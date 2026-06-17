@@ -134,8 +134,7 @@ All services use health checks and will come up in dependency order.
 ```bash
 # Stop containers
 docker compose -f docker/docker-compose.prod.yml down
-
----
+```
 
 ## Local Development
 
