@@ -61,28 +61,11 @@ jobs:
           node-version: 24
           cache: "pnpm"
 
-      - name: Setup SSH
-        uses: MrSquaare/ssh-setup-action@v1
-        with:
-          host: github.com
-          private-key: ${{ secrets.SSH_PRIVATE_KEY_BLOCKNOTE_REPO }}
-
-      - name: Add tiptap registry to .npmrc
-        run: |
-          NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
-          echo "" >> $NPM_CONFIG_USERCONFIG
-          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> $NPM_CONFIG_USERCONFIG
-          echo "//registry.tiptap.dev/:_authToken=\${TIPTAP_PRO_TOKEN}" >> $NPM_CONFIG_USERCONFIG
-
       - run: npm i -g turbo
 
       - run: pnpm install --frozen-lockfile
-        env:
-          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
       - run: turbo run lint --affected
-        env:
-          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
   test-backend:
     name: Test backend
@@ -164,12 +147,6 @@ jobs:
           restore-keys: |
             pnpm-cache-
 
-      - name: Setup SSH
-        uses: MrSquaare/ssh-setup-action@v1
-        with:
-          host: github.com
-          private-key: ${{ secrets.SSH_PRIVATE_KEY_BLOCKNOTE_REPO }}
-
       - name: Start clickhouse
         uses: getsentry/action-clickhouse-in-ci@v1
         env:
@@ -185,24 +162,13 @@ jobs:
           node-version: 24
           cache: "pnpm"
 
-      - name: Add tiptap registry to .npmrc
-        run: |
-          NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
-          echo "" >> $NPM_CONFIG_USERCONFIG
-          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> $NPM_CONFIG_USERCONFIG
-          echo "//registry.tiptap.dev/:_authToken=\${TIPTAP_PRO_TOKEN}" >> $NPM_CONFIG_USERCONFIG
-
       - run: npm i -g turbo
 
       - run: pnpm install --frozen-lockfile
-        env:
-          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
       - name: Build libs
         run: turbo run build --filter="./libs/*"
           --filter=!./libs/multiplayer-blocknote-lib
-        env:
-          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
       - name: Seed
         run: |
@@ -227,7 +193,6 @@ jobs:
           SLACK_CLIENT_ID: "1234567890"
           SLACK_CLIENT_SECRET: "1234567890"
           SLACK_SIGNING_SECRET: "1234567890"
-          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
   build-backend:
     strategy:
@@ -408,12 +373,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        uses: MrSquaare/ssh-setup-action@v1
-        with:
-          host: github.com
-          private-key: ${{ secrets.SSH_PRIVATE_KEY_BLOCKNOTE_REPO }}
-
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
@@ -443,13 +402,6 @@ jobs:
           restore-keys: |
             pnpm-cache-
 
-      - name: Add tiptap registry to .npmrc
-        run: |
-          NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
-          echo "" >> $NPM_CONFIG_USERCONFIG
-          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> $NPM_CONFIG_USERCONFIG
-          echo "//registry.tiptap.dev/:_authToken=\${TIPTAP_PRO_TOKEN}" >> $NPM_CONFIG_USERCONFIG
-
       - name: Set release tag
         run: |
           echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
@@ -457,15 +409,11 @@ jobs:
       - name: Install dependencies
         run: |
           pnpm -F "@multiplayer/multiplayer-web-app..." install --frozen-lockfile
-        env:
-          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
       - name: Build lib dependencies
         run: npx turbo run build --filter=@multiplayer/types
           --filter=@multiplayer/entity --filter=@multiplayer/blocknote
           --filter=@multiplayer/util-shared
-        env:
-          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
       - name: Build Frontend
         run: npm --prefix clients/multiplayer-web-app run build

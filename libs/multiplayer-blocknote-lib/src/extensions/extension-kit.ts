@@ -1,7 +1,6 @@
 import {
   Link,
   Color,
-  Emoji,
   Focus,
   Table,
   Column,
@@ -32,7 +31,6 @@ import {
   TrailingNode,
   HorizontalRule,
   CharacterCount,
-  emojiSuggestion,
   Comment,
   CodeBlock,
   RestApiBlock,
@@ -93,16 +91,11 @@ export const ExtensionKit = ({
     CharacterCount.configure({ limit: 5000000 }),
     Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
     ImageUpload.configure({ clientId: Math.random() }),
-    Emoji.configure({ enableEmoticons: true, suggestion: emojiSuggestion }),
     TextAlign.extend({
       addKeyboardShortcuts() {
         return {}
       },
     }).configure({ types: ['heading', 'paragraph'] }),
-    // UniqueID.configure({
-    //   types: ['paragraph', 'heading', 'blockquote', 'codeBlock', 'table'],
-    //   filterTransaction: transaction => !isChangeOrigin(transaction),
-    // }),
     Subscript,
     Superscript,
     Table,

@@ -22,3 +22,5 @@ export const config = {
   REACT_APP_STRIPE_FREE_PRODUCT_ID: w.REACT_APP_STRIPE_FREE_PRODUCT_ID ?? process.env.REACT_APP_STRIPE_FREE_PRODUCT_ID ?? '',
   REACT_APP_SERVICE_VERSION: w.REACT_APP_SERVICE_VERSION ?? process.env.REACT_APP_SERVICE_VERSION ?? '',
 };
+
+(window as any).__ENV__ = config

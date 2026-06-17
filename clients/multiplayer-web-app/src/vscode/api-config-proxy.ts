@@ -5,9 +5,9 @@ import { config as buildTimeConfig } from "../config";
 
 if (typeof window !== 'undefined') {
   (window as any).__ENV__ = {
+    REACT_APP_API_BASE_URL: 'http://localhost',
+    NODE_ENV: 'production',
     ...buildTimeConfig,
-    REACT_APP_API_BASE_URL: "http://localhost",
-    NODE_ENV: "production",
   };
 }
 

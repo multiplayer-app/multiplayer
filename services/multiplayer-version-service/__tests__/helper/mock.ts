@@ -639,22 +639,22 @@ export const teamRoles = [{
 }]
 
 export const roles = async () => {
-  const allRoles = await RoleModel.find({})
-
-  const rolesToCreate = [
-    ...accountRoles.filter(accountRole => {
-      return !allRoles.find(existingRole => existingRole.type === accountRole.type && accountRole.name === existingRole.name)
-    }),
-    ...workspaceRoles.filter(workspaceRole => {
-      return !allRoles.find(existingRole => existingRole.type === workspaceRole.type && workspaceRole.name === existingRole.name)
-    }),
-    ...teamRoles.filter(teamRole => {
-      return !allRoles.find(existingRole => existingRole.type === teamRole.type && teamRole.name === existingRole.name)
-    }),
+  const allRoleDefs = [
+    ...accountRoles,
+    ...workspaceRoles,
+    ...teamRoles,
   ]
 
-
-  await RoleModel.insertMany(rolesToCreate)
+  await RoleModel.bulkWrite(
+    allRoleDefs.map(role => ({
+      updateOne: {
+        filter: { type: role.type, name: role.name },
+        update: { $set: role },
+        upsert: true,
+      },
+    })),
+    { ordered: false },
+  )
 }
 
 export const user = async () => {
@@ -669,7 +669,7 @@ export const user = async () => {
   }
 }
 
-export const workspace = async (userId) => {
+export const workspace = async (userId: any) => {
   const workspaceName = faker.internet.userName()
   const workspaceId = new mongoose.Types.ObjectId()
 
@@ -712,7 +712,7 @@ export const workspace = async (userId) => {
   }
 }
 
-export const project = async (workspaceId) => {
+export const project = async (workspaceId: any) => {
   const project = await ProjectModel.createProject({
     workspace: workspaceId,
     name: faker.commerce.productName(),
@@ -742,7 +742,7 @@ export const project = async (workspaceId) => {
   }
 }
 
-export const entity = async (projectId, projectBranchId) => {
+export const entity = async (projectId: any, projectBranchId: any) => {
   const project = await ProjectModel.findProjectById(projectId)
 
   const entityId = new mongoose.Types.ObjectId()
@@ -762,11 +762,11 @@ export const entity = async (projectId, projectBranchId) => {
 }
 
 export const entityCommit = async (
-  entityId,
-  changeType,
-  projectBranchId,
-  commitId,
-  parentEntityCommitId,
+  entityId: any,
+  changeType: any,
+  projectBranchId: any,
+  commitId: any,
+  parentEntityCommitId: any,
 ) => {
   const entityCommitId = new mongoose.Types.ObjectId()
 
@@ -798,11 +798,11 @@ export const entityCommit = async (
 }
 
 export const commit = async (
-  projectBranchId,
-  parentCommitId,
-  entityCommitIds,
-  mergeFromBranchId?,
-  mergeFromCommitId?,
+  projectBranchId: any,
+  parentCommitId: any,
+  entityCommitIds: any,
+  mergeFromBranchId?: any,
+  mergeFromCommitId?: any,
 ) => {
   const projectBranch = await ProjectBranchModel.findProjectBranchById(projectBranchId)
   const project = await ProjectModel.findProjectById(projectBranch?.project.toString() as string)

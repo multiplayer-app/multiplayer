@@ -43,7 +43,6 @@ coverage
 # ignore exported files
 cronjobs/signups/export/
 
-BlockNote
 vite.config.ts.timestamp-*.mjs
 .multiplayer
 out

@@ -4,7 +4,6 @@ import { EditorContent } from '@tiptap/react'
 import { TiptapProps, BlockEditorRef } from './types'
 import { LinkMenu } from '../menus'
 import { TextMenu } from '../menus/TextMenu'
-import { ContentItemMenu } from '../menus/ContentItemMenu'
 import { ColumnsMenu } from '../../extensions/MultiColumn/menus'
 import { TableColumnMenu, TableRowMenu } from '../../extensions/Table/menus'
 import ImageBlockMenu from '../../extensions/ImageBlock/components/ImageBlockMenu'
@@ -104,7 +103,6 @@ export const BlockEditor = forwardRef<BlockEditorRef, TiptapProps>((options, ref
             {allowRunnableBlocks && <PlaceholderBlock editor={editor} />}
           </div>
           <TextMenu editor={editor} customBlockExclusions={customBlockExclusions} />
-          <ContentItemMenu editor={editor} />
           <SearchAndReplaceMenu editor={editor} appendTo={menuContainerRef} />
           <LinkMenu editor={editor} appendTo={menuContainerRef} />
           <ColumnsMenu editor={editor} appendTo={menuContainerRef} />
