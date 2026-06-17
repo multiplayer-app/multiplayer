@@ -464,6 +464,8 @@ jobs:
         run: npx turbo run build --filter=@multiplayer/types
           --filter=@multiplayer/entity --filter=@multiplayer/blocknote
           --filter=@multiplayer/util-shared
+        env:
+          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
       - name: Build Frontend
         run: npm --prefix clients/multiplayer-web-app run build
