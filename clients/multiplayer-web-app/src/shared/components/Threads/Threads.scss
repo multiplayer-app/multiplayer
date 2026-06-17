@@ -1,0 +1,44 @@
+.thread-item {
+  position: relative;
+  &.has-replies {
+    &::before {
+      content: "";
+      position: absolute;
+      bottom: 56px;
+      left: 28px;
+      height: calc(100% - 108px);
+      width: 1px;
+      background-color: var(--chakra-colors-gray-200);
+    }
+  }
+  &.is-highlighted {
+    animation: highlight .3s linear;
+  }
+}
+
+@keyframes highlight {
+  0%, 100% {
+    border-color: initial;
+    box-shadow: initial;
+  }
+  10%, 90% {
+    border-color: #77a0c8;
+    box-shadow: 0 0 5px rgba(119, 160, 200, 0.3);
+  }
+  20%, 80% {
+    border-color: #77a0c8;
+    box-shadow: 0 0 7px rgba(119, 160, 200, 0.3);
+  }
+  30%, 70% {
+    border-color: #77a0c8;
+    box-shadow: 0 0 9px rgba(119, 160, 200, 0.3);
+  }
+  40%, 60% {
+    border-color: #77a0c8;
+    box-shadow: 0 0 11px rgba(119, 160, 200, 0.3);
+  }
+  50% {
+    border-color: #77a0c8;
+    box-shadow: 0 0 13px rgba(119, 160, 200, 0.3);
+  }
+}

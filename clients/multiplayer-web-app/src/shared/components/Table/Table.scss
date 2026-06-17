@@ -1,0 +1,54 @@
+.table-wrapper {
+  .resizer {
+    display: inline-block;
+    width: 6px;
+    margin: 4px 0;
+    height: calc(100% - 8px);
+    border-left: 1px solid var(--chakra-colors-border-secondary);
+    border-radius: 1px;
+    cursor: col-resize;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: translateX(50%);
+  }
+
+  > div {
+    > table {
+      .table-header {
+        th {
+          &.table-header-sticky-left {
+            position: sticky;
+            z-index: 1;
+          }
+
+          &.table-header-sticky-right {
+            position: sticky;
+            z-index: 1;
+          }
+        }
+      }
+
+      .table-body {
+        tr {
+          &.default_cursor {
+            cursor: default;
+          }
+          td {
+            &.table-cell-sticky-left {
+              left: 0;
+              position: sticky;
+              z-index: 2;
+            }
+
+            &.table-cell-sticky-right {
+              right: 0;
+              position: sticky;
+              z-index: 2;
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@multiplayer/mcp",
+  "version": "0.0.1",
+  "description": "Multiplayer MCP server",
+  "main": "dist/index.js",
+  "bin": {
+    "multiplayer": "./dist/stdio-mcp.js"
+  },
+  "scripts": {
+    "build:local": "tsc && chmod 755 dist/stdio-mcp.js",
+    "build": "tsc --build --force",
+    "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.28.0",
+    "@multiplayer/entity": "0.0.1",
+    "@multiplayer/types": "0.0.1",
+    "@rrweb/packer": "2.0.0-alpha.18",
+    "@rrweb/types": "2.0.0-alpha.18",
+    "jwt-decode": "4.0.0",
+    "zod": "3.25.55"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "jest": "30.3.0",
+    "ts-jest": "29.4.4",
+    "@types/jest": "30.0.0",
+    "typescript": "6.0.2"
+  },
+  "files": [
+    "dist"
+  ]
+}

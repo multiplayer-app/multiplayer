@@ -1,0 +1,34 @@
+{
+    "name": "@multiplayer/mongo",
+    "version": "0.0.1",
+    "description": "Multiplayer mongodb library",
+    "main": "dist/index.js",
+    "engines": {
+        "node": ">=18",
+        "npm": ">=8"
+    },
+    "scripts": {
+        "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+        "preversion": "npm run lint",
+        "postversion": "git push && git push --tags",
+        "build": "tsc --build --force"
+    },
+    "author": "Multiplayer",
+    "keywords": [
+        "mongo",
+        "mongoose",
+        "library"
+    ],
+    "dependencies": {
+        "@aws-sdk/credential-providers": "3.750.0",
+        "@multiplayer/logger": "0.0.1",
+        "mongodb-client-encryption": "6.2.0",
+        "mongoose": "8.10.1",
+        "mongodb": "6.13.0"
+    },
+    "devDependencies": {
+        "@types/node": "25.5.0",
+        "eslint": "10.1.0",
+        "typescript": "6.0.2"
+    }
+}

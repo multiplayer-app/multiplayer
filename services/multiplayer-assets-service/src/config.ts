@@ -1,0 +1,5 @@
+export const PORT = process.env.PORT || '3000'
+export const CORS_DOMAIN = process.env.CORS_DOMAIN || '*'
+export const API_PREFIX = process.env.API_PREFIX || '/v0/assets'
+export const SWAGGER_ENABLED = (process.env.SWAGGER_ENABLED || 'false') === 'true'
+export const MULTIPLAYER_BASE_API_URL = process.env.MULTIPLAYER_BASE_API_URL || 'https://api.multiplayer.app'

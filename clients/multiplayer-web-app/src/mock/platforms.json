@@ -1,0 +1,67 @@
+{
+  "protocolr": "1.0.0",
+  "info": {
+    "description": "Ramp Web Platform",
+    "version": "1.0.0",
+    "name": "FilingRamp",
+    "id": "ramp-web-platform",
+    "title": "ramp-web-app",
+    "contact": {
+      "email": "dev@filingramp.com"
+    }
+  },
+  "tags": [
+    {
+      "name": "ops",
+      "description": "ops services"
+    }
+  ],
+  "services": {
+    "ramp-web-api-service": {
+      "version": "1.0.0"
+    },
+    "ramp-auth-service": {
+      "version": "1.0.0"
+    },
+    "ramp-sync-service": {
+      "version": "1.0.0"
+    },
+    "ramp-serff-polling-service": {
+      "version": "1.0.0"
+    },
+    "ramp-filing-drafts-service": {
+      "version": "1.0.0"
+    },
+    "ramp-import-service": {
+      "version": "1.0.0"
+    },
+    "ramp-messaging-service": {
+      "version": "1.0.0"
+    },
+    "ramp-search-service": {
+      "version": "1.0.0"
+    }
+  },
+  "external": {
+    "mongodb-atlas": {
+      "version": "1.0.0"
+    },
+    "rabbit-mq": {
+      "version": "1.0.0"
+    },
+    "aws-s3": {
+      "version": "1.0.0",
+      "triggers": {
+        "huge-lambda-trigger": {
+          "version": "1.0.0"
+        },
+        "lores-lambda-trigger": {
+          "version": "1.0.0"
+        },
+        "sprite-lambda-trigger": {
+          "version": "1.0.0"
+        }
+      }
+    }
+  }
+}

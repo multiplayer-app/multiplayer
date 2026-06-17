@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "declaration": true,
+    "declarationMap": true,
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "noUnusedParameters": false,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": false,
+    "preserveConstEnums": true,
+    "removeComments": false,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "target": "ES2018",
+    "strict": true,
+    "composite": true,
+    "outDir": "./dist/",
+    "rootDir": "./src/",
+    "types": ["node"]
+  },
+  "exclude": [
+    "dist",
+    "coverage",
+    "jest.config.js",
+    "__tests__",
+    "scripts",
+    "migrations",
+    "static",
+    "babel.config.js"
+  ],
+  "references": []
+}

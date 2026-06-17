@@ -1,0 +1,32 @@
+{
+    "name": "@multiplayer/fetch",
+    "version": "0.0.1",
+    "description": "Multiplayer fetch library",
+    "main": "dist/index.js",
+    "engines": {
+        "node": ">=18",
+        "npm": ">=8"
+    },
+    "scripts": {
+        "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+        "preversion": "npm run lint",
+        "postversion": "git push && git push --tags",
+        "build": "tsc --build --force"
+    },
+    "author": "Multiplayer",
+    "keywords": [
+        "redis",
+        "library"
+    ],
+    "dependencies": {
+      "@multiplayer/logger": "0.0.1",
+      "axios": "1.8.4",
+      "axios-retry": "4.5.0",
+      "json-stringify-safe": "5.0.1"
+    },
+    "devDependencies": {
+        "@types/node": "25.5.0",
+        "eslint": "10.1.0",
+        "typescript": "6.0.2"
+    }
+}

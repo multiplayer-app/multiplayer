@@ -1,0 +1,22 @@
+.workspace-sidebar {
+  .chakra-button {
+    .line-box {
+      position: relative;
+      &::after {
+        content: "";
+        position: absolute;
+        width: 1px;
+        top: -6px;
+        bottom: -6px;
+        left: 10px;
+        background: var(--chakra-colors-border-primary);
+        transition: all 0.2s;
+      }
+    }
+    &.active .line-box::after {
+      top: 0;
+      bottom: 0;
+      background: var(--chakra-colors-brand-500);
+    }
+  }
+}

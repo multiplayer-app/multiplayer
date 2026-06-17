@@ -1,0 +1,649 @@
+name: Build app
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  attestations: write
+  contents: read
+  packages: read
+
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  # aws ecr
+  # DOCKER_REPOSITORY_PREFIX: multiplayer-staging-
+  # docker hub
+  DOCKER_REPOSITORY_PREFIX: multiplayer-
+  MONGODB_URI: mongodb://localhost
+  AMQP_URI: amqp://localhost
+  REDIS_URI: redis://localhost:6379
+  REPOSITORY_URL: "${{ github.server_url }}/${{ github.repository }}"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        id: turbo-cache
+        with:
+          path: turbo
+          key: turbo-cache-${{ github.sha }}
+          restore-keys: |
+            turbo-cache-
+
+      - name: Cache pnpm
+        uses: actions/cache@v4
+        id: pnpm-cache
+        with:
+          path: |
+            pnpm
+          key: pnpm-cache-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-cache-
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          cache: true
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Setup SSH
+        uses: MrSquaare/ssh-setup-action@v1
+        with:
+          host: github.com
+          private-key: ${{ secrets.SSH_PRIVATE_KEY_BLOCKNOTE_REPO }}
+
+      - name: Add tiptap registry to .npmrc
+        run: |
+          NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
+          echo "" >> $NPM_CONFIG_USERCONFIG
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> $NPM_CONFIG_USERCONFIG
+          echo "//registry.tiptap.dev/:_authToken=\${TIPTAP_PRO_TOKEN}" >> $NPM_CONFIG_USERCONFIG
+
+      - run: npm i -g turbo
+
+      - run: pnpm install --frozen-lockfile
+        env:
+          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
+
+      - run: turbo run lint --affected
+        env:
+          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
+
+  test-backend:
+    name: Test backend
+    needs:
+      - lint
+    runs-on: ubuntu-24.04
+    services:
+      mongo:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+      rabbitmq:
+        image: rabbitmq:3.11-management
+        ports:
+          - 5672:5672
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 10s --health-timeout
+          5s --health-retries 5
+        ports:
+          - 6379:6379
+      zookeeper:
+        image: bitnamilegacy/zookeeper:3.8.3-debian-11-r2
+        ports:
+          - 2181:2181
+        env:
+          ALLOW_ANONYMOUS_LOGIN: yes
+        options: >-
+          --health-cmd "echo mntr | nc -w 2 -q 2 localhost 2181"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      kafka:
+        image: bitnamilegacy/kafka:3.6.0
+        ports:
+          - 9092:9092
+          - 29092:29092
+        options: >-
+          --health-cmd "kafka-broker-api-versions.sh --version"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+        env:
+          KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+          ALLOW_PLAINTEXT_LISTENER: yes
+          KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+          KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      minio:
+        image: bitnamilegacy/minio:2025.7.23-debian-12-r5
+        ports:
+          - 8000:9000
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_DEFAULT_BUCKETS: private-bucket
+        # options: >-
+        #   --health-cmd "curl -f http://localhost:9000/minio/health/live"
+        #   --health-interval 10s
+        #   --health-timeout 5s
+        #   --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        id: turbo-cache
+        with:
+          path: turbo
+          key: turbo-cache-${{ github.sha }}
+          restore-keys: |
+            turbo-cache-
+
+      - name: Cache pnpm
+        uses: actions/cache@v4
+        id: pnpm-cache
+        with:
+          path: |
+            pnpm
+          key: pnpm-cache-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-cache-
+
+      - name: Setup SSH
+        uses: MrSquaare/ssh-setup-action@v1
+        with:
+          host: github.com
+          private-key: ${{ secrets.SSH_PRIVATE_KEY_BLOCKNOTE_REPO }}
+
+      - name: Start clickhouse
+        uses: getsentry/action-clickhouse-in-ci@v1
+        env:
+          DOCKER_API_VERSION: 1.44
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          cache: true
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Add tiptap registry to .npmrc
+        run: |
+          NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
+          echo "" >> $NPM_CONFIG_USERCONFIG
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> $NPM_CONFIG_USERCONFIG
+          echo "//registry.tiptap.dev/:_authToken=\${TIPTAP_PRO_TOKEN}" >> $NPM_CONFIG_USERCONFIG
+
+      - run: npm i -g turbo
+
+      - run: pnpm install --frozen-lockfile
+        env:
+          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
+
+      - name: Build libs
+        run: turbo run build --filter="./libs/*"
+          --filter=!./libs/multiplayer-blocknote-lib
+        env:
+          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
+
+      - name: Seed
+        run: |
+          npm run seed-counter
+          npm run seed-roles
+        env:
+          MONGODB_URI: mongodb://localhost
+          MONGODB_ENCRYPTION_MASTER_KEY_PROVIDER: local
+
+      - name: Run tests
+        run: turbo run test --filter="./services/*"
+        env:
+          PLATFORM_ENV: ci
+          MONGODB_ENCRYPTION_MASTER_KEY_PROVIDER: local
+          MONGODB_URI: mongodb://localhost
+          KAFKA_URI: localhost:29092
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          S3_HOST: http://localhost:8000
+          S3_PRIVATE_BUCKET: private-bucket
+          SLACK_CLIENT_ID: "1234567890"
+          SLACK_CLIENT_SECRET: "1234567890"
+          SLACK_SIGNING_SECRET: "1234567890"
+          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
+
+  build-backend:
+    strategy:
+      matrix:
+        env: [staging]
+        service:
+          - "@multiplayer/api"
+          - "@multiplayer/authentication"
+          - "@multiplayer/collaboration"
+          - "@multiplayer/git"
+          - "@multiplayer/notification"
+          - "@multiplayer/radar"
+          - "@multiplayer/version"
+          - "@multiplayer/assets"
+          - "@multiplayer/signup-stats"
+    name: Build service ${{ matrix.service }} (${{ matrix.env }})
+    # needs:
+    #   - lint
+    #   - test-backend
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.env }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_ORGANIZATION }}
+          password: ${{ secrets.DOCKERHUB_OAT }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Cache turbo
+        uses: actions/cache@v4
+        id: turbo-cache
+        with:
+          path: turbo
+          key: turbo-cache-${{ github.sha }}
+          restore-keys: |
+            turbo-cache-
+
+      - name: Cache pnpm
+        uses: actions/cache@v4
+        id: pnpm-cache
+        with:
+          path: |
+            pnpm
+          key: pnpm-cache-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-cache-
+
+      - name: inject pnpm cache into docker
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.0
+        with:
+          cache-map: |
+            {
+              "pnpm": "/pnpm"
+            }
+
+      - name: inject turbo cache into docker
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.0
+        with:
+          cache-map: |
+            {
+              "turbo": "/app/.turbo"
+            }
+
+      - name: Get service folder from package name
+        id: get-service-folder
+        run: |
+          SERVICE_FOLDER_PATH=$(find services cronjobs -name "package.json" | while read f; do
+            name=$(jq -r '.name' "$f")
+            if [ "$name" = "${{ matrix.service }}" ]; then
+              dirname "$f"
+              break
+            fi
+          done)
+          echo "SERVICE_FOLDER_PATH=$SERVICE_FOLDER_PATH" >> $GITHUB_ENV
+          SERVICE_FOLDER_NAME=$(basename "$SERVICE_FOLDER_PATH")
+          SERVICE_NAME="${SERVICE_FOLDER_NAME/multiplayer-/}"
+          SERVICE_NAME="${SERVICE_NAME/-service/}"
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+          echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE=${{ vars.DOCKERHUB_ORGANIZATION }}/${{ env.DOCKER_REPOSITORY_PREFIX }}${SERVICE_NAME}" >> $GITHUB_ENV
+        # echo "DOCKER_IMAGE= ${{ steps.ecr-login.outputs.registry }}/${{ env.DOCKER_REPOSITORY_PREFIX }}${SERVICE_NAME}" >> $GITHUB_ENV
+
+      - name: Set Docker tags
+        run: |
+          TAGS="${{ env.DOCKER_IMAGE }}:${{ env.SERVICE_VERSION }}"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            TAGS="$TAGS,${{ env.DOCKER_IMAGE }}:latest"
+          fi
+          echo "DOCKER_TAGS=$TAGS" >> $GITHUB_ENV
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.SERVICE_FOLDER_PATH }}/Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ env.DOCKER_TAGS }}
+          push: true
+          build-args: |
+            SERVICE_FOLDER=${{ env.SERVICE_FOLDER_PATH }}
+            SERVICE_VERSION=${{ env.SERVICE_VERSION }}
+            NODE_ENV=production
+
+      - name: Login to Octopus Deploy
+        uses: OctopusDeploy/login@v1
+        with:
+          server: ${{ secrets.OCTOPUS_HOST }}
+          service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
+
+      - name: Install OctopusCLI
+        uses: OctopusDeploy/install-octopus-cli-action@v3
+        with:
+          version: 1.2.0
+
+      - name: Create a release in Octopus Deploy
+        uses: OctopusDeploy/create-release-action@v3
+        with:
+          project: ${{ env.SERVICE_NAME }}
+          server: ${{ secrets.OCTOPUS_HOST }}
+          space: ${{ secrets.OCTOPUS_SPACE }}
+          release_number: ${{ env.SERVICE_VERSION }}
+          release_notes: "[GitHub commit: ${{
+            steps.commit.outputs.sha_short}}](https://github.com/${{
+            github.event.repository.full_name }}/commit/${{
+            steps.commit.outputs.sha_short}}) / [GitHub branch: ${{
+            env.BRANCH_NAME }}](https://github.com/${{
+            github.event.repository.full_name }}/compare/${{ env.BRANCH_NAME
+            }})"
+
+      - name: Install multiplayer-app/cli
+        run: npm install -g @multiplayer-app/cli@latest
+
+      - name: Create release in multiplayer
+        env:
+          MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
+          COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
+          COMMIT_SHA: ${{ github.sha }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+          SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+          REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
+        run: |
+          npm --prefix ${{ env.SERVICE_FOLDER_PATH }} run multiplayer:release
+
+      - name: Upload source maps to multiplayer (production)
+        env:
+          MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
+          COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
+          COMMIT_SHA: ${{ github.sha }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+          SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+          REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
+        run: |
+          CONTAINER_ID=$(docker create "${{ env.DOCKER_IMAGE }}:${{ env.SERVICE_VERSION }}")
+          mkdir -p ${{ env.SERVICE_FOLDER_PATH }}/dist
+          docker cp "$CONTAINER_ID:/app/${{ env.SERVICE_FOLDER_PATH }}/dist/." ${{ env.SERVICE_FOLDER_PATH }}/dist
+          docker rm "$CONTAINER_ID"
+          cd ${{ env.SERVICE_FOLDER_PATH }}/dist
+          multiplayer sourcemaps upload . \
+            --api-key="${{ secrets.MULTIPLAYER_API_KEY }}" \
+            --service="${{ env.SERVICE_NAME }}" \
+            --release="${{ env.SERVICE_VERSION }}"
+
+  # build-frontend:
+  #   name: Build Frontend
+  #   needs: lint
+  #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup SSH
+  #       uses: MrSquaare/ssh-setup-action@v1
+  #       with:
+  #         host: github.com
+  #         private-key: ${{ secrets.SSH_PRIVATE_KEY_BLOCKNOTE_REPO }}
+
+  #     - uses: pnpm/action-setup@v4
+  #       name: Install pnpm
+  #       with:
+  #         cache: true
+
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 24
+  #         cache: "pnpm"
+
+  #     - name: Cache turbo
+  #       uses: actions/cache@v4
+  #       id: turbo-cache
+  #       with:
+  #         path: turbo
+  #         key: turbo-cache-${{ github.sha }}
+  #         restore-keys: |
+  #           turbo-cache-
+
+  #     - name: Cache pnpm
+  #       uses: actions/cache@v4
+  #       id: pnpm-cache
+  #       with:
+  #         path: |
+  #           pnpm
+  #         key: pnpm-cache-${{ hashFiles('pnpm-lock.yaml') }}
+  #         restore-keys: |
+  #           pnpm-cache-
+
+  #     - name: Add tiptap registry to .npmrc
+  #       run: |
+  #         NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
+  #         echo "" >> $NPM_CONFIG_USERCONFIG
+  #         echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> $NPM_CONFIG_USERCONFIG
+  #         echo "//registry.tiptap.dev/:_authToken=\${TIPTAP_PRO_TOKEN}" >> $NPM_CONFIG_USERCONFIG
+
+  #     - name: Set release tag
+  #       run: |
+  #         echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+  #     - name: Install dependencies
+  #       run: |
+  #         pnpm -F "@multiplayer/multiplayer-web-app..." install --frozen-lockfile
+  #       env:
+  #         TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
+
+  #     - name: Build lib dependencies
+  #       run: npx turbo run build --filter=@multiplayer/types
+  #         --filter=@multiplayer/entity --filter=@multiplayer/blocknote
+  #         --filter=@multiplayer/util-shared
+
+  #     - name: Build Frontend
+  #       run: npm --prefix clients/multiplayer-web-app run build
+  #       env:
+  #         NODE_OPTIONS: "--max_old_space_size=6144"
+  #         CI: false
+
+  #     - name: Upload build artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: frontend-build-${{ github.sha }}
+  #         path: clients/multiplayer-web-app/build/
+  #         retention-days: 1
+
+  # deploy-frontend:
+  #   strategy:
+  #     matrix:
+  #       env: [staging, production]
+  #   name: Deploy Frontend (${{ matrix.env }})
+  #   environment: ${{ matrix.env }}
+  #   needs: build-frontend
+  #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+  #   runs-on: ubuntu-22.04
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - uses: pnpm/action-setup@v4
+  #       name: Install pnpm
+  #       with:
+  #         cache: true
+
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 24
+  #         cache: "pnpm"
+
+  #     - name: Set release tag
+  #       run: |
+  #         echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+  #         echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+  #     - name: Download build artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: frontend-build-${{ github.sha }}
+  #         path: clients/multiplayer-web-app/build/
+
+  #     - name: Generate config.js
+  #       env:
+  #         REACT_APP_API_BASE_URL: ${{ vars.REACT_APP_API_BASE_URL }}
+  #         REACT_APP_API_PREFIX: ${{ vars.REACT_APP_API_PREFIX }}
+  #         REACT_APP_GIT_PREFIX: ${{ vars.REACT_APP_GIT_PREFIX }}
+  #         REACT_APP_AUTH_PREFIX: ${{ vars.REACT_APP_AUTH_PREFIX }}
+  #         REACT_APP_VERSION_PREFIX: ${{ vars.REACT_APP_VERSION_PREFIX }}
+  #         REACT_APP_RADAR_PREFIX: ${{ vars.REACT_APP_RADAR_PREFIX }}
+  #         REACT_APP_ASSETS_PREFIX: ${{ vars.REACT_APP_ASSETS_PREFIX }}
+  #         REACT_APP_NOTEBOOK_PREFIX: ${{ vars.REACT_APP_NOTEBOOK_PREFIX }}
+  #         REACT_APP_COLLABORATION_PREFIX: ${{ vars.REACT_APP_COLLABORATION_PREFIX }}
+  #         REACT_APP_PLATFORM_ENV: ${{ vars.REACT_APP_PLATFORM_ENV }}
+  #         REACT_APP_IS_PRODUCTION: ${{ vars.REACT_APP_IS_PRODUCTION }}
+  #         REACT_APP_SANDBOX_URL: ${{ vars.REACT_APP_SANDBOX_URL }}
+  #         REACT_APP_DEMO_PUBLIC: ${{ vars.REACT_APP_DEMO_PUBLIC }}
+  #         REACT_APP_NEWRELIC_ACCOUNT_ID: ${{ vars.REACT_APP_NEWRELIC_ACCOUNT_ID }}
+  #         REACT_APP_NEWRELIC_APPLICATION_ID: ${{ vars.REACT_APP_NEWRELIC_APPLICATION_ID }}
+  #         REACT_APP_SESSION_DEBUGGER_API_BASE_URL: ${{ vars.REACT_APP_SESSION_DEBUGGER_API_BASE_URL }}
+  #         REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT: ${{ vars.REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT }}
+  #         REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID: ${{ vars.REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID }}
+  #         REACT_APP_STRIPE_FREE_PRODUCT_ID: ${{ vars.REACT_APP_STRIPE_FREE_PRODUCT_ID }}
+  #         REACT_APP_POSTHOG_KEY: ${{ secrets.REACT_APP_POSTHOG_KEY }}
+  #         REACT_APP_SESSION_DEBUGGER_KEY: ${{ secrets.REACT_APP_SESSION_DEBUGGER_KEY }}
+  #         REACT_APP_SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+  #       run: |
+  #         cat > clients/multiplayer-web-app/build/config.js << EOF
+  #         window.__ENV__ = {
+  #           "REACT_APP_API_BASE_URL": "${REACT_APP_API_BASE_URL}",
+  #           "REACT_APP_API_PREFIX": "${REACT_APP_API_PREFIX}",
+  #           "REACT_APP_GIT_PREFIX": "${REACT_APP_GIT_PREFIX}",
+  #           "REACT_APP_AUTH_PREFIX": "${REACT_APP_AUTH_PREFIX}",
+  #           "REACT_APP_VERSION_PREFIX": "${REACT_APP_VERSION_PREFIX}",
+  #           "REACT_APP_RADAR_PREFIX": "${REACT_APP_RADAR_PREFIX}",
+  #           "REACT_APP_ASSETS_PREFIX": "${REACT_APP_ASSETS_PREFIX}",
+  #           "REACT_APP_NOTEBOOK_PREFIX": "${REACT_APP_NOTEBOOK_PREFIX}",
+  #           "REACT_APP_COLLABORATION_PREFIX": "${REACT_APP_COLLABORATION_PREFIX}",
+  #           "REACT_APP_PLATFORM_ENV": "${REACT_APP_PLATFORM_ENV}",
+  #           "REACT_APP_IS_PRODUCTION": "${REACT_APP_IS_PRODUCTION}",
+  #           "REACT_APP_SANDBOX_URL": "${REACT_APP_SANDBOX_URL}",
+  #           "REACT_APP_DEMO_PUBLIC": "${REACT_APP_DEMO_PUBLIC}",
+  #           "REACT_APP_NEWRELIC_ACCOUNT_ID": "${REACT_APP_NEWRELIC_ACCOUNT_ID}",
+  #           "REACT_APP_NEWRELIC_APPLICATION_ID": "${REACT_APP_NEWRELIC_APPLICATION_ID}",
+  #           "REACT_APP_SESSION_DEBUGGER_API_BASE_URL": "${REACT_APP_SESSION_DEBUGGER_API_BASE_URL}",
+  #           "REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT": "${REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT}",
+  #           "REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID": "${REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID}",
+  #           "REACT_APP_STRIPE_FREE_PRODUCT_ID": "${REACT_APP_STRIPE_FREE_PRODUCT_ID}",
+  #           "REACT_APP_POSTHOG_KEY": "${REACT_APP_POSTHOG_KEY}",
+  #           "REACT_APP_SESSION_DEBUGGER_KEY": "${REACT_APP_SESSION_DEBUGGER_KEY}",
+  #           "REACT_APP_SERVICE_VERSION": "${REACT_APP_SERVICE_VERSION}"
+  #         };
+  #         EOF
+
+  #     - name: Configure AWS Credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-region: ${{ vars.AWS_REGION }}
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  #     - name: Deploy to S3
+  #       env:
+  #         WEB_APP_S3_BUCKET: ${{ vars.WEB_APP_S3_BUCKET }}
+  #         SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+  #       run: |
+  #         npm --prefix clients/multiplayer-web-app run deploy-s3
+
+  # release-frontend:
+  #   strategy:
+  #     matrix:
+  #       env: [production]
+  #   name: Release frontend
+  #   environment: ${{ matrix.env }}
+  #   needs: deploy-frontend
+  #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+  #   runs-on: ubuntu-22.04
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - uses: pnpm/action-setup@v4
+  #       name: Install pnpm
+  #       with:
+  #         cache: true
+
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 24
+  #         cache: "pnpm"
+
+  #     - name: Set release tag
+  #       run: |
+  #         echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+  #         echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+  #     - name: Login to Octopus Deploy
+  #       uses: OctopusDeploy/login@v1
+  #       with:
+  #         server: ${{ secrets.OCTOPUS_HOST }}
+  #         service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
+
+  #     - name: Install OctopusCLI
+  #       uses: OctopusDeploy/install-octopus-cli-action@v3
+  #       with:
+  #         version: 1.2.0
+
+  #     - name: Create a release in Octopus Deploy
+  #       uses: OctopusDeploy/create-release-action@v3
+  #       with:
+  #         project: web-app
+  #         server: ${{ secrets.OCTOPUS_HOST }}
+  #         space: ${{ secrets.OCTOPUS_SPACE }}
+  #         release_number: ${{ env.SERVICE_VERSION }}
+  #         release_notes: "[GitHub commit: ${{
+  #           steps.commit.outputs.sha_short}}](https://github.com/${{
+  #           github.event.repository.full_name }}/commit/${{
+  #           steps.commit.outputs.sha_short}}) / [GitHub branch: ${{
+  #           env.BRANCH_NAME }}](https://github.com/${{
+  #           github.event.repository.full_name }}/compare/${{ env.BRANCH_NAME
+  #           }})"
+
+  #     - name: Install multiplayer-app/cli
+  #       run: npm install -g @multiplayer-app/cli@latest
+
+  #     - name: Create release in multiplayer
+  #       env:
+  #         MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
+  #         COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
+  #         COMMIT_SHA: ${{ github.sha }}
+  #         BRANCH_NAME: ${{ env.BRANCH_NAME }}
+  #         SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+  #         REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
+  #       run: |
+  #         npx lerna run multiplayer:release --scope @multiplayer/multiplayer-web-app

@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+      "multiplayer": {
+        "command": "npx",
+        "args": ["-y", "@multiplayer/mcp"],
+        "env": {
+          "MULTIPLAYER_API_KEY": "<API_KEY>"
+        }
+      }
+    }
+  }
+
+
+
+

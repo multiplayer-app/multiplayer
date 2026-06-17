@@ -1,0 +1,34 @@
+{
+  "name": "@multiplayer/kafka",
+  "description": "Multiplayer kafka lib",
+  "version": "0.0.1",
+  "author": "Multiplayer",
+  "main": "dist/index.js",
+  "contributors": [
+    "Dmytro Shvaika <shvajka@gmail.com>"
+  ],
+  "dependencies": {
+    "@multiplayer/logger": "0.0.1",
+    "@multiplayer/util": "0.0.1",
+    "kafkajs": "2.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "eslint": "10.1.0",
+    "typescript": "6.0.2"
+  },
+  "engines": {
+    "node": ">=18",
+    "npm": ">=8"
+  },
+  "keywords": [
+    "kafka",
+    "library"
+  ],
+  "scripts": {
+    "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+    "build": "tsc --build --force",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags"
+  }
+}

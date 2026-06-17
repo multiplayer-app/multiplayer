@@ -1,0 +1,42 @@
+{
+  "name": "@multiplayer/signup-stats",
+  "version": "0.0.1",
+  "description": "Cronjob for getting signups count",
+  "main": "dist/index.js",
+  "engines": {
+      "node": ">=18",
+      "npm": ">=8"
+  },
+  "scripts": {
+      "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+      "start": "node dist/index.js",
+      "dev": "tsc -w & nodemon --watch dist ./dist/index.js",
+      "build": "npm run clean && npm run compile",
+      "clean": "rm -rf ./dist",
+      "compile": "tsc --build --force",
+      "build:docker": "bash ../../scripts/docker-build.sh",
+      "push:docker": "bash ../../scripts/docker-push.sh",
+      "build:push:docker": "npm run build:docker && npm run push:docker",
+      "octopus:release": "bash ../../scripts/octopus-release.sh",
+      "multiplayer:release": "bash ../../scripts/multiplayer-release.sh"
+  },
+  "author": "Multiplayer",
+  "keywords": [
+      "cronjob",
+      "signup",
+      "stats"
+  ],
+  "dependencies": {
+      "@multiplayer/mongo": "0.0.1",
+      "@multiplayer/models": "0.0.1",
+      "@multiplayer/logger": "0.0.1",
+      "@json2csv/plainjs": "7.0.1",
+      "axios": "1.8.4",
+      "dotenv": "16.3.1",
+      "form-data": "4.0.0"
+  },
+  "devDependencies": {
+      "eslint": "10.1.0",
+      "typescript": "6.0.2"
+  }
+}

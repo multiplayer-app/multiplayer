@@ -1,0 +1,3 @@
+export enum AlertRuleActionType {
+  SEND_SLACK_NOTIFICATION = 'SEND_SLACK_NOTIFICATION',
+}

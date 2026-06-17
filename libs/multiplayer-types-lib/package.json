@@ -1,0 +1,30 @@
+{
+  "name": "@multiplayer/types",
+  "version": "0.0.1",
+  "description": "Multiplayer types library",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18",
+    "npm": ">=8"
+  },
+  "scripts": {
+    "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags",
+    "build": "tsc --build --force"
+  },
+  "author": "Multiplayer",
+  "keywords": [
+    "types",
+    "library"
+  ],
+  "dependencies": {
+    "@opentelemetry/api": "1.9.1",
+    "@multiplayer-app/ai-agent-types": "0.1.0-beta.92",
+    "@multiplayer-app/session-recorder-common": "2.0.85"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "typescript": "6.0.2"
+  }
+}

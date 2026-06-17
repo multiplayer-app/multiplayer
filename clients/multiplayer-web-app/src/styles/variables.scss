@@ -1,0 +1,125 @@
+@use 'sass:map';
+
+$font-family-base: 'Inter', sans-serif;
+$font-family-jb: 'JetBrains Mono', monospace;
+
+$purple: #5e41ff;
+$gray: #f3f3f3;
+$green: #00c889;
+$yellow: #fcd34d;
+$blue: #3c8cec;
+$dark-blue: #0069ff;
+
+$gray50: #f9fafb;
+$gray100: #f3f4f6;
+$gray200: #e5e7eb;
+$gray300: #d2d5da;
+$gray400: #9da3ae;
+$gray500: #808080;
+$gray600: #6c727f;
+$gray700: #394150;
+$gray800: #212936;
+$gray900: #121826;
+
+$blue100: #dbeafe;
+$blue500: #3b82f6;
+$blue900: #2329d6;
+
+$green200: #a7f3d0;
+$green300: #6ee7b7;
+$green500: #00a563;
+
+$blue-light-500: #0ea5e9;
+
+$indigo100: #e0e7ff;
+$indigo200: #c7d2fe;
+$indigo500: #6366f1;
+$indigo600: #4f46e5;
+$indigo800: #3730a3;
+
+$logo-color: $indigo800;
+$body-color: $gray700;
+$heading-color: $gray900;
+$text-muted: $gray400;
+
+$border-primary: $gray200;
+
+$root-sidebar-width: 300px;
+$root-sidebar-bg: $gray100;
+
+$sidebar-link-color: $gray700;
+$sidebar-link-active-bg: $blue100;
+$sidebar-link-active-border: $blue500;
+
+$root-header-height: 86px;
+
+$gutter-xs: 4px;
+$gutter-sm: 8px;
+$gutter-md: 16px;
+$gutter-lg: 24px;
+$gutter-xl: 48px;
+
+$gutters: (
+  0: 0,
+  auto: auto,
+  xs: $gutter-xs,
+  sm: $gutter-sm,
+  md: $gutter-md,
+  lg: $gutter-lg,
+  xl: $gutter-xl,
+);
+
+$primary: $indigo600;
+
+$btn-variants: (
+  primary: (
+    background: $indigo600,
+    color: white,
+  ),
+  light: (
+    background: white,
+    color: #0b0a30,
+  ),
+  warning: (
+    background: $yellow,
+    color: #0b0a30,
+  ),
+  link: (
+    background: transparent,
+    color: inherit,
+  ),
+);
+
+$btn-size-variants: (
+  sm: (
+    height: 32px,
+    font-size: 14px,
+  ),
+  md: (
+    height: 38px,
+    font-size: 14px,
+  ),
+  lg: (
+    height: 48px,
+    font-size: 14px,
+  ),
+);
+
+$border-radius: (
+  sm: 4px,
+  md: 8px,
+  lg: 16px,
+  xl: 32px,
+);
+
+// Dropdown
+$dropdown-menu-bg: white;
+$dropdown-menu-padding: $gutter-xs 0;
+
+$dropdown-item-bg: rgba(0, 0, 0, 0.1);
+$dropdown-item-padding: $gutter-xs $gutter-md;
+
+$auth-page-bg: #f8f8fb;
+$auth-content-bg: white;
+$auth-content-border: 1px solid rgba(0, 0, 0, 0.1);
+$auth-content-border-radius: map.get($border-radius, lg);

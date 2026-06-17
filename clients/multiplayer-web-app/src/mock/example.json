@@ -1,0 +1,209 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "0.0.1",
+    "title": "Multiplayer API service"
+  },
+  "servers": [
+    {
+      "url": "/v0/api"
+    }
+  ],
+  "tags": [
+    {
+      "name": "User",
+      "description": "User"
+    }
+  ],
+  "paths": {
+    "/users/current": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "Get Current user.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current User",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateCurrentUser",
+        "summary": "Update current user.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated User",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "primaryEmail": {
+            "type": "string",
+            "readOnly": true
+          },
+          "primaryEmailSource": {
+            "$ref": "#/components/schemas/UserPrimaryEmailSourceEnum"
+          },
+          "profiles": {
+            "type": "object",
+            "properties": {
+              "gitlab": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "email": {
+                    "type": "string",
+                    "readOnly": true
+                  }
+                }
+              },
+              "github": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "email": {
+                    "type": "string",
+                    "readOnly": true
+                  }
+                }
+              },
+              "google": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "email": {
+                    "type": "string",
+                    "readOnly": true
+                  }
+                }
+              },
+              "local": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "readOnly": true
+                  }
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

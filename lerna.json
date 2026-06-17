@@ -1,0 +1,9 @@
+{
+  "packages": [
+    "services/*",
+    "libs/*",
+    "clients/*",
+    "cronjobs/*"
+  ],
+  "version": "0.0.0"
+}

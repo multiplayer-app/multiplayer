@@ -1,0 +1,5311 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "0.0.1",
+    "title": "Multiplayer API service"
+  },
+  "servers": [
+    {
+      "url": "/v0/api"
+    }
+  ],
+  "tags": [
+    {
+      "name": "User",
+      "description": "User"
+    },
+    {
+      "name": "Health",
+      "description": "Health"
+    },
+    {
+      "name": "Healthz",
+      "description": "Healthz"
+    },
+    {
+      "name": "Team",
+      "description": "Team"
+    },
+    {
+      "name": "Project",
+      "description": "Project"
+    },
+    {
+      "name": "Workspace",
+      "description": "Workspace"
+    },
+    {
+      "name": "Workspace-Member",
+      "description": "Workspace-Member"
+    },
+    {
+      "name": "Marketing",
+      "description": "Marketing"
+    },
+    {
+      "name": "Thread",
+      "description": "Thread"
+    },
+    {
+      "name": "Comment",
+      "description": "Comment"
+    },
+    {
+      "name": "Token",
+      "description": "Token"
+    },
+    {
+      "name": "Tag",
+      "description": "Tag"
+    },
+    {
+      "name": "Google-Workspace",
+      "description": "Google-Workspace"
+    },
+    {
+      "name": "Role",
+      "description": "Role"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Get health.",
+        "description": "Get health.",
+        "tags": [
+          "Health"
+        ],
+        "operationId": "geHealth",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Get healthz.",
+        "description": "Get healthz.",
+        "tags": [
+          "Healthz"
+        ],
+        "operationId": "geHealthz",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Healthz.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Healthz"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "listUsers",
+        "summary": "List Users.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/current": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "Get Current user.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current User",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateCurrentUser",
+        "summary": "Update current user.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated User",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/current/icon": {
+      "patch": {
+        "operationId": "updateCurrentUserIcon",
+        "summary": "Update current user icon.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated current user picture.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentUrl"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/current/workspace-settings/{workspaceId}": {
+      "get": {
+        "operationId": "getWorkspaceUser",
+        "summary": "Get workspace user.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace User",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceUser"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateWorkspaceUser",
+        "summary": "Update workspace user.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceUserUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated User",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceUser"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/current/workspace-settings/{workspaceId}/icon": {
+      "patch": {
+        "operationId": "updateWorkspaceUserIcon",
+        "summary": "Update workspace user icon.",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated workspace user icon.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentUrl"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces": {
+      "get": {
+        "operationId": "listWorkspaces",
+        "summary": "List Workspaces.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "type": "boolean",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of Workspaces.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspacesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWorkspace",
+        "summary": "Create Workspace.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCreatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Created Workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}": {
+      "get": {
+        "operationId": "getWorkspace",
+        "summary": "Get Workspace.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateWorkspace",
+        "summary": "Update Workspace.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWorkspace",
+        "summary": "Delete Workspace.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace deleted"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/icon": {
+      "patch": {
+        "operationId": "updateWorkspaceIcon",
+        "summary": "Update workspace icon.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated workspace icon.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentUrl"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/users": {
+      "get": {
+        "operationId": "getWorkspaceUsers",
+        "summary": "Get workspace users.",
+        "tags": [
+          "Workspace-Member"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMembersWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "inviteUserToWorkspace",
+        "summary": "Invite user to workspace.",
+        "tags": [
+          "Workspace-Member"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddWorkspaceMembersPayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Added users to workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMembers"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/users/{workspaceMemberId}": {
+      "patch": {
+        "operationId": "updateWorkspaceUser",
+        "summary": "Update workspace user.",
+        "tags": [
+          "Workspace-Member"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "workspaceMemberId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace member id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceMemberPayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Workspace user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceUser"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWorkspaceUser",
+        "summary": "Remove user from workspace.",
+        "tags": [
+          "Workspace-Member"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "workspaceMemberId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace member id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "204": {
+            "description": "User removed from workspace."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/users/{workspaceMemberId}/invitation/resend": {
+      "post": {
+        "operationId": "resendWorkspaceInvitation",
+        "summary": "Resend workspace invitation.",
+        "tags": [
+          "Workspace-Member"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "workspaceUserId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace user id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "204": {
+            "description": "Invitation sent."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/domains": {
+      "post": {
+        "operationId": "addDomainToWorkspace",
+        "summary": "Add domain to workspace.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddWorkspaceDomainPayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "204": {
+            "description": "Email with confirmation code sent. Check email."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/domains/confirm": {
+      "post": {
+        "operationId": "confirmWorkspaceDomain",
+        "summary": "Confirm workspace domain.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmWorkspaceDomainPayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "204": {
+            "description": "Domain added to workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/domains/{workspaceDomainId}": {
+      "delete": {
+        "operationId": "removeDomainFromWorkspace",
+        "summary": "Remove domain from workspace.",
+        "tags": [
+          "Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "workspaceDomainId",
+            "in": "path",
+            "type": "string",
+            "description": "Domain.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "204": {
+            "description": "Domain removed."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/teams": {
+      "get": {
+        "operationId": "listTeams",
+        "summary": "List Teams.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "type": "boolean",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of Teams.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamsWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTeam",
+        "summary": "Create Team.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamCreatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Created Team.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Team"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/teams/{teamId}": {
+      "get": {
+        "operationId": "getTeam",
+        "summary": "Get Team.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Team",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Team"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateTeam",
+        "summary": "Update Team.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Team",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Team"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTeam",
+        "summary": "Delete Team.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team deleted"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/teams/{teamId}/icon": {
+      "patch": {
+        "operationId": "updateTeamIcon",
+        "summary": "Update team icon.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated team icon.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentUrl"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/teams/{teamId}/users": {
+      "get": {
+        "operationId": "listTeamUsers",
+        "summary": "List team users.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Team users.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMembersWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/teams/{teamId}/users/{teamUserId}": {
+      "patch": {
+        "operationId": "updateTeamMember",
+        "summary": "Update team member.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamUserId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team user id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTeamMemberPayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated team member.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMember"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTeamUser",
+        "summary": "Remove user from team.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamUserId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team user id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "204": {
+            "description": "User removed from team."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/teams/{teamId}/projects": {
+      "get": {
+        "operationId": "getTeamProjects",
+        "summary": "Get team projects.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Team projects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectsWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addProjectToTeam",
+        "summary": "Add project to team.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddProjectToTeamPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Team projects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "removeProjectFromTeam",
+        "summary": "Remove project from team.",
+        "tags": [
+          "Team"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Team id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveProjectFromTeamPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Project removed."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "summary": "List Projects.",
+        "tags": [
+          "Project"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "type": "boolean",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectsWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createProject",
+        "summary": "Create Project.",
+        "tags": [
+          "Project"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Created Project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}": {
+      "get": {
+        "operationId": "getProject",
+        "summary": "Get Project.",
+        "tags": [
+          "Project"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateProject",
+        "summary": "Update Project.",
+        "tags": [
+          "Project"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteProject",
+        "summary": "Delete Project.",
+        "tags": [
+          "Project"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Project deleted"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/icon": {
+      "patch": {
+        "operationId": "updateProjectIcon",
+        "summary": "Update project icon.",
+        "tags": [
+          "Project"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated project icon.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentUrl"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/cover-image": {
+      "patch": {
+        "operationId": "updateProjectCoverImage",
+        "summary": "Update project cover image.",
+        "tags": [
+          "Project"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated project cover image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentUrl"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/threads": {
+      "get": {
+        "operationId": "listThreads",
+        "summary": "List Threads.",
+        "tags": [
+          "Thread"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "branchId",
+            "in": "query",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Branch id - hex.",
+            "required": false
+          },
+          {
+            "name": "entityId",
+            "in": "query",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Entity id - hex.",
+            "required": false
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": {
+              "$ref": "#/components/schemas/ThreadStatus"
+            },
+            "description": "Thread Status",
+            "required": false
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "type": {
+              "$ref": "#/components/schemas/SortOrder"
+            },
+            "description": "Sort order",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Threads",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadsWithCursorAndComments"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createThread",
+        "summary": "Create Thread.",
+        "tags": [
+          "Thread"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThreadCreatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Created Thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadWithComments"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/threads/{threadId}": {
+      "get": {
+        "operationId": "getThread",
+        "summary": "Get Thread.",
+        "tags": [
+          "Thread"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Thread id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thread",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateThread",
+        "summary": "Update Thread.",
+        "tags": [
+          "Thread"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Thread id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThreadUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Thread",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteThread",
+        "summary": "Delete Thread.",
+        "tags": [
+          "Thread"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Thread id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Thread deleted"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/comments": {
+      "get": {
+        "operationId": "listComments",
+        "summary": "List Comments.",
+        "tags": [
+          "Comment"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "threadId",
+            "in": "query",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Thread id - hex.",
+            "required": false
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "type": {
+              "$ref": "#/components/schemas/SortOrder"
+            },
+            "description": "Sort order",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentsWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createComment",
+        "summary": "Create Comment.",
+        "tags": [
+          "Comment"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentCreatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Created Comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/comments/{commentId}": {
+      "get": {
+        "operationId": "getComment",
+        "summary": "Get Comment.",
+        "tags": [
+          "Comment"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Comment id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateComment",
+        "summary": "Update Comment.",
+        "tags": [
+          "Comment"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Comment id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteComment",
+        "summary": "Delete Comment.",
+        "tags": [
+          "Comment"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Comment id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Comment deleted"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tokens/apply": {
+      "post": {
+        "operationId": "applyToken",
+        "summary": "Apply token.",
+        "tags": [
+          "Token"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyTokenPayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Token applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workspace": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tokens/{token}": {
+      "get": {
+        "operationId": "getToken",
+        "summary": "Get token.",
+        "tags": [
+          "Token"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "type": "string",
+            "description": "Token.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/tags": {
+      "get": {
+        "operationId": "listTags",
+        "summary": "List Tags.",
+        "tags": [
+          "Tag"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "type": "boolean",
+            "required": false
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTag",
+        "summary": "Create Tag.",
+        "tags": [
+          "Tag"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagCreatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Created Tag.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/tags/{tagId}": {
+      "get": {
+        "operationId": "getTag",
+        "summary": "Get Tag.",
+        "tags": [
+          "Tag"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "tagId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Tag id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateTag",
+        "summary": "Update Tag.",
+        "tags": [
+          "Tag"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "tagId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Tag id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagUpdatePayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteComment",
+        "summary": "Delete Comment.",
+        "tags": [
+          "Tag"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "tagId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Tag id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tag deleted"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/marketing/contacts": {
+      "post": {
+        "operationId": "addMarketingContact",
+        "summary": "Add marketing contact.",
+        "tags": [
+          "Marketing"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMarketingContactPayload"
+              }
+            }
+          }
+        },
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "204": {
+            "description": "Contact successfully added."
+          },
+          "205": {
+            "description": "User already subscribed."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/google-workspace/auth": {
+      "get": {
+        "operationId": "authGoogleWorkspace",
+        "summary": "Authenticate google workspace.",
+        "tags": [
+          "Google-Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "name": "workspace",
+            "in": "query",
+            "type": "string",
+            "description": "Workspace id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to google"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/google-workspace/callback": {
+      "get": {
+        "operationId": "googleWorkspaceCallback",
+        "summary": "Google oauth workspace callback.",
+        "tags": [
+          "Google-Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully authenticated.",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "example": "Multiplayer_SID=abcde12345; Path=/; HttpOnly"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/google-workspace/users": {
+      "get": {
+        "operationId": "listGoogleWorkspaceUsers",
+        "summary": "List Google workspace users.",
+        "tags": [
+          "Google-Workspace"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "query",
+            "type": "string",
+            "description": "Workspace id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Google workspace users.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleWorkspaceUsers"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles": {
+      "get": {
+        "operationId": "listRoles",
+        "summary": "List roles.",
+        "tags": [
+          "Role"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          },
+          {
+            "name": "hidden",
+            "in": "query",
+            "type": "boolean",
+            "required": false
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RoleTypeEnum"
+            },
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Roles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/{roleId}": {
+      "get": {
+        "operationId": "getRole",
+        "summary": "Get role.",
+        "tags": [
+          "Role"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "roleId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Role id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Role.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "Multiplayer_SID"
+      }
+    },
+    "schemas": {
+      "SortOrder": {
+        "type": "string",
+        "enum": [
+          "ASC",
+          "DESC"
+        ]
+      },
+      "RoleTypeEnum": {
+        "type": "string",
+        "enum": [
+          "WORKSPACE",
+          "TEAM"
+        ]
+      },
+      "AccessActionEnum": {
+        "type": "string",
+        "enum": [
+          "create",
+          "update"
+        ]
+      },
+      "WorkspacePermissionsEnum": {
+        "type": "string",
+        "enum": [
+          "project:create",
+          "project:update",
+          "project:read",
+          "project:delete",
+          "team:create",
+          "team:update",
+          "team:read",
+          "team:delete",
+          "integration:create",
+          "integration:update",
+          "integration:read",
+          "integration:delete",
+          "workspaceMember:create",
+          "workspaceMember:update",
+          "workspaceMember:read",
+          "workspaceMember:delete",
+          "teamMember:update",
+          "teamMember:read",
+          "teamMember:delete",
+          "tag:create",
+          "tag:update",
+          "tag:read",
+          "tag:delete",
+          "workspace:create",
+          "workspace:update",
+          "workspace:read",
+          "workspace:delete",
+          "gitRepository:read",
+          "gitRepositoryBranch:create",
+          "gitRepositoryBranch:update",
+          "gitRepositoryBranch:read",
+          "gitRepositoryBranch:delete",
+          "gitRepositoryCommit:create",
+          "gitRepositoryCommit:update",
+          "gitRepositoryCommit:read",
+          "gitRepositoryCommit:delete",
+          "gitRepositoryFile:create",
+          "gitRepositoryFile:update",
+          "gitRepositoryFile:read",
+          "gitRepositoryFile:delete"
+        ]
+      },
+      "TeamPermissionsEnum": {
+        "type": "string",
+        "enum": [
+          "comment:create",
+          "comment:update",
+          "comment:read",
+          "comment:delete",
+          "thread:create",
+          "thread:update",
+          "thread:read",
+          "thread:delete",
+          "gitRepositoryInternal:create",
+          "gitRepositoryInternal:update",
+          "gitRepositoryInternal:read",
+          "gitRepositoryInternal:delete",
+          "gitRepositoryInternalBranch:create",
+          "gitRepositoryInternalBranch:update",
+          "gitRepositoryInternalBranch:read",
+          "gitRepositoryInternalBranch:delete",
+          "gitRepositoryInternalCommit:create",
+          "gitRepositoryInternalCommit:update",
+          "gitRepositoryInternalCommit:read",
+          "gitRepositoryInternalCommit:delete",
+          "gitRepositoryInternalFile:create",
+          "gitRepositoryInternalFile:update",
+          "gitRepositoryInternalFile:read",
+          "gitRepositoryInternalFile:delete",
+          "commit:create",
+          "commit:read",
+          "commit:update",
+          "commit:delete",
+          "entityCommit:create",
+          "entityCommit:read",
+          "entityCommit:delete",
+          "entityCommit:update",
+          "entity:create",
+          "entity:update",
+          "entity:read",
+          "entity:delete",
+          "projectBranchReview:create",
+          "projectBranchReview:update",
+          "projectBranchReview:read",
+          "projectBranchReview:delete",
+          "projectBranch:create",
+          "projectBranch:update",
+          "projectBranch:read",
+          "projectBranch:delete",
+          "projectLink:create",
+          "projectLink:update",
+          "projectLink:read",
+          "projectLink:delete",
+          "projectTag:create",
+          "projectTag:update",
+          "projectTag:read",
+          "projectTag:delete"
+        ]
+      },
+      "FileStatusEnum": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "DONE",
+          "ERROR"
+        ]
+      },
+      "TokenTypeEnum": {
+        "type": "string",
+        "enum": [
+          "RESET_PASSWORD",
+          "CONFIRM_EMAIL",
+          "VERIFY_DOMAIN",
+          "USER_INVITE",
+          "USER_WORKSPACE_INVITATION"
+        ]
+      },
+      "UserPrimaryEmailSourceEnum": {
+        "type": "string",
+        "enum": [
+          "GITLAB",
+          "GITHUB",
+          "GOOGLE",
+          "LOCAL"
+        ]
+      },
+      "WorkspaceUserStatusEnum": {
+        "type": "string",
+        "enum": [
+          "ACTIVE",
+          "PENDING"
+        ]
+      },
+      "ThreadStatus": {
+        "type": "string",
+        "enum": [
+          "RESOLVED",
+          "ARCHIVED",
+          "ACTIVE"
+        ]
+      },
+      "Cursor": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "skip": {
+            "type": "integer",
+            "min": 0
+          },
+          "limit": {
+            "type": "integer",
+            "min": 1
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "messageQueue": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "mongodb": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        }
+      },
+      "Healthz": {
+        "type": "string"
+      },
+      "Thread": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "project": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "branch": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "entity": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ThreadStatus"
+          },
+          "commentablePath": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "position": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "usersInDiscussion": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "initiator": {
+            "type": "string"
+          },
+          "firstComment": {
+            "type": "string"
+          },
+          "totalComments": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "lastActivityAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "ThreadWithComments": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Thread"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "firstComment": {
+                "$ref": "#/components/schemas/Comment"
+              }
+            }
+          }
+        ]
+      },
+      "ThreadsWithComments": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ThreadWithComments"
+        }
+      },
+      "ThreadsWithCursorAndComments": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ThreadsWithComments"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "ThreadCreatePayload": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entity": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "commentablePath": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "position": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      },
+      "ThreadUpdatePayload": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ThreadStatus"
+          },
+          "commentablePath": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "position": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "hex",
+            "readOnly": true
+          },
+          "project": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "thread": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "workspaceUser": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "content": {
+            "type": "string",
+            "readOnly": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "Comments": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Comment"
+        }
+      },
+      "CommentsWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Comments"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "CommentCreatePayload": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Thread id - hex.",
+            "required": true
+          }
+        }
+      },
+      "CommentUpdatePayload": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          }
+        }
+      },
+      "ApplyTokenPayload": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "Teams": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Team"
+        }
+      },
+      "TeamsWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Teams"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "Team": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "projects": {
+            "type": "array",
+            "description": "Array of project ids",
+            "items": {
+              "type": "object",
+              "properties": {
+                "_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "TeamCreatePayload": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "TeamUpdatePayload": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AddProjectToTeamPayload": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "RemoveProjectFromTeamPayload": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "TeamMembersWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TeamMembers"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "TeamMembers": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TeamMember"
+        }
+      },
+      "TeamMember": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "workspaceUser": {
+            "$ref": "#/components/schemas/WorkspaceUser"
+          },
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateTeamMemberPayload": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AttachmentUrl": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "ProjectsWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Projects"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "Projects": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Project"
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "iconUrl": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "ProjectCreatePayload": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "ProjectUpdatePayload": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Workspaces": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Workspace"
+        }
+      },
+      "WorkspacesWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Workspaces"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "Workspace": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "iconUrl": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceDomain"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "WorkspaceDomain": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "WorkspaceCreatePayload": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspaceUpdatePayload": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspaceMembersWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/WorkspaceMembers"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "WorkspaceMembers": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/WorkspaceMember"
+        }
+      },
+      "WorkspaceMember": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "workspaceUser": {
+            "$ref": "#/components/schemas/WorkspaceUser"
+          },
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AddWorkspaceMembersPayload": {
+        "type": "object",
+        "properties": {
+          "emails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teamRole": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateWorkspaceMemberPayload": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AddWorkspaceDomainPayload": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ConfirmWorkspaceDomainPayload": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "UsersWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Users"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "Users": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/User"
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "primaryEmail": {
+            "type": "string",
+            "readOnly": true
+          },
+          "primaryEmailSource": {
+            "$ref": "#/components/schemas/UserPrimaryEmailSourceEnum"
+          },
+          "profiles": {
+            "type": "object",
+            "properties": {
+              "gitlab": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "email": {
+                    "type": "string",
+                    "readOnly": true
+                  }
+                }
+              },
+              "github": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "email": {
+                    "type": "string",
+                    "readOnly": true
+                  }
+                }
+              },
+              "google": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "readOnly": true
+                  },
+                  "email": {
+                    "type": "string",
+                    "readOnly": true
+                  }
+                }
+              },
+              "local": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "readOnly": true
+                  }
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "UserUpdatePayload": {
+        "type": "object",
+        "properties": {}
+      },
+      "WorkspaceUsersWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/WorkspaceUsers"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "WorkspaceUsers": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/WorkspaceUser"
+        }
+      },
+      "WorkspaceUser": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex color",
+            "example": "#ECA96F"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WorkspaceUserStatusEnum"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "WorkspaceUserUpdatePayload": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex color",
+            "example": "#ECA96F"
+          },
+          "timezone": {
+            "type": "string"
+          }
+        }
+      },
+      "TagsWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "Tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Tag"
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "workspace": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "TagCreatePayload": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "TagUpdatePayload": {
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AddMarketingContactPayload": {
+        "type": "object",
+        "required": [
+          "email",
+          "message"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "GoogleWorkspaceUsers": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/GoogleWorkspaceUser"
+        }
+      },
+      "GoogleWorkspaceUser": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "Token": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TokenTypeEnum"
+          },
+          "workspace": {
+            "type": "object",
+            "properties": {
+              "_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "inviter": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "RolesWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Roles"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "Roles": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Role"
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "default": {
+            "type": "boolean"
+          },
+          "type": {
+            "$ref": "#/components/schemas/RoleTypeEnum"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/WorkspacePermissionsEnum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TeamPermissionsEnum"
+                    }
+                  ]
+                },
+                "access": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AccessActionEnum"
+                  }
+                }
+              }
+            }
+          },
+          "workspaceAdmin": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

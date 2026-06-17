@@ -1,0 +1,6 @@
+export enum RoleType {
+  ACCOUNT = 'ACCOUNT',
+  WORKSPACE = 'WORKSPACE',
+  PROJECT = 'PROJECT',
+  PUBLIC_SHARE = 'PUBLIC_SHARE',
+}

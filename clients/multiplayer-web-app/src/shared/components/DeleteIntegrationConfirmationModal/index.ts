@@ -1,0 +1,3 @@
+import DeleteIntegrationConfirmationModal from "./DeleteIntegrationConfirmationModal";
+
+export default DeleteIntegrationConfirmationModal;

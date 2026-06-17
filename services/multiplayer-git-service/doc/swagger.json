@@ -1,0 +1,4806 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "0.0.1",
+    "title": "Multiplayer GIT service"
+  },
+  "servers": [
+    {
+      "url": "/v0/git"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health"
+    },
+    {
+      "name": "Healthz",
+      "description": "Healthz"
+    },
+    {
+      "name": "Integration",
+      "description": "Integration"
+    },
+    {
+      "name": "Repository",
+      "description": "Repository"
+    },
+    {
+      "name": "File",
+      "description": "File"
+    },
+    {
+      "name": "Tree",
+      "description": "Tree"
+    },
+    {
+      "name": "Branch",
+      "description": "Branch"
+    },
+    {
+      "name": "Commit",
+      "description": "Commit"
+    },
+    {
+      "name": "Tag",
+      "description": "Tag"
+    },
+    {
+      "name": "Git-Repository",
+      "description": "Git Repository"
+    },
+    {
+      "name": "Git-Repository-Branch",
+      "description": "Git Repository Branch"
+    },
+    {
+      "name": "Git-Repository-File",
+      "description": "Git Repository File"
+    },
+    {
+      "name": "Git-Repository-Tree",
+      "description": "Git Repository Tree"
+    },
+    {
+      "name": "Git-Repository-Tag",
+      "description": "Git Repository Tag"
+    },
+    {
+      "name": "Git-Repository-Commit",
+      "description": "Git Repository Commit"
+    },
+    {
+      "name": "Git-Public-Repository",
+      "description": "Git Public Repository"
+    },
+    {
+      "name": "Git-Public-Repository-Branch",
+      "description": "Git Public Repository Branch"
+    },
+    {
+      "name": "Git-Public-Repository-File",
+      "description": "Git Public Repository File"
+    },
+    {
+      "name": "Git-Public-Repository-Tree",
+      "description": "Git Public Repository Tree"
+    },
+    {
+      "name": "Webhook",
+      "description": "Webhook"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Get health.",
+        "description": "Get health.",
+        "tags": [
+          "Health"
+        ],
+        "operationId": "geHealth",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Get healthz.",
+        "description": "Get healthz.",
+        "tags": [
+          "Healthz"
+        ],
+        "operationId": "geHealthz",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Healthz"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/bitbucket/auth": {
+      "get": {
+        "operationId": "createBitbucketIntegration",
+        "summary": "Create BitBucket integration.",
+        "tags": [
+          "Integration"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": true,
+            "description": "Workspace id."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to BitBucket."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/bitbucket/callback": {
+      "get": {
+        "operationId": "createBitbucketCallback",
+        "summary": "Create BitBucket integrarion callback.",
+        "tags": [
+          "Integration"
+        ],
+        "responses": {
+          "200": {
+            "description": "BitBucket integration added."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/github/auth": {
+      "get": {
+        "operationId": "createGithubIntegration",
+        "summary": "(deprecated) Create GitHub integration.",
+        "tags": [
+          "Integration"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": true,
+            "description": "Workspace id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Redirect to GitHub"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/github/callback": {
+      "get": {
+        "operationId": "createGithubIntegrationCallback",
+        "summary": "(deprecated) Create GitHub integration oauth callback.",
+        "tags": [
+          "Integration"
+        ],
+        "responses": {
+          "200": {
+            "description": "Created GitHub integration."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/github-app/install": {
+      "get": {
+        "operationId": "createGithubAppIntegration",
+        "summary": "Create GitHub App integration.",
+        "tags": [
+          "Integration"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": true,
+            "description": "Workspace id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Redirect to GitHub"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/gitlab/auth": {
+      "get": {
+        "operationId": "createGitlabIntegration",
+        "summary": "Create GitLab integration.",
+        "tags": [
+          "Integration"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": true,
+            "description": "Workspace id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Redirect to GitLab"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/gitlab/callback": {
+      "get": {
+        "operationId": "createGitlabIntegrationCallback",
+        "summary": "Create GitLab integration oauth callback.",
+        "tags": [
+          "Integration"
+        ],
+        "responses": {
+          "200": {
+            "description": "Created GitLab integration."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/atlassian/auth": {
+      "get": {
+        "operationId": "createAtlassianIntegration",
+        "summary": "Create Atlassian integration.",
+        "tags": [
+          "Integration"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": true,
+            "description": "Workspace id."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to Atlassian."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/atlassian/callback": {
+      "get": {
+        "operationId": "createAtlassianCallback",
+        "summary": "Create Atlassian integrarion callback.",
+        "tags": [
+          "Integration"
+        ],
+        "responses": {
+          "200": {
+            "description": "Atlassian integration added."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/linear/auth": {
+      "get": {
+        "operationId": "createLinearIntegration",
+        "summary": "Create Linear integration.",
+        "tags": [
+          "Integration"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": true,
+            "description": "Workspace id."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to Atlassian."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/linear/callback": {
+      "get": {
+        "operationId": "createLinearCallback",
+        "summary": "Create Linear integrarion callback.",
+        "tags": [
+          "Integration"
+        ],
+        "responses": {
+          "200": {
+            "description": "Linear integration added."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/slack/auth": {
+      "get": {
+        "operationId": "createSlackIntegration",
+        "summary": "Create Slack integration.",
+        "tags": [
+          "Integration"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": true,
+            "description": "Workspace id."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to Slack."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/slack/callback": {
+      "get": {
+        "operationId": "createSlackIntegrationCallback",
+        "summary": "Create Slack integrarion callback.",
+        "tags": [
+          "Integration"
+        ],
+        "responses": {
+          "200": {
+            "description": "Slack integration added."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/slack/event": {
+      "get": {
+        "operationId": "slackEventsWebhook",
+        "summary": "Slack events webhook.",
+        "tags": [
+          "Integration"
+        ],
+        "responses": {
+          "200": {
+            "description": "Slack webhook processed."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations": {
+      "get": {
+        "operationId": "listIntegrations",
+        "summary": "List Integrations.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "type": "string",
+            "schema": {
+              "$ref": "#/components/schemas/IntegrationTypeEnum"
+            },
+            "required": false
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Filter by project id - hex.",
+            "required": false
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Integrations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationsWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createIntegration",
+        "summary": "Create Integration.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationCreatePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Integration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Integration"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}": {
+      "get": {
+        "operationId": "getIntegration",
+        "summary": "Get Integration.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Integration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Integration"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateIntegration",
+        "summary": "Update Integration.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationUpdatePayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Integration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Integration"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteIntegration",
+        "summary": "Delete Integration.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Integration deleted"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/otel/rotate-key": {
+      "patch": {
+        "operationId": "rotateOtelIntegrationKey",
+        "summary": "Rotate otel integration key.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Integration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Integration"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/otel/status": {
+      "patch": {
+        "operationId": "getOtelIntegrationStatus",
+        "summary": "Get OTEL integration status.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OTEL Integration status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtelIntegrationStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/git/resync": {
+      "post": {
+        "operationId": "resyncIntegration",
+        "summary": "Resync Integration. Updated git repo name and other info.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Integration repos resynced."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/linear": {
+      "patch": {
+        "operationId": "updateLinearIntegration",
+        "summary": "Update Linear Integration.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIntegrationLinearPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Linear Integration updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Integration"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/linear/statuses": {
+      "get": {
+        "operationId": "getLinearIntegrationTicketStatuses",
+        "summary": "Get Linear Integration ticket statuses.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Linear Integration statuses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinearIntegrationStatuses"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/atlassian": {
+      "patch": {
+        "operationId": "updateAtlassianIntegration",
+        "summary": "Update Atlassian Integration.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIntegrationAtlassianPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Atlassian Integration updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Integration"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/atlassian/orgs": {
+      "get": {
+        "operationId": "getAtlassianIntegrationOrgs",
+        "summary": "Get Atlassian Integration orgs.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Atlassian Integration orgs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtlassianIntegrationOrgs"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/atlassian/statuses": {
+      "get": {
+        "operationId": "getAtlassianIntegrationTicketStatuses",
+        "summary": "Get Atlassian Integration ticket statuses.",
+        "tags": [
+          "Integration"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          },
+          {
+            "name": "orgId",
+            "in": "query",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Atlassian Integration statuses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtlassianIntegrationStatuses"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/repositories": {
+      "get": {
+        "operationId": "getRepositoriesInIntegration",
+        "summary": "Get repositories in integration.",
+        "tags": [
+          "Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id - hex.",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "30",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Repositories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepositoriesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/repositories/{repositoryId}/tree/{path}": {
+      "get": {
+        "operationId": "getTree",
+        "summary": "Get tree.",
+        "tags": [
+          "Tree"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id.",
+            "required": true
+          },
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Repository id",
+            "required": true
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "type": "string",
+            "description": "File path. Should be uri encoded.",
+            "required": true
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "type": "string",
+            "description": "Branch id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/repositories/{repositoryId}/files/{path}/contents": {
+      "get": {
+        "operationId": "getRepositoryFileContents",
+        "summary": "Get files in repository.",
+        "tags": [
+          "File"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id.",
+            "required": true
+          },
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Repository id",
+            "required": true
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "type": "string",
+            "description": "File path. Should be uri encoded.",
+            "required": true
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "type": "string",
+            "description": "Branch id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File from repo. Raw."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/repositories/{repositoryId}/branches": {
+      "get": {
+        "operationId": "getBranches",
+        "summary": "Get branches.",
+        "tags": [
+          "Branch"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id.",
+            "required": true
+          },
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Repository id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createBranch",
+        "summary": "Create branch.",
+        "tags": [
+          "Branch"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id.",
+            "required": true
+          },
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Repository id",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Git branch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Branch"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/git/pull-request": {
+      "post": {
+        "operationId": "createPullRequest",
+        "summary": "Create pull request.",
+        "tags": [
+          "Pull Request"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePullRequestPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PR url.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PullRequestUrl"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/repositories/{repositoryId}/tags": {
+      "get": {
+        "operationId": "listTags",
+        "summary": "List tags.",
+        "tags": [
+          "Tag"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id.",
+            "required": true
+          },
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Repository id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tags.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/integrations/{integrationId}/repositories/{repositoryId}/branches/{branchId}/commit": {
+      "post": {
+        "operationId": "createRepositoryCommit",
+        "summary": "Create repository commit.",
+        "tags": [
+          "Commit"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Integration id.",
+            "required": true
+          },
+          {
+            "name": "repositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Repository id",
+            "required": true
+          },
+          {
+            "name": "branchId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Branch id",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommitPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Git branch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Commit"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/{gitRepositoryId}/git/tree/{path}": {
+      "get": {
+        "operationId": "getGitRepositoryTree",
+        "summary": "Get tree.",
+        "tags": [
+          "Git-Repository-Tree"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git RepositoryId id.",
+            "required": true
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "type": "string",
+            "description": "File path. Should be uri encoded.",
+            "required": true
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "type": "string",
+            "description": "Branch id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/git/{gitId}/tree/{path}": {
+      "get": {
+        "operationId": "getGitRepositoryTreeByGitId",
+        "summary": "Get tree by git id.",
+        "tags": [
+          "Git-Repository-Tree"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git id.",
+            "required": true
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "type": "string",
+            "description": "File path. Should be uri encoded.",
+            "required": true
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "type": "string",
+            "description": "Branch id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/{gitRepositoryId}/git/files/{path}/contents": {
+      "get": {
+        "operationId": "getGitRepositoryFileContents",
+        "summary": "Get files in repository.",
+        "tags": [
+          "Git-Repository-File"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id.",
+            "required": true
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "type": "string",
+            "description": "File path. Should be uri encoded.",
+            "required": true
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "type": "string",
+            "description": "Branch id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File from repo. Raw."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/git/{gitId}/files/{path}/contents": {
+      "get": {
+        "operationId": "getGitRepositoryFileContentsByGitId",
+        "summary": "Get git file content by git id.",
+        "tags": [
+          "Git-Repository-File"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id.",
+            "required": true
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "type": "string",
+            "description": "File path. Should be uri encoded.",
+            "required": true
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "type": "string",
+            "description": "Branch id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File from repo. Raw."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/{gitRepositoryId}/git/branches": {
+      "get": {
+        "operationId": "getGitRepoBranches",
+        "summary": "Get branches for git repo from git.",
+        "tags": [
+          "Git-Repository-Branch"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createGitRepoBranch",
+        "summary": "Create git repo branch in git.",
+        "tags": [
+          "Git-Repository-Branch"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Git branch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Branch"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/{gitRepositoryId}/git/branches/{branchId}/commit": {
+      "post": {
+        "operationId": "createGitRepositoryCommit",
+        "summary": "Create git-repository commit.",
+        "tags": [
+          "Git-Repository-Commit"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id",
+            "required": true
+          },
+          {
+            "name": "branchId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Branch id",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommitPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Git branch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Commit"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/git/{gitId}/branches/{branchId}/commit": {
+      "post": {
+        "operationId": "createGitRepositoryCommitByGitId",
+        "summary": "Create git-repository commit by git id.",
+        "tags": [
+          "Git-Repository-Commit"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git id",
+            "required": true
+          },
+          {
+            "name": "branchId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Branch id",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommitPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Git branch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Commit"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/{gitRepositoryId}/git/tags": {
+      "get": {
+        "operationId": "getGitRepoTags",
+        "summary": "Get tags for git repo from git.",
+        "tags": [
+          "Git-Repository-Tag"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/git-repositories": {
+      "get": {
+        "operationId": "listGitRepositories in workspace",
+        "summary": "List git repositories in workspace.",
+        "tags": [
+          "Git-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryType",
+            "in": "query",
+            "type": "string",
+            "schema": {
+              "$ref": "#/components/schemas/IntegrationTypeEnum"
+            },
+            "required": false
+          },
+          {
+            "name": "integration",
+            "in": "query",
+            "type": "string",
+            "format": "uuid",
+            "description": "Integration id.",
+            "required": false
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "type": "boolean",
+            "required": false
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Git repositories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRepositoriesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories": {
+      "get": {
+        "operationId": "listGitRepositories in project",
+        "summary": "List git repositories in project.",
+        "tags": [
+          "Git-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryType",
+            "in": "query",
+            "type": "string",
+            "schema": {
+              "$ref": "#/components/schemas/IntegrationTypeEnum"
+            },
+            "required": false
+          },
+          {
+            "name": "integration",
+            "in": "query",
+            "type": "string",
+            "format": "uuid",
+            "description": "Integration id.",
+            "required": false
+          },
+          {
+            "name": "gitRepositoryName",
+            "in": "query",
+            "type": "string",
+            "description": "Git repo name.",
+            "required": false
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "type": "boolean",
+            "required": false
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "type": "integer",
+            "min": 0,
+            "description": "documents to skip. Default 0",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "min": 1,
+            "type": "integer",
+            "description": "limit. Default 30.",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Git repositories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRepositoriesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createGitRepository",
+        "summary": "Create git repository.",
+        "tags": [
+          "Git-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGitRepositoryPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Repository.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRepository"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/git-repositories/bulk": {
+      "patch": {
+        "operationId": "bulkhUpdateGitRepository",
+        "summary": "Bulk update git repository.",
+        "tags": [
+          "Git-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUpdateGitRepositoryPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Git Repositories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRepositories"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/{gitRepositoryId}": {
+      "get": {
+        "operationId": "getGitRepository",
+        "summary": "Get git repository.",
+        "tags": [
+          "Git-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Git repository.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRepository"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateGitRepository",
+        "summary": "Update git repository.",
+        "tags": [
+          "Git-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGitRepositoryPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Git repository.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRepository"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteGitRepository",
+        "summary": "Delete git repository and connected data (project-links, tags)",
+        "tags": [
+          "Git-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id.",
+            "required": true
+          },
+          {
+            "name": "integrationId",
+            "in": "query",
+            "description": "Parent integration id - hex.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Git repository deleted."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/projects/{projectId}/git-repositories/git/{gitId}": {
+      "get": {
+        "operationId": "getGitRepositoryByGitId",
+        "summary": "Get git repository by git id.",
+        "tags": [
+          "Git-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Workspace id - hex.",
+            "required": true
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Project id - hex.",
+            "required": true
+          },
+          {
+            "name": "gitId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Git repository.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRepository"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-repositories/git": {
+      "get": {
+        "operationId": "listPublicGitRepositories",
+        "summary": "List public git repositories",
+        "tags": [
+          "Git-Public-Repository"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gitProviderType",
+            "in": "query",
+            "type": "string",
+            "schema": {
+              "$ref": "#/components/schemas/IntegrationTypeEnum"
+            },
+            "required": true
+          },
+          {
+            "name": "repositoryName",
+            "in": "query",
+            "description": "Repository name",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Git repositories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitRepositoriesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-repositories/{gitPublicRepositoryId}/git/branches": {
+      "get": {
+        "operationId": "listGitRepoBranches",
+        "summary": "List branches for public git repo from git.",
+        "tags": [
+          "Git-Public-Repository-Branch"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gitProviderType",
+            "in": "query",
+            "type": "string",
+            "schema": {
+              "$ref": "#/components/schemas/IntegrationTypeEnum"
+            },
+            "required": true
+          },
+          {
+            "name": "gitPublicRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Repository id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-repositories/{gitPublicRepositoryId}/git/branches/{branchName}": {
+      "get": {
+        "operationId": "getPublicGitRepoBranch",
+        "summary": "Get branch for public git repo from git.",
+        "tags": [
+          "Git-Public-Repository-Branch"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gitProviderType",
+            "in": "query",
+            "type": "string",
+            "schema": {
+              "$ref": "#/components/schemas/IntegrationTypeEnum"
+            },
+            "required": true
+          },
+          {
+            "name": "gitPublicRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Public-Repository id",
+            "required": true
+          },
+          {
+            "name": "branchName",
+            "in": "path",
+            "type": "string",
+            "description": "Branch Name",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-repositories/{gitPublicRepositoryId}/git/tree/{path}": {
+      "get": {
+        "operationId": "getPublicGitRepositoryTree",
+        "summary": "Get public git repo tree.",
+        "tags": [
+          "Git-Public-Repository-Tree"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gitProviderType",
+            "in": "query",
+            "type": "string",
+            "schema": {
+              "$ref": "#/components/schemas/IntegrationTypeEnum"
+            },
+            "required": true
+          },
+          {
+            "name": "gitPublicRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git RepositoryId id.",
+            "required": true
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "type": "string",
+            "description": "File path. Should be uri encoded.",
+            "required": true
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "type": "string",
+            "description": "Branch id",
+            "required": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "number",
+            "description": "Default 1.",
+            "min": "1",
+            "required": false
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "type": "number",
+            "description": "Default 30.",
+            "min": "10",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilesWithCursor"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public-repositories/{gitPublicRepositoryId}/git/files/{path}/contents": {
+      "get": {
+        "operationId": "getPublicGitRepositoryFileContents",
+        "summary": "Get files in public repository.",
+        "tags": [
+          "Git-Public-Repository-File"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gitProviderType",
+            "in": "query",
+            "type": "string",
+            "schema": {
+              "$ref": "#/components/schemas/IntegrationTypeEnum"
+            },
+            "required": true
+          },
+          {
+            "name": "gitPublicRepositoryId",
+            "in": "path",
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "description": "Git-Public-Repository id.",
+            "required": true
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "type": "string",
+            "description": "File path. Should be uri encoded.",
+            "required": true
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "type": "string",
+            "description": "Branch id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File from repo. Raw."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/bitbucket": {
+      "post": {
+        "operationId": "bitbucketWebhook",
+        "summary": "Bitbucket webhook",
+        "tags": [
+          "Webhook"
+        ],
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Webhhok handled."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/gitlab": {
+      "post": {
+        "operationId": "gitlabWebhook",
+        "summary": "Gitlab webhook",
+        "tags": [
+          "Webhook"
+        ],
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Webhhok handled."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "Multiplayer_SID"
+      }
+    },
+    "schemas": {
+      "AuthTypeEnum": {
+        "type": "string",
+        "enum": [
+          "LOCAL"
+        ]
+      },
+      "OtelAgentSelectionModeEnum": {
+        "type": "string",
+        "enum": [
+          "ANY",
+          "ONLY_MY_AGENT"
+        ]
+      },
+      "IntegrationTypeEnum": {
+        "type": "string",
+        "enum": [
+          "GITLAB",
+          "GITHUB",
+          "BITBUCKET",
+          "ATLASSIAN",
+          "LINEAR",
+          "OPENTELEMETRY",
+          "API_KEY",
+          "OTEL",
+          "SLACK"
+        ]
+      },
+      "IntegrationAuthTypeEnum": {
+        "type": "string",
+        "enum": [
+          "OAUTH",
+          "ACCESS_TOKEN",
+          "GITHUB_APP"
+        ]
+      },
+      "CommitContentActionEnum": {
+        "type": "string",
+        "enum": [
+          "CREATE",
+          "DELETE",
+          "MOVE",
+          "UPDATE"
+        ]
+      },
+      "GitContentTypeEnum": {
+        "type": "string",
+        "enum": [
+          "file",
+          "directory"
+        ]
+      },
+      "RepositoryOwnerTypeEnum": {
+        "type": "string",
+        "enum": [
+          "user",
+          "organization"
+        ]
+      },
+      "ProjectBranchStatusEnum": {
+        "type": "string",
+        "enum": [
+          "TO_REVIEW",
+          "CHANGE_REQUESTED",
+          "IN_PROGRESS",
+          "MERGED",
+          "CLOSED",
+          "APPROVED",
+          "DRAFT"
+        ]
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "mongodb": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        }
+      },
+      "Healthz": {
+        "type": "string"
+      },
+      "Cursor": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "skip": {
+            "type": "integer",
+            "min": 0
+          },
+          "limit": {
+            "type": "integer",
+            "min": 1
+          }
+        }
+      },
+      "GitCursor": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "string"
+          },
+          "perPage": {
+            "type": "integer",
+            "min": 0
+          },
+          "nextPage": {
+            "type": "string"
+          }
+        }
+      },
+      "RepositoriesWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Repositories"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/GitCursor"
+          }
+        }
+      },
+      "Repositories": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Repositoriy"
+        }
+      },
+      "Repositoriy": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "private": {
+            "type": "string"
+          },
+          "defaultBranch": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "$ref": "#/components/schemas/RepositoryOwnerTypeEnum"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "FilesWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Files"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/GitCursor"
+          }
+        }
+      },
+      "Files": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/File"
+        }
+      },
+      "File": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "sha": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/GitContentTypeEnum"
+          }
+        }
+      },
+      "TagsWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/GitCursor"
+          }
+        }
+      },
+      "Tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Tag"
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "commitSha": {
+            "type": "string"
+          }
+        }
+      },
+      "BranchesWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Branches"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/GitCursor"
+          }
+        }
+      },
+      "Branches": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Branch"
+        }
+      },
+      "Branch": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "lastCommitSha": {
+            "type": "string"
+          },
+          "default": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateBranchPayload": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parentBranch": {
+            "type": "string"
+          }
+        }
+      },
+      "CreatePullRequestPayload": {
+        "type": "object",
+        "properties": {
+          "repositoryUrl": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "baseBranch": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "PullRequestUrl": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateCommitPayload": {
+        "type": "object",
+        "properties": {
+          "commitMessage": {
+            "type": "string",
+            "required": true
+          },
+          "contents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "$ref": "#/components/schemas/CommitContentActionEnum",
+                  "required": true
+                },
+                "filePath": {
+                  "type": "string",
+                  "required": true
+                },
+                "content": {
+                  "type": "string"
+                },
+                "previousPath": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Commit": {
+        "type": "object",
+        "properties": {
+          "sha": {
+            "type": "string",
+            "required": true
+          }
+        }
+      },
+      "IntegrationsWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Integrations"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "Integrations": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Integration"
+        }
+      },
+      "Integration": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "workspace": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "project": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "workspaceRole": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectRole": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceUser": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "type": {
+            "$ref": "#/components/schemas/IntegrationTypeEnum"
+          },
+          "authType": {
+            "$ref": "#/components/schemas/IntegrationAuthTypeEnum"
+          },
+          "gitlab": {
+            "type": "object",
+            "properties": {
+              "integrationSettingsUrl": {
+                "type": "string"
+              }
+            }
+          },
+          "github": {
+            "type": "object",
+            "properties": {
+              "integrationSettingsUrl": {
+                "type": "string"
+              },
+              "installationId": {
+                "type": "number"
+              },
+              "orgId": {
+                "type": "string"
+              },
+              "orgName": {
+                "type": "string"
+              }
+            }
+          },
+          "bitbucket": {
+            "type": "object",
+            "properties": {
+              "integrationSettingsUrl": {
+                "type": "string"
+              }
+            }
+          },
+          "atlassian": {
+            "type": "object",
+            "properties": {
+              "orgId": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "ticketStatusMapping": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "projectBranchStatus": {
+                      "$ref": "#/components/schemas/ProjectBranchStatusEnum"
+                    },
+                    "ticketStatus": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "linear": {
+            "type": "object",
+            "properties": {
+              "ticketStatusMapping": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "projectBranchStatus": {
+                      "$ref": "#/components/schemas/ProjectBranchStatusEnum"
+                    },
+                    "ticketStatus": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "otel": {
+            "type": "object",
+            "properties": {
+              "autoMergeEnabled": {
+                "type": "boolean"
+              },
+              "autoCreateRelease": {
+                "type": "boolean"
+              },
+              "agentSelectionMode": {
+                "$ref": "#/components/schemas/OtelAgentSelectionModeEnum"
+              },
+              "autoResolveIssues": {
+                "type": "boolean"
+              },
+              "autoCreateIssues": {
+                "type": "boolean"
+              }
+            }
+          },
+          "slack": {
+            "type": "object",
+            "properties": {
+              "integrationSettingsUrl": {
+                "type": "string"
+              },
+              "enterpriseId": {
+                "type": "string"
+              },
+              "teamId": {
+                "type": "string"
+              },
+              "configurationUrl": {
+                "type": "string"
+              },
+              "teamName": {
+                "type": "string"
+              }
+            }
+          },
+
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "OtelIntegrationStatus": {
+        "type": "object",
+        "properties": {
+          "otelLogs": {
+            "type": "boolean"
+          },
+          "otelSpans": {
+            "type": "boolean"
+          },
+          "rrwebEvents": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IntegrationCreatePayload": {
+        "type": "object",
+        "required": [
+          "type",
+          "authType"
+        ],
+        "properties": {
+          "project": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceRole": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectRole": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/IntegrationTypeEnum"
+          },
+          "authType": {
+            "$ref": "#/components/schemas/IntegrationAuthTypeEnum"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "otel": {
+            "type": "object",
+            "properties": {
+              "autoCreateRelease": {
+                "type": "boolean"
+              },
+              "autoMergeEnabled": {
+                "type": "boolean"
+              },
+              "agentSelectionMode": {
+                "$ref": "#/components/schemas/OtelAgentSelectionModeEnum"
+              },
+              "autoResolveIssues": {
+                "type": "boolean"
+              },
+              "autoCreateIssues": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "IntegrationUpdatePayload": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "otel": {
+            "type": "object",
+            "properties": {
+              "autoCreateRelease": {
+                "type": "boolean"
+              },
+              "autoMergeEnabled": {
+                "type": "boolean"
+              },
+              "agentSelectionMode": {
+                "$ref": "#/components/schemas/OtelAgentSelectionModeEnum"
+              },
+              "autoResolveIssues": {
+                "type": "boolean"
+              },
+              "autoCreateIssues": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "UpdateIntegrationLinearPayload": {
+        "type": "object",
+        "required": [
+          "linear"
+        ],
+        "properties": {
+          "linear": {
+            "type": "object",
+            "properties": {
+              "ticketStatusMapping": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "projectBranchStatus": {
+                      "$ref": "#/components/schemas/ProjectBranchStatusEnum"
+                    },
+                    "ticketStatus": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateIntegrationAtlassianPayload": {
+        "type": "object",
+        "required": [
+          "linear"
+        ],
+        "properties": {
+          "linear": {
+            "type": "object",
+            "properties": {
+              "orgId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "ticketStatusMapping": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "projectBranchStatus": {
+                      "$ref": "#/components/schemas/ProjectBranchStatusEnum"
+                    },
+                    "ticketStatus": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "LinearIntegrationStatuses": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/LinearIntegrationStatus"
+        }
+      },
+      "LinearIntegrationStatus": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "readOnly": true
+          }
+        }
+      },
+      "AtlassianIntegrationStatuses": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AtlassianIntegrationStatus"
+        }
+      },
+      "AtlassianIntegrationStatus": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          }
+        }
+      },
+      "AtlassianIntegrationOrgs": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AtlassianIntegrationOrg"
+        }
+      },
+      "AtlassianIntegrationOrg": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          }
+        }
+      },
+      "GitRepositoriesWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/GitRepositories"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "GitRepositories": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/GitRepository"
+        }
+      },
+      "GitRepository": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "project": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspace": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "gitRepository": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "$ref": "#/components/schemas/IntegrationTypeEnum"
+              },
+              "id": {
+                "type": "string"
+              },
+              "_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "private": {
+                "type": "boolean"
+              },
+              "defaultBranch": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "CreateGitRepositoryPayload": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "gitRepositoryId": {
+            "type": "string"
+          },
+          "gitRepositoryType": {
+            "$ref": "#/components/schemas/IntegrationTypeEnum"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateGitRepositoryPayload": {
+        "type": "object",
+        "required": [
+          "gitRepositoryId",
+          "gitRepositoryType"
+        ],
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BulkUpdateGitRepositoryPayload": {
+        "type": "object",
+        "required": [
+          "gitRepositoryId",
+          "gitRepositoryType"
+        ],
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "gitRepositoryId": {
+            "type": "string"
+          },
+          "gitRepositoryType": {
+            "$ref": "#/components/schemas/IntegrationTypeEnum"
+          }
+        }
+      },
+      "GitRepositoryEntitiesWithCursor": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/GitRepositoryEntities"
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        }
+      },
+      "GitRepositoryEntities": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/GitRepositoryEntity"
+        }
+      },
+      "GitRepositoryEntity": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "project": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "gitRepositoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectBranches": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "path": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "CreateGitRepositoryEntityPayload": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "projectBranches": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "UpdateGitRepositoryEntityPayload": {
+        "type": "object",
+        "properties": {
+          "projectBranches": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "UpdateGitRepositoryEntityProjectBranchesPayload": {
+        "type": "object",
+        "properties": {
+          "addProjectBranch": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "removeProjectBranch": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

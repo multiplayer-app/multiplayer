@@ -1,0 +1,102 @@
+.excalidraw {
+  .layer-ui__wrapper__footer-right,
+  .shapes-section,
+  .App-toolbar--mobile,
+  .App-bottom-bar,
+  .mobile-misc-tools-container,
+  .undo-redo-buttons,
+  [aria-label="Undo"],
+  [aria-label="Redo"] {
+    display: none !important;
+  }
+
+  .App-menu_top {
+    label[title="Library"],
+    .main-menu-trigger {
+      display: none !important;
+    }
+    .App-menu__left {
+      top: 0;
+    }
+  }
+
+  &.injected-toolbar-wrapper {
+    overflow: visible;
+    user-select: auto;
+    .mobile-misc-tools-container {
+      display: flex !important;
+      position: relative;
+      flex-direction: row;
+      top: unset;
+      right: unset;
+      border: unset;
+      background: unset;
+      overflow: visible;
+      gap: 4px;
+      margin-right: 4px;
+      label[title="Library"] {
+        display: none;
+      }
+      .ToolIcon__icon {
+        border-radius: var(--border-radius-lg);
+      }
+    }
+    .shapes-section {
+      display: flex !important;
+      pointer-events: auto !important;
+      .Island {
+        box-shadow: unset;
+        background: unset;
+        padding: 0;
+      }
+      .App-toolbar__extra-tools-dropdown {
+        z-index: 20;
+        background-color: var(--island-bg-color);
+        box-shadow: var(--shadow-island);
+        border-radius: var(--border-radius-lg);
+      }
+    }
+    .App-toolbar--mobile {
+      box-shadow: unset;
+      background: unset;
+      padding: 0;
+      display: block !important;
+      z-index: 12;
+    }
+    .HintViewer {
+      top: 40px;
+      z-index: 25;
+    }
+    .dropdown-menu-container {
+      z-index: 20 !important;
+    }
+    .main-menu-trigger,
+    .help-icon {
+      background: unset;
+      box-shadow: unset;
+      &:hover {
+        --background: var(--color-surface-high);
+        background-color: var(--background);
+        text-decoration: none;
+      }
+    }
+  }
+}
+
+.excalidraw.excalidraw-container.excalidraw--mobile {
+  container-type: inline-size;
+}
+
+@container (max-width: 730px) {
+  div.App-bottom-bar.App-bottom-bar {
+    display: block !important;
+    top: unset;
+    .App-toolbar-content {
+      justify-content: flex-start;
+      gap: 20px;
+    }
+  }
+  .excalidraw--mobile.excalidraw .HintViewer {
+    margin-top: -20px;
+  }
+}

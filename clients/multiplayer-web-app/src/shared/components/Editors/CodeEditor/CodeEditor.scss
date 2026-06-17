@@ -1,0 +1,50 @@
+.yRemoteSelection {
+  background-color: rgb(250, 129, 0, 0.5);
+}
+
+.yRemoteSelectionHead {
+  height: 100%;
+  position: absolute;
+  border-top: solid 2px;
+  border-left: solid 2px;
+  border-bottom: solid 2px;
+  border-color: orange;
+  box-sizing: border-box;
+  cursor: pointer;
+  // animation: cursor-blink 1s steps(2) infinite;
+
+  &:after {
+    content: " ";
+    opacity: 0;
+    color: white;
+    font-weight: 500;
+    left: -2px;
+    font-size: 12px;
+    border-radius: 3px 3px 3px 0;
+    bottom: 100%;
+    padding: 0 0.25rem;
+    line-height: 1.25rem;
+    position: absolute;
+    user-select: none;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity 0.25s ease-in-out;
+  }
+
+  &:hover {
+    animation: none;
+    &:after {
+      opacity: 1;
+    }
+  }
+}
+
+.mp-comment-node {
+  z-index: 100;
+}
+
+@keyframes cursor-blink {
+  0% {
+    opacity: 0;
+  }
+}

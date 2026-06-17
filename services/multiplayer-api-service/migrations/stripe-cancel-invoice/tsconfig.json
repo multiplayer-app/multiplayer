@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "baseUrl": ".",
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "noUnusedParameters": false,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "moduleResolution": "node",
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": false,
+    "preserveConstEnums": true,
+    "removeComments": false,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "target": "ES2018",
+    "downlevelIteration": true,
+    "strict": true,
+    "composite": true,
+    "outDir": "./dist/",
+    "rootDir": "./",
+    "preserveSymlinks": true
+  },
+  "exclude": ["dist", "coverage", "jest.config.js", "__tests__", "migration"],
+  "references": [ ]
+}

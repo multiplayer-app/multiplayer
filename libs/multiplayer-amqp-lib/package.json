@@ -1,0 +1,35 @@
+{
+  "name": "@multiplayer/amqp",
+  "description": "Multiplayer amqp",
+  "version": "0.0.1",
+  "author": "Multiplayer",
+  "main": "dist/index.js",
+  "contributors": [
+    "Dmytro Shvaika <shvajka@gmail.com>"
+  ],
+  "dependencies": {
+    "@multiplayer/logger": "0.0.1",
+    "amqplib": "0.10.3",
+    "json-stringify-safe": "5.0.1"
+  },
+  "devDependencies": {
+    "@types/amqplib": "0.10.1",
+    "@types/node": "25.5.0",
+    "eslint": "10.1.0",
+    "typescript": "6.0.2"
+  },
+  "engines": {
+    "node": ">=18",
+    "npm": ">=8"
+  },
+  "keywords": [
+    "amqp",
+    "library"
+  ],
+  "scripts": {
+    "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+    "build": "tsc --build --force",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@multiplayer/seed-counter",
+  "version": "0.0.1",
+  "description": "",
+  "main": "./src/index.ts",
+  "engines": {
+    "node": ">=18",
+    "npm": ">=8"
+  },
+  "scripts": {
+    "start": "tsc --build --force && node dist/index.js"
+  },
+  "author": "Multiplayer",
+  "dependencies": {
+    "@multiplayer/models": "0.0.1",
+    "@multiplayer/mongo": "0.0.1",
+    "@multiplayer/logger": "0.0.1",
+    "@multiplayer/types": "0.0.1",
+    "dotenv": "16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "typescript": "6.0.2"
+  }
+}

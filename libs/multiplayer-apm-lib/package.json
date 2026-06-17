@@ -1,0 +1,60 @@
+{
+  "name": "@multiplayer/apm",
+  "description": "Multiplayer apm",
+  "version": "0.0.1",
+  "author": "Multiplayer",
+  "main": "dist/index.js",
+  "contributors": [
+    "Dmytro Shvaika <shvajka@gmail.com>"
+  ],
+  "dependencies": {
+    "@multiplayer-app/session-recorder-node": "2.0.18",
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/api-logs": "0.214.0",
+    "@opentelemetry/core": "2.6.1",
+    "@opentelemetry/exporter-logs-otlp-http": "0.214.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.214.0",
+    "@opentelemetry/exporter-prometheus": "0.214.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.214.0",
+    "@opentelemetry/instrumentation": "0.214.0",
+    "@opentelemetry/auto-instrumentations-node": "0.71.0",
+    "@opentelemetry/instrumentation-express": "0.62.0",
+    "@opentelemetry/resources": "2.6.1",
+    "@opentelemetry/sdk-logs": "0.214.0",
+    "@opentelemetry/sdk-metrics": "2.6.1",
+    "@opentelemetry/sdk-node": "0.214.0",
+    "@opentelemetry/sdk-trace-base": "2.6.1",
+    "@opentelemetry/sdk-trace-node": "2.6.1",
+    "@opentelemetry/semantic-conventions": "1.40.0",
+    "protobufjs": "8.0.1",
+    "newrelic": "13.19.1",
+    "to-json-schema": "0.2.5",
+    "openapi-json-schema": "2.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "25.6.0",
+    "eslint": "10.2.0",
+    "typescript": "6.0.2"
+  },
+  "overrides": {
+    "@opentelemetry/auto-instrumentations-node": {
+      "@opentelemetry/api": "1.9.1",
+      "@opentelemetry/instrumentation-express": "$@opentelemetry/instrumentation-express"
+    }
+  },
+  "engines": {
+    "node": ">=18",
+    "npm": ">=8"
+  },
+  "keywords": [
+    "apm",
+    "library"
+  ],
+  "scripts": {
+    "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags",
+    "build": "tsc --build --force"
+  }
+}

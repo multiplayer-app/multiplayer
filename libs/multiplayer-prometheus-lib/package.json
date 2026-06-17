@@ -1,0 +1,29 @@
+{
+    "name": "@multiplayer/prometheus",
+    "version": "0.0.1",
+    "description": "Multiplayer prometheus library",
+    "main": "dist/index.js",
+    "engines": {
+        "node": ">=18",
+        "npm": ">=8"
+    },
+    "scripts": {
+        "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+        "preversion": "npm run lint",
+        "postversion": "git push && git push --tags",
+        "build": "tsc --build --force"
+    },
+    "author": "Multiplayer",
+    "keywords": [
+        "prometheus",
+        "library"
+    ],
+    "dependencies": {
+        "prom-client": "15.1.0",
+        "express": "5.2.1"
+    },
+    "devDependencies": {
+      "@types/node": "25.5.0",
+      "typescript": "6.0.2"
+    }
+}

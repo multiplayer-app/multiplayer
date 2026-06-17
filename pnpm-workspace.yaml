@@ -1,0 +1,10 @@
+packages:
+  - 'libs/*'
+  - 'clients/*'
+  - 'services/*'
+  - 'cronjobs/*'
+  - 'scripts/seed/*'
+
+linkWorkspacePackages: deep
+# shamefullyHoist: true
+nodeLinker: hoisted

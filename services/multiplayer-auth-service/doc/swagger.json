@@ -1,0 +1,1514 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "0.0.1",
+    "title": "Multiplayer Authentication service"
+  },
+  "servers": [
+    {
+      "url": "/v0/auth"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Google",
+      "description": "Google"
+    },
+    {
+      "name": "Github",
+      "description": "Github"
+    },
+    {
+      "name": "Gitlab",
+      "description": "Gitlab"
+    },
+    {
+      "name": "Local",
+      "description": "Local"
+    },
+    {
+      "name": "Logout",
+      "description": "Logout"
+    },
+    {
+      "name": "Health",
+      "description": "Health"
+    },
+    {
+      "name": "Healthz",
+      "description": "Healthz"
+    },
+    {
+      "name": "Auth-Type",
+      "description": "Auth-Type"
+    },
+    {
+      "name": "User-Sessions",
+      "description": "User-Sessions"
+    },
+    {
+      "name": "OAuth-Clients",
+      "description": "OAuth client management (authenticated)"
+    },
+    {
+      "name": "OAuth-Public",
+      "description": "OAuth public endpoints: registration, token exchange, revocation"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Get health.",
+        "description": "Get health.",
+        "tags": [
+          "Health"
+        ],
+        "operationId": "geHealth",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Get healthz.",
+        "description": "Get healthz.",
+        "tags": [
+          "Healthz"
+        ],
+        "operationId": "geHealthz",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Healthz"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/google/auth": {
+      "get": {
+        "operationId": "googleAuth",
+        "summary": "Login with google account.",
+        "tags": [
+          "Google"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refUser",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "description": "Id of user who invited."
+          },
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "linkToUserId",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": false,
+            "description": "Link to user with id. Note: you should be logged in."
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to google"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/google/callback": {
+      "get": {
+        "operationId": "googleCallback",
+        "summary": "Google oauth callback.",
+        "tags": [
+          "Google"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully authenticated. The session ID is returned in a cookie named `Multiplayer_SID`. You need to include this cookie in subsequent requests.",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "example": "Multiplayer_SID=abcde12345; Path=/; HttpOnly"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/google/unlink": {
+      "patch": {
+        "operationId": "unlinkGoogleAccount",
+        "summary": "Unlink google account.",
+        "tags": [
+          "Google"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Unlinked"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/auth": {
+      "get": {
+        "operationId": "githubAuth",
+        "summary": "Login with github account.",
+        "tags": [
+          "Github"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refUser",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "description": "Id of user who invited."
+          },
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "linkToUserId",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": false,
+            "description": "Link to user with id. Note: you should be logged in."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Redirect to github"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/callback": {
+      "get": {
+        "operationId": "githubCallback",
+        "summary": "Github oauth callback.",
+        "tags": [
+          "Github"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully authenticated. The session ID is returned in a cookie named `Multiplayer_SID`. You need to include this cookie in subsequent requests.",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "example": "Multiplayer_SID=abcde12345; Path=/; HttpOnly"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/unlink": {
+      "patch": {
+        "operationId": "unlinkGithubAccount",
+        "summary": "Unlink github account.",
+        "tags": [
+          "Github"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Unlinked"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gitlab/auth": {
+      "get": {
+        "operationId": "gitlabAuth",
+        "summary": "Login with gitlab account.",
+        "tags": [
+          "Gitlab"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refUser",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "description": "Id of user who invited."
+          },
+          {
+            "in": "query",
+            "name": "redirectUrl",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Redirect url after auth."
+          },
+          {
+            "in": "query",
+            "name": "linkToUserId",
+            "schema": {
+              "type": "string",
+              "minLength": 24,
+              "maxLength": 24
+            },
+            "required": false,
+            "description": "Link to user with id. Note: you should be logged in."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Redirect to gitlab"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gitlab/callback": {
+      "get": {
+        "operationId": "gitlabCallback",
+        "summary": "Gitlab oauth callback.",
+        "tags": [
+          "Gitlab"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully authenticated. The session ID is returned in a cookie named `Multiplayer_SID`. You need to include this cookie in subsequent requests.",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "example": "Multiplayer_SID=abcde12345; Path=/; HttpOnly"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gitlab/unlink": {
+      "patch": {
+        "operationId": "unlinkGitlabAccount",
+        "summary": "Unlink gitlab account.",
+        "tags": [
+          "Gitlab"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Unlinked"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/login": {
+      "post": {
+        "operationId": "login",
+        "summary": "Login with email & password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalLoginPayload"
+              }
+            }
+          }
+        },
+        "tags": [
+          "Local"
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully authenticated. The session ID is returned in a cookie named `Multiplayer_SID`. You need to include this cookie in subsequent requests.",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "example": "JSESSIONID=abcde12345; Path=/; HttpOnly"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/register": {
+      "post": {
+        "operationId": "localRegister",
+        "summary": "Register using your email",
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "Local"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalRegisterPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "User created. Check your email."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/forgot": {
+      "post": {
+        "operationId": "localForgotPassword",
+        "summary": "Send reset password email.",
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "Local"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalForgotPasswordPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Reset password email sent."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/set-password": {
+      "post": {
+        "operationId": "setLocalPassword",
+        "summary": "Set password for local profile.",
+        "tags": [
+          "Local"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalSetPasswordPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "New password set. You can login."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/confirm-email": {
+      "post": {
+        "operationId": "confirmLocalEmail",
+        "summary": "Confirm local email.",
+        "tags": [
+          "Local"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalConfirmEmailPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Local email confirmed."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/local/resend-confirm-email": {
+      "post": {
+        "operationId": "resendConfirmLocalEmail",
+        "summary": "Resend confirm local email.",
+        "tags": [
+          "Local"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendLocalConfirmEmailPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Confirm email sent."
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "operationId": "logoutCurrent",
+        "summary": "Logout from current session.",
+        "tags": [
+          "Logout"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully destroyed session"
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth-type": {
+      "get": {
+        "operationId": "getUserAuthType",
+        "summary": "Get user auth type.",
+        "tags": [
+          "Auth-Type"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "email",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "User email."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User auth type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAuthType"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user-session": {
+      "get": {
+        "operationId": "getUserSession",
+        "summary": "Get user session.",
+        "tags": [
+          "User-Sessions"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSessions"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateUserSession",
+        "summary": "Update user session.",
+        "tags": [
+          "User-Sessions"
+        ],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserSessionPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current user session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserSession"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oauth-clients/{clientId}": {
+      "get": {
+        "operationId": "getOauthClient",
+        "summary": "Get OAuth client info (used by the authorize page).",
+        "tags": ["OAuth-Clients"],
+        "security": [{ "CookieAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": { "type": "string", "minLength": 24, "maxLength": 24 },
+            "description": "OAuth client ID."
+          },
+          {
+            "in": "query",
+            "name": "redirect_uri",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Redirect URI registered for this client."
+          },
+          {
+            "in": "query",
+            "name": "response_type",
+            "required": true,
+            "schema": { "type": "string", "enum": ["code"] },
+            "description": "Must be 'code'."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OAuth client info.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OauthClientInfo" }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+    "/oauth-clients/{clientId}/authorize": {
+      "post": {
+        "operationId": "generateAuthCode",
+        "summary": "Generate an authorization code for an OAuth client.",
+        "tags": ["OAuth-Clients"],
+        "security": [{ "CookieAuth": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": { "type": "string", "minLength": 24, "maxLength": 24 },
+            "description": "OAuth client ID."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GenerateAuthCodePayload" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization code (plain string).",
+            "content": {
+              "application/json": {
+                "schema": { "type": "string", "example": "a1b2c3d4..." }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+    "/public/oauth-clients": {
+      "post": {
+        "operationId": "registerOauthClient",
+        "summary": "Register a new OAuth client (RFC 7591 dynamic registration).",
+        "tags": ["OAuth-Public"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OauthClientRegistrationPayload" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registered client with credentials.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OauthClientRegistrationResponse" }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+    "/public/oauth-clients/{clientId}": {
+      "get": {
+        "operationId": "getPublicOauthClient",
+        "summary": "Read OAuth client registration.",
+        "tags": ["OAuth-Public"],
+        "security": [{ "BearerRegistrationToken": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": { "type": "string", "minLength": 24, "maxLength": 24 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OAuth client registration data.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OauthClientRegistrationData" }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateOauthClient",
+        "summary": "Update OAuth client registration.",
+        "tags": ["OAuth-Public"],
+        "security": [{ "BearerRegistrationToken": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": { "type": "string", "minLength": 24, "maxLength": 24 }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OauthClientUpdatePayload" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated client registration data.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OauthClientRegistrationData" }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteOauthClient",
+        "summary": "Delete an OAuth client registration.",
+        "tags": ["OAuth-Public"],
+        "security": [{ "BearerRegistrationToken": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": { "type": "string", "minLength": 24, "maxLength": 24 }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Client deleted." },
+          "default": {
+            "description": "unexpected error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    },
+    "/public/oauth-clients/token": {
+      "post": {
+        "operationId": "exchangeToken",
+        "summary": "Exchange an authorization code or refresh token for access/refresh tokens.",
+        "tags": ["OAuth-Public"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TokenExchangePayload" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token response.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenExchangeResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (bad grant type, mismatched redirect_uri, invalid code_verifier).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OauthError" } } }
+          },
+          "401": {
+            "description": "Invalid or expired code/refresh token.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OauthError" } } }
+          }
+        }
+      }
+    },
+    "/public/oauth-clients/token/revoke": {
+      "post": {
+        "operationId": "revokeToken",
+        "summary": "Revoke an access token.",
+        "tags": ["OAuth-Public"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RevokeTokenPayload" }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Token revoked." },
+          "default": {
+            "description": "unexpected error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "Multiplayer_SID"
+      },
+      "BearerRegistrationToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Registration access token returned when the client was created."
+      }
+    },
+    "schemas": {
+      "AuthTypeEnum": {
+        "type": "string",
+        "enum": [
+          "LOCAL"
+        ]
+      },
+      "UserColorEnum": {
+        "type": "string",
+        "enum": [
+          "#FF4F00",
+          "#ECA96F",
+          "#EC6FA9",
+          "#6FECA9"
+        ]
+      },
+      "UserPrimaryEmailSourceEnum": {
+        "type": "string",
+        "enum": [
+          "GITLAB",
+          "GITHUB",
+          "GOOGLE",
+          "LOCAL"
+        ]
+      },
+      "WorkspaceMemberRoleEnum": {
+        "type": "string",
+        "enum": [
+          "ADMIN",
+          "USER"
+        ]
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "messageQueue": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "mongodb": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        }
+      },
+      "Healthz": {
+        "type": "string"
+      },
+      "WorkspaceInSession": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "workspaceUser": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "role": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "projects": {
+                  "type": "array",
+                  "items": {
+                  "type": "string",
+                  "format": "uuid"
+                  }
+                }
+              }
+            }
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "role": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "UserSession": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "primaryEmail": {
+            "type": "string"
+          },
+          "primaryEmailSource": {
+            "$ref": "#/components/schemas/UserPrimaryEmailSourceEnum"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceInSession"
+            }
+          }
+        }
+      },
+      "LocalLoginPayload": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "required": true
+          },
+          "password": {
+            "type": "string",
+            "required": true
+          }
+        }
+      },
+      "LocalRegisterPayload": {
+        "type": "object",
+        "properties": {
+          "refUser": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstName": {
+            "type": "string",
+            "required": true
+          },
+          "lastName": {
+            "type": "string",
+            "required": true
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "required": true
+          },
+          "password": {
+            "type": "string",
+            "required": true
+          }
+        }
+      },
+      "LocalForgotPasswordPayload": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "required": true
+          }
+        }
+      },
+      "LocalSetPasswordPayload": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "required": true
+          },
+          "password": {
+            "type": "string",
+            "required": true
+          }
+        }
+      },
+      "LocalConfirmEmailPayload": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "required": true
+          }
+        }
+      },
+      "ResendLocalConfirmEmailPayload": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "required": true
+          }
+        }
+      },
+      "UserAuthType": {
+        "type": "object",
+        "properties": {
+          "authType": {
+            "$ref": "#/components/schemas/AuthTypeEnum"
+          }
+        }
+      },
+      "UserSessions": {
+        "type": "object",
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSession"
+            }
+          },
+          "current": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CurrentUserSession": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateUserSessionPayload": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "OauthClientInfo": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "clientName": { "type": "string" },
+          "clientUri": { "type": "string" },
+          "logoUri": { "type": "string" },
+          "scope": { "type": "string" }
+        }
+      },
+      "GenerateAuthCodePayload": {
+        "type": "object",
+        "required": ["codeChallenge", "codeChallengeMethod", "redirectUri", "tokenType"],
+        "properties": {
+          "codeChallenge": { "type": "string" },
+          "codeChallengeMethod": { "type": "string", "enum": ["S256"] },
+          "redirectUri": { "type": "string" },
+          "tokenType": { "type": "string", "enum": ["project", "personal"] },
+          "workspaceId": { "type": "string", "description": "Required when tokenType=project." },
+          "projectId": { "type": "string", "description": "Required when tokenType=project." },
+          "scope": {
+            "type": "object",
+            "description": "Required when tokenType=project. Map of entity → array of actions.",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      },
+      "OauthClientRegistrationPayload": {
+        "type": "object",
+        "required": ["redirect_uris", "client_name"],
+        "properties": {
+          "redirect_uris": { "type": "array", "items": { "type": "string" } },
+          "client_name": { "type": "string" },
+          "client_uri": { "type": "string" },
+          "logo_uri": { "type": "string" },
+          "scope": { "type": "string" },
+          "grant_types": { "type": "array", "items": { "type": "string" } },
+          "response_types": { "type": "array", "items": { "type": "string" } },
+          "token_endpoint_auth_method": { "type": "string" }
+        }
+      },
+      "OauthClientRegistrationResponse": {
+        "type": "object",
+        "properties": {
+          "client_id": { "type": "string" },
+          "client_secret": { "type": "string" },
+          "client_id_issued_at": { "type": "integer" },
+          "client_secret_expires_at": { "type": "integer" },
+          "registration_access_token": { "type": "string" },
+          "registration_client_uri": { "type": "string" },
+          "redirect_uris": { "type": "array", "items": { "type": "string" } },
+          "grant_types": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "OauthClientRegistrationData": {
+        "type": "object",
+        "properties": {
+          "client_id": { "type": "string" },
+          "client_id_issued_at": { "type": "integer" },
+          "client_secret_expires_at": { "type": "integer" },
+          "registration_client_uri": { "type": "string" },
+          "redirect_uris": { "type": "array", "items": { "type": "string" } },
+          "grant_types": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "OauthClientUpdatePayload": {
+        "type": "object",
+        "required": ["client_id"],
+        "properties": {
+          "client_id": { "type": "string" },
+          "redirect_uris": { "type": "array", "items": { "type": "string" } },
+          "client_name": { "type": "string" },
+          "client_uri": { "type": "string" },
+          "logo_uri": { "type": "string" },
+          "grant_types": { "type": "array", "items": { "type": "string" } },
+          "response_types": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "TokenExchangePayload": {
+        "type": "object",
+        "required": ["grant_type"],
+        "properties": {
+          "grant_type": { "type": "string", "enum": ["authorization_code", "refresh_token"] },
+          "code": { "type": "string", "description": "Required for authorization_code grant." },
+          "redirect_uri": { "type": "string", "description": "Required for authorization_code grant." },
+          "code_verifier": { "type": "string", "description": "PKCE verifier. Required for authorization_code grant." },
+          "client_id": { "type": "string", "description": "Required for authorization_code grant." },
+          "refresh_token": { "type": "string", "description": "Required for refresh_token grant." }
+        }
+      },
+      "TokenExchangeResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": { "type": "string" },
+          "refresh_token": { "type": "string" },
+          "token_type": { "type": "string", "example": "Bearer" },
+          "expires_in": { "type": "integer", "example": 3600 },
+          "scope": { "type": "string" },
+          "extra": {
+            "type": "object",
+            "properties": {
+              "workspace": { "type": "string" },
+              "project": { "type": "string" },
+              "userId": { "type": "string" }
+            }
+          }
+        }
+      },
+      "RevokeTokenPayload": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": { "type": "string", "description": "Bearer token to revoke (format: 'Bearer <token>')." }
+        }
+      },
+      "OauthError": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "error_description": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

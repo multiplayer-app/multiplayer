@@ -1,0 +1,21 @@
+.comment-mode {
+  .HintViewer {
+    display: none;
+  }
+  .excalidraw__canvas.interactive {
+    cursor: var(--comment-cursor) !important;
+  }
+  .ToolIcon.fillable .ToolIcon_type_radio:checked + .ToolIcon__icon {
+    background: unset;
+    svg {
+      fill: white;
+    }
+    &:hover {
+      background: var(--button-hover-bg);
+    }
+  }
+}
+
+.excalidraw__canvas.interactive {
+  z-index: 1 !important;
+}

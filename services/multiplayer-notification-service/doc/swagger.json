@@ -1,0 +1,112 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "0.0.1",
+    "title": "Multiplayer Notification service"
+  },
+  "servers": [
+    {
+      "url": "/v0/api"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health"
+    },
+    {
+      "name": "Healthz",
+      "description": "Healthz"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Get health.",
+        "description": "Get health.",
+        "tags": [ "Health" ],
+        "operationId": "geHealth",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Get healthz.",
+        "description": "Get healthz.",
+        "tags": [ "Healthz" ],
+        "operationId": "geHealthz",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Healthz.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Healthz"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Health": {
+        "type": "object",
+        "properties": {
+          "messageQueue": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        }
+      },
+      "Healthz": {
+        "type": "string"
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

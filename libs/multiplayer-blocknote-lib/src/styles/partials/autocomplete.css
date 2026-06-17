@@ -1,0 +1,50 @@
+.ProseMirror {
+  .autocomplete-wrapper {
+    .cm-tooltip {
+      @apply z-20;
+    }
+    .cm-editor.cm-focused {
+      @apply z-20;
+    }
+    .cm-theme-light,
+    .cm-editor {
+      @apply w-full h-full text-inherit flex-1 bg-transparent;
+    }
+    .cm-content {
+      @apply p-2;
+    }
+    .cm-scroller {
+      font-family: inherit;
+      scrollbar-width: none;
+      overscroll-behavior-y: auto;
+    }
+  }
+  .cm-tooltip {
+    @apply bg-slate-50 text-gray-700 rounded-md shadow-md p-0;
+    border: none;
+  }
+
+  .cm-tooltip-arrow {
+    @apply text-gray-700;
+  }
+
+  .cm-tooltip-arrow:after,
+  .cm-tooltip-arrow:before {
+    border-top-color: currentColor !important;
+  }
+  .cm-tooltip.cm-tooltip-autocomplete > ul {
+    @apply font-mono;
+  }
+
+  .cm-tooltip.cm-tooltip-autocomplete > ul > * {
+    @apply leading-6;
+  }
+
+  .cm-tooltip-autocomplete ul li[aria-selected] {
+    @apply bg-gray-200 text-gray-700;
+  }
+
+  .cm-tooltip-autocomplete ul li[aria-selected] .cm-completionLabel {
+    @apply text-gray-700;
+  }
+}

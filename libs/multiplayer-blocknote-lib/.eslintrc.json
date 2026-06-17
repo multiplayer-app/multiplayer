@@ -1,0 +1,33 @@
+{
+  "env": {
+    "jest": true,
+    "browser": true
+  },
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "prettier",
+    "plugin:prettier/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:storybook/recommended"
+  ],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "prettier/prettier": ["error"],
+    "import/no-anonymous-default-export": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/jsx-no-constructed-context-values": "error",
+    "react/jsx-no-bind": "warn",
+    "react/jsx-key": "error",
+    "react/display-name": "warn",
+    "react-hooks/rules-of-hooks": "warn",
+    "@next/next/no-img-element": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/ban-ts-comment": "off"
+  }
+}

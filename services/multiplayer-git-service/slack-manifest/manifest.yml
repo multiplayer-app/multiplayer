@@ -1,0 +1,26 @@
+{
+    "display_information": {
+        "name": "Multiplayer-{{ENVIRONMENT}}"
+    },
+    "features": {
+        "bot_user": {
+            "display_name": "Multiplayer-{{ENVIRONMENT}}",
+            "always_online": false
+        }
+    },
+    "oauth_config": {
+        "redirect_urls": [
+            "{{DOMAIN}}/v0/git/integrations/slack/callback"
+        ],
+        "scopes": {
+            "bot": [
+                "chat:write"
+            ]
+        }
+    },
+    "settings": {
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": false,
+        "token_rotation_enabled": false
+    }
+}

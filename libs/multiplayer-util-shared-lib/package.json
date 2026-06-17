@@ -1,0 +1,30 @@
+{
+    "name": "@multiplayer/util-shared",
+    "version": "0.0.1",
+    "description": "Util library shared BE + FE",
+    "main": "dist/index.js",
+    "engines": {
+        "node": ">=18",
+        "npm": ">=8"
+    },
+    "scripts": {
+        "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+        "preversion": "npm run lint",
+        "postversion": "git push && git push --tags",
+        "build": "tsc --build --force"
+    },
+    "author": "Multiplayer",
+    "dependencies": {
+        "free-email-domains": "1.0.34",
+        "email-to-name": "2.0.6",
+        "joi": "17.10.0",
+        "openapi-types": "12.1.3",
+        "slugify": "1.6.6",
+        "unique-names-generator": "4.7.1"
+    },
+    "devDependencies": {
+        "@types/node": "25.5.0",
+        "eslint": "10.1.0",
+        "typescript": "6.0.2"
+    }
+}

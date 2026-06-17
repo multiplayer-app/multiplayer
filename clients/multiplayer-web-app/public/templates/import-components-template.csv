@@ -1,0 +1,4 @@
+name,type,scope,owner,shortDescription,tags,aliases
+example-service,service,private,internal,This is an imported example service.,"service:true, new, imported",example-service-test
+example-client-app,client,public,external,This is an imported example client app,"web-app, frontend","example-client-staging, example-client-production"
+example-with-required-fields-only,,,,,,

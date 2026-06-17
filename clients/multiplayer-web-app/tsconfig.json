@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src/",
+    "target": "ES2018",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "downlevelIteration": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "typeRoots": ["types"],
+    "jsx": "react-jsx",
+    "paths": {
+      "vscode/*": ["vscode/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../../libs/multiplayer-types-lib/tsconfig.json"
+    },
+    {
+      "path": "../../libs/multiplayer-blocknote-lib/tsconfig.json"
+    },
+    {
+      "path": "../../libs/multiplayer-util-shared-lib/tsconfig.json"
+    }
+  ]
+}

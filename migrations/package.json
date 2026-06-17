@@ -1,0 +1,7 @@
+{
+  "name": "multiplayer-mongo-migrations",
+  "version": "1.0.0",
+  "dependencies": {
+    "migrate-mongo": "11.0.0"
+  }
+}

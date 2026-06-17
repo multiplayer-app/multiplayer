@@ -1,0 +1,19 @@
+@import "rrweb-player/dist/style.css";
+
+.player-frame {
+  .player-frame__content {
+    .replayer-wrapper {
+      position: relative;
+      box-shadow: var(--chakra-shadows-2xl);
+      left: unset;
+      top: unset;
+      transform-origin: unset;
+    }
+    .replayer-mouse.touch-device {
+      border-color: var(--chakra-colors-gray-300);
+      &.touch-active {
+        border-color: var(--chakra-colors-brand-500);
+      }
+    }
+  }
+}

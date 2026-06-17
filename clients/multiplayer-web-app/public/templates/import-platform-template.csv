@@ -1,0 +1,5 @@
+name,dependsOn,type,shortDescription,tags
+example-client-app,example-service,client,This is an imported example client app,"web-app, frontend"
+example-service,"example-library, example-db",service,This is an imported example service,"service:true, new, imported"
+example-library,,generic,This library is a dependency of example-service,
+example-db,,service,This db component is also a dependency of it,db

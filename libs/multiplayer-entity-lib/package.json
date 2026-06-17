@@ -1,0 +1,50 @@
+{
+  "name": "@multiplayer/entity",
+  "version": "0.0.1",
+  "description": "Library for entity specific operations",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18",
+    "npm": ">=8"
+  },
+  "scripts": {
+    "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags",
+    "build": "tsc --build --force",
+    "test": "jest --forceExit"
+  },
+  "author": "Multiplayer",
+  "dependencies": {
+    "@langchain/core": "0.1.63",
+    "@langchain/textsplitters": "0.0.1",
+    "@multiplayer/types": "0.0.1",
+    "@tiptap/html": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
+    "@tiptap/static-renderer": "^3.3.0",
+    "google-diff-match-patch": "2.0.0",
+    "diff-match-patch": "1.0.5",
+    "joi": "17.10.0",
+    "js-yaml": "4.1.0",
+    "jsondiffpatch": "0.4.1",
+    "lodash.chunk": "4.2.0",
+    "markdown-it": "14.1.0",
+    "openapi-types": "12.1.3",
+    "quill-delta": "5.1.0",
+    "uuid": "9.0.0",
+    "yjs": "13.6.6"
+  },
+  "devDependencies": {
+    "@babel/core": "7.29.0",
+    "@babel/preset-env": "7.29.2",
+    "@babel/preset-typescript": "7.28.5",
+    "@types/jest": "30.0.0",
+    "@types/js-yaml": "4.0.9",
+    "@types/node": "25.5.0",
+    "babel-jest": "30.3.0",
+    "eslint": "10.1.0",
+    "jest": "30.3.0",
+    "jest-environment-node": "30.3.0",
+    "typescript": "6.0.2"
+  }
+}

@@ -1,0 +1,3446 @@
+{
+  "protocolr": "1.0.0",
+  "info": {
+    "type": "schema",
+    "version": "1.0.0",
+    "title": "Ramp Web Schemas",
+    "description": "Ramp Web Schema Definitions.",
+    "contact": {
+      "email": "dev@filingramp.com"
+    }
+  },
+  "tags": [
+    {
+      "name": "accounts",
+      "description": "accounts API"
+    },
+    {
+      "name": "attachments",
+      "description": "attachments API"
+    },
+    {
+      "name": "companies",
+      "description": "companies API"
+    },
+    {
+      "name": "contacts",
+      "description": "contacts API"
+    },
+    {
+      "name": "custom-fields",
+      "description": "custom-fields API"
+    },
+    {
+      "name": "dashboard",
+      "description": "dashboard API"
+    },
+    {
+      "name": "filings",
+      "description": "filings API"
+    },
+    {
+      "name": "filings-meta",
+      "description": "filings-meta API"
+    },
+    {
+      "name": "forms-library",
+      "description": "forms-library API"
+    },
+    {
+      "name": "health",
+      "description": "health API"
+    },
+    {
+      "name": "healthz",
+      "description": "healthz API"
+    },
+    {
+      "name": "products",
+      "description": "products API"
+    },
+    {
+      "name": "projects",
+      "description": "projects API"
+    },
+    {
+      "name": "rates-library",
+      "description": "rates-library API"
+    },
+    {
+      "name": "reports",
+      "description": "reports API"
+    },
+    {
+      "name": "search",
+      "description": "search API"
+    },
+    {
+      "name": "serff-authors",
+      "description": "serff-authors API"
+    },
+    {
+      "name": "serff-companies",
+      "description": "serff-companies API"
+    },
+    {
+      "name": "serff-contacts",
+      "description": "serff-contacts API"
+    },
+    {
+      "name": "serff-filings",
+      "description": "serff-filings API"
+    },
+    {
+      "name": "serff-instances",
+      "description": "serff-instances API"
+    },
+    {
+      "name": "sync",
+      "description": "sync API"
+    },
+    {
+      "name": "users",
+      "description": "users API"
+    },
+    {
+      "name": "workflow",
+      "description": "workflow API"
+    },
+    {
+      "name": "workspaces",
+      "description": "workspaces API"
+    }
+  ],
+  "definitions": {
+    "Accounts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Account"
+      }
+    },
+    "Account": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/AccountBase"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "features": {
+          "$ref": "#/definitions/AccountFeatures"
+        }
+      }
+    },
+    "AccountBase": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Unique."
+        },
+        "authType": {
+          "type": "string",
+          "enum": [
+            "RAMP",
+            "AZURE_AD"
+          ],
+          "default": "RAMP"
+        },
+        "defaultSerffRestInstance": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Instances."
+        },
+        "defaultSerffSoapInstance": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Instances."
+        },
+        "archived": {
+          "type": "boolean",
+          "default": false,
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "AccountFeatures": {
+      "type": "object",
+      "properties": {
+        "customFields": {
+          "type": "boolean",
+          "default": false
+        },
+        "filingDrafts": {
+          "type": "boolean",
+          "default": false
+        },
+        "directMessaging": {
+          "type": "boolean",
+          "default": false
+        },
+        "workflow": {
+          "type": "boolean",
+          "default": false
+        },
+        "workflowChat": {
+          "type": "boolean",
+          "default": false
+        },
+        "workspace": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "Attachment": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "AttachmentWithKey": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "Companies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Company"
+      }
+    },
+    "Company": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Unique within account."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "Contact": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "fullName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 100,
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "companyName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 10000
+        }
+      }
+    },
+    "CustomFields": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/CustomField"
+      }
+    },
+    "CustomField": {
+      "type": "object",
+      "required": [
+        "name",
+        "key",
+        "valueType",
+        "type",
+        "multi",
+        "isEnabled"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "hint": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Null is allowed."
+        },
+        "key": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "valueType": {
+          "type": "string",
+          "enum": [
+            "BOOLEAN",
+            "NUMBER",
+            "STRING",
+            "DATE",
+            "COLOR",
+            "LINK",
+            "DROPDOWN",
+            "OBJECT"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "FORM",
+            "RATE"
+          ]
+        },
+        "multi": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "number"
+        },
+        "dropdownValues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "value",
+              "allowDetails"
+            ],
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "allowDetails": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "objectFields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "key",
+              "valueType"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "key": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "valueType": {
+                "type": "string",
+                "enum": [
+                  "BOOLEAN",
+                  "NUMBER",
+                  "STRING",
+                  "DATE",
+                  "COLOR"
+                ]
+              }
+            }
+          }
+        },
+        "account": {
+          "type": "string",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "CustomFieldsOrderPayload": {
+      "type": "object",
+      "required": [
+        "customFields"
+      ],
+      "properties": {
+        "customFields": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "order"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 24,
+                "maxLength": 24,
+                "description": "Hex, ref Custom-Fields."
+              },
+              "order": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "DashboardLatestUpdates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "productInfo": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              },
+              "initials": {
+                "type": "string"
+              },
+              "icon": {
+                "type": "string"
+              }
+            }
+          },
+          "projectInfo": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "filingInfo": {
+            "type": "object",
+            "properties": {
+              "filingType": {
+                "type": "string"
+              },
+              "serffDateLastModified": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "state": {
+                "type": "string"
+              },
+              "statusId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "DashboardPinnedProject": {
+      "type": "object",
+      "properties": {
+        "productInfo": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "initials": {
+              "type": "string"
+            },
+            "icon": {
+              "type": "string"
+            }
+          }
+        },
+        "projectInfo": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "projectNumber": {
+              "type": "string"
+            },
+            "leads": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "stateCount": {
+          "type": "number"
+        },
+        "latestApprovals": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "dispositionDate": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "effectiveDate": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "state": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "DashboardUpcomingDeadlines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "productInfo": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              },
+              "initials": {
+                "type": "string"
+              },
+              "icon": {
+                "type": "string"
+              }
+            }
+          },
+          "projectInfo": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "filingInfo": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "filingType": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "objectionId": {
+                "type": "string"
+              },
+              "respondByDate": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+    },
+    "FilingPayloadBase": {
+      "type": "object",
+      "required": [
+        "companies",
+        "typeOfInsurance",
+        "subTypeOfInsurance"
+      ],
+      "properties": {
+        "companies": {
+          "type": "array",
+          "minLength": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 100
+              }
+            }
+          }
+        },
+        "typeOfInsurance": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "subTypeOfInsurance": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "customTrackingNumber": {
+          "type": "string",
+          "maxLength": 255
+        }
+      }
+    },
+    "FilingCreatePayload": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/FilingPayloadBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "filingType",
+        "projectId",
+        "state"
+      ],
+      "properties": {
+        "filingType": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Products.projects"
+        },
+        "state": {
+          "type": "string",
+          "maxLength": 100
+        }
+      }
+    },
+    "FilingUpdatePayload": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/FilingPayloadBase"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "dateSubmitted": {
+          "type": "string"
+        }
+      }
+    },
+    "FilingsSync": {
+      "required": [
+        "filingIds",
+        "projectId",
+        "serffInstanceId"
+      ],
+      "type": "object",
+      "properties": {
+        "filingIds": {
+          "type": "array",
+          "minLength": 1,
+          "maxLength": 1000,
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Projects"
+        },
+        "serffInstanceId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Instances."
+        }
+      }
+    },
+    "FilingFee": {
+      "type": "object",
+      "properties": {
+        "stateFee": {
+          "type": "object",
+          "properties": {
+            "required": {
+              "type": "boolean"
+            },
+            "retaliatory": {
+              "type": "boolean"
+            },
+            "calculationExplanation": {
+              "type": "string",
+              "maxLength": 50000
+            },
+            "efts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "companyName": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "bypassed": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "transactionFees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "companyName": {
+                "type": "string",
+                "maxLength": 5000
+              },
+              "amount": {
+                "type": "number",
+                "minimum": 0
+              },
+              "feeType": {
+                "type": "string",
+                "maxLength": 5000
+              },
+              "paymentType": {
+                "type": "string",
+                "maxLength": 5000
+              }
+            }
+          }
+        }
+      }
+    },
+    "FilingFormBase": {
+      "type": "object",
+      "required": [
+        "formName",
+        "formType",
+        "action"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "resourceId": {
+          "type": "string",
+          "readOnly": true
+        },
+        "formName": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "formNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "editionDate": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "formType": {
+          "type": "string",
+          "enum": [
+            "ADV",
+            "BND",
+            "CER",
+            "DSC",
+            "END",
+            "PCF",
+            "ABE",
+            "CNR",
+            "DEC",
+            "ERS",
+            "OTH"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "N",
+            "RP",
+            "WD"
+          ]
+        },
+        "previousFilingNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "replacedFormNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "readabilityScore": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Allow null."
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Defualt now."
+        },
+        "reviewStatus": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "hasPreviousVersion": {
+          "type": "boolean",
+          "default": false
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "FilingForm": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/FilingFormBase"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "attachment": {
+          "$ref": "#/definitions/Attachment"
+        }
+      }
+    },
+    "FilingForms": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FilingForm"
+      }
+    },
+    "FilingGeneralInformation": {
+      "type": "object",
+      "properties": {
+        "advisoryOrganizationCircular": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "companyTrackingNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "correspondingTrackingNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 50000,
+          "description": "Allow null."
+        },
+        "domicileStatus": {
+          "type": "string",
+          "enum": [
+            "A",
+            "P",
+            "D",
+            "NF"
+          ],
+          "description": "Allow null."
+        },
+        "domicileStatusComment": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "effectiveDateRequestedNew": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Allow null."
+        },
+        "effectiveDateRequestedNewUponApproval": {
+          "type": "boolean",
+          "description": "Allow null."
+        },
+        "effectiveDateRequestedRenewal": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Allow null."
+        },
+        "effectiveDateRequestedRenewalUponApproval": {
+          "type": "boolean",
+          "description": "Allow null."
+        },
+        "referenceNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "referenceOrganization": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "referenceTitle": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        }
+      }
+    },
+    "FilingRateBase": {
+      "type": "object",
+      "required": [
+        "rateName",
+        "action"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "resourceId": {
+          "type": "string",
+          "readOnly": true
+        },
+        "rateName": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "ruleNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "N",
+            "RP",
+            "WD"
+          ]
+        },
+        "previousFilingNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Defualt now."
+        },
+        "reviewStatus": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "hasPreviousVersion": {
+          "type": "boolean",
+          "default": false
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "FilingRate": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/FilingRateBase"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "attachment": {
+          "$ref": "#/definitions/Attachment"
+        }
+      }
+    },
+    "FilingRates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FilingRate"
+      }
+    },
+    "FilingRateData": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "rateChangeType": {
+          "type": "integer",
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "description": "Allow null."
+        },
+        "lastRateRevisionOverallPercentage": {
+          "type": "number",
+          "description": "Allow null."
+        },
+        "lastRateRevisionEffectiveDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Allow null."
+        },
+        "lastFilingMethod": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "lastTrackingNumber": {
+          "type": "string",
+          "maxLength": 5000,
+          "description": "Allow null."
+        },
+        "companiesRateData": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "companyName": {
+                "type": "string",
+                "maxLength": 5000
+              },
+              "overallIndicatedChange": {
+                "type": "number"
+              },
+              "overallRateImpact": {
+                "type": "number"
+              },
+              "writtenPremiumChangeForThisProgram": {
+                "type": "number"
+              },
+              "numberOfPolicyHoldersAffectedForThisProgram": {
+                "type": "number"
+              },
+              "writtenPremiumForThisProgram": {
+                "type": "number"
+              },
+              "maxChange": {
+                "type": "number"
+              },
+              "minChange": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "overallRateIndicatedForThisFiling": {
+          "type": "number",
+          "description": "Allow null."
+        },
+        "overallRateImpactForThisFiling": {
+          "type": "number",
+          "description": "Allow null."
+        }
+      }
+    },
+    "FilingObjectionPayloadBase": {
+      "type": "object",
+      "properties": {
+        "conclusionText": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "introductionText": {
+          "type": "string"
+        },
+        "letterDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "objections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "objectionOrder": {
+                "type": "number"
+              },
+              "comment": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "respondByDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "submitterName": {
+          "type": "string"
+        },
+        "hasResponse": {
+          "type": "boolean"
+        }
+      }
+    },
+    "FilingObjection": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "conclusionText": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "introductionText": {
+          "type": "string"
+        },
+        "letterDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "objections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "objectionOrder": {
+                "type": "number"
+              },
+              "comment": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "respondByDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "submitterName": {
+          "type": "string",
+          "properties": {
+            "respondByDate": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "hasResponse": {
+          "type": "boolean"
+        },
+        "attachment": {
+          "$ref": "#/definitions/Attachment"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "FilingObjections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FilingObjection"
+      }
+    },
+    "FilingResponsePayload": {
+      "type": "object",
+      "properties": {
+        "conclusionText": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "introductionText": {
+          "type": "string"
+        },
+        "responses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "objectionId": {
+                "type": "string"
+              },
+              "comment": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "submitterName": {
+          "type": "string"
+        }
+      }
+    },
+    "FilingResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "conclusionText": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "introductionText": {
+          "type": "string"
+        },
+        "responses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "objectionId": {
+                "type": "string"
+              },
+              "comment": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "submitterName": {
+          "type": "string"
+        },
+        "attachment": {
+          "$ref": "#/definitions/Attachment"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "FilingResponses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FilingResponse"
+      }
+    },
+    "FilingAmendmentBase": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "comment": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "FilingAmendment": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/FilingAmendmentBase"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "attachment": {
+          "$ref": "#/definitions/Attachment"
+        }
+      }
+    },
+    "FilingAmendments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FilingAmendment"
+      }
+    },
+    "FilingStateSpecific": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "maxLength": 50000,
+          "readOnly": true
+        },
+        "answer": {
+          "type": "string",
+          "maxLength": 50000,
+          "readOnly": true
+        }
+      }
+    },
+    "FilingSupporting": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "resourceId": {
+          "type": "string",
+          "readOnly": true
+        },
+        "bypassed": {
+          "type": "boolean",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 5000,
+          "readOnly": true
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 50000,
+          "readOnly": true
+        },
+        "comment": {
+          "type": "string",
+          "maxLength": 50000,
+          "readOnly": true
+        },
+        "bypassExplanation": {
+          "type": "string",
+          "maxLength": 50000,
+          "readOnly": true
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Defualt now."
+        },
+        "attachment": {
+          "$ref": "#/definitions/Attachment"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "FilingDispositionPayload": {
+      "type": "object",
+      "properties": {
+        "comments": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dispositionDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "effectiveImplementationDateNew": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "effectiveImplementationDateRenewal": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "FilingDisposition": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "conclusionText": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "introductionText": {
+          "type": "string"
+        },
+        "responses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "objectionId": {
+                "type": "string"
+              },
+              "comment": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "submitterName": {
+          "type": "string"
+        },
+        "attachment": {
+          "$ref": "#/definitions/Attachment"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "FilingDispositions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FilingDisposition"
+      }
+    },
+    "FilingBase": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "trackingNumber": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "companies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "projectNumber": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "serffDateLastModified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "subTypeOfInsurance": {
+          "type": "string"
+        },
+        "statusId": {
+          "type": "string"
+        },
+        "hasPreviousVersion": {
+          "type": "boolean"
+        },
+        "filingType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "productId": {
+          "type": "string"
+        },
+        "accountId": {
+          "type": "string"
+        },
+        "overrides": {
+          "$ref": "#/definitions/FilingOverrides"
+        }
+      }
+    },
+    "FilingOverridesBase": {
+      "type": "object",
+      "properties": {
+        "effectiveDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hidden": {
+          "type": "boolean"
+        },
+        "objections": {
+          "type": "object",
+          "properties": {
+            "dynamicKey": {
+              "type": "object",
+              "properties": {
+                "respondByDate": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "FilingOverrides": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/FilingOverridesBase"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "attachment": {
+          "$ref": "#/definitions/AttachmentWithKey"
+        }
+      }
+    },
+    "Filing": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/FilingBase"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "fee": {
+          "$ref": "#/definitions/FilingFee"
+        },
+        "forms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FilingForm"
+          }
+        },
+        "generalInformation": {
+          "$ref": "#/definitions/FilingGeneralInformation"
+        },
+        "rates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FilingRate"
+          }
+        },
+        "rateData": {
+          "$ref": "#/definitions/FilingRateData"
+        },
+        "objections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FilingObjection"
+          }
+        },
+        "responses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FilingResponse"
+          }
+        },
+        "amendments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FilingAmendment"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "readOnly": true
+              },
+              "comments": {
+                "type": "string"
+              },
+              "dateSubmitted": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "noteType": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "attachment": {
+                "$ref": "#/definitions/Attachment"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "readOnly": true
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "readOnly": true
+              }
+            }
+          }
+        },
+        "stateSpecifics": {
+          "type": "array",
+          "readOnly": true,
+          "items": {
+            "$ref": "#/definitions/FilingStateSpecific"
+          }
+        },
+        "supportings": {
+          "type": "array",
+          "readOnly": true,
+          "items": {
+            "$ref": "#/definitions/FilingSupporting"
+          }
+        },
+        "dispositions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FilingDisposition"
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "FilingsWithTimeline": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FilingWithTimeline"
+      }
+    },
+    "FilingWithTimeline": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Filing"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "timeline": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Timeline"
+          }
+        }
+      }
+    },
+    "FilingMetaObjectionIsHidden": {
+      "type": "object",
+      "properties": {
+        "isHidden": {
+          "type": "boolean"
+        }
+      }
+    },
+    "FilingMetaObjectionResponders": {
+      "type": "object",
+      "properties": {
+        "responders": {
+          "type": "object"
+        }
+      }
+    },
+    "FilingMetaResponseEntryCreatePayload": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "$ref": "#/definitions/FilingMetaResponseEntry"
+        },
+        "objectionLetterId": {
+          "type": "string"
+        }
+      }
+    },
+    "FilingMetaResponseEntryUpdatePayload": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "draft": {
+          "type": "boolean"
+        },
+        "responseLetterId": {
+          "type": "string"
+        }
+      }
+    },
+    "FilingMetaResponseEntryAttachmentDeletePayload": {
+      "type": "object",
+      "properties": {
+        "responseLetterId": {
+          "type": "string"
+        }
+      }
+    },
+    "FilingMetaResponseEntry": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "draft": {
+          "type": "boolean"
+        },
+        "objectionId": {
+          "type": "string"
+        }
+      }
+    },
+    "FormsLibrary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "formName": {
+                  "type": "string"
+                },
+                "formNumber": {
+                  "type": "string"
+                },
+                "editionDate": {
+                  "type": "string"
+                },
+                "effectiveDate": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "projectId": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "attachmentKey": {
+                  "type": "string"
+                },
+                "hidden": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "FormsLibraryPayload": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string"
+        }
+      }
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "mongodb": {
+          "type": "boolean",
+          "readOnly": true
+        },
+        "elasticsearch": {
+          "type": "boolean",
+          "readOnly": true
+        }
+      }
+    },
+    "Products": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Product"
+      }
+    },
+    "ProductBase": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex.",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Unique within account."
+        },
+        "color": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "Color hex code."
+        },
+        "initials": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "order": {
+          "type": "number",
+          "format": "float",
+          "description": "Positive."
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Accounts.",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "Product": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ProductBase"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "projects": {
+          "type": "array",
+          "readOnly": true,
+          "items": {
+            "$ref": "#/definitions/Projects"
+          }
+        }
+      }
+    },
+    "ProjectCreatePayload": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "projectNumber": {
+          "type": "string"
+        }
+      }
+    },
+    "ProjectUpdatePayload": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "projectNumber": {
+          "type": "string"
+        },
+        "leads": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ProjectCreateUpdateResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/Project"
+        }
+      }
+    },
+    "Projects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Project"
+      }
+    },
+    "Project": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string"
+        },
+        "projectNumber": {
+          "type": "string"
+        },
+        "order": {
+          "type": "string",
+          "readOnly": true
+        },
+        "leads": {
+          "type": "array",
+          "readOnly": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "ProjectsOrderPayload": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "order": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ProjectStateClonePayload": {
+      "type": "object",
+      "properties": {
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ProjectAndFilingsWithTimeline": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "projectNumber": {
+              "type": "string"
+            },
+            "leads": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "filings": {
+              "$ref": "#/definitions/FilingsWithTimeline"
+            }
+          }
+        }
+      }
+    },
+    "RatesLibrary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ruleNumber": {
+                  "type": "string"
+                },
+                "rateName": {
+                  "type": "string"
+                },
+                "effectiveDate": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "projectId": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "attachmentKey": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ReportLibraryPayload": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "type": "string"
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportLibraryDocumentPayload": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportLibraryResponse": {
+      "type": "object",
+      "properties": {
+        "reportSummaryUrl": {
+          "type": "string"
+        },
+        "reportCompressionUrl": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportStateCreatePayload": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string"
+        }
+      }
+    },
+    "SerffAuthors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SerffAuthor"
+      }
+    },
+    "SerffAuthor": {
+      "type": "object",
+      "required": [
+        "name",
+        "serffId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "serffId": {
+          "type": "string",
+          "maxLength": 100,
+          "readOnly": true
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "readOnly": true,
+          "description": "Hex, ref Accounts."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "SerffAuthorsSync": {
+      "type": "object",
+      "required": [
+        "serffInstanceId"
+      ],
+      "properties": {
+        "serffInstanceId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Instances."
+        }
+      }
+    },
+    "SerffCompanies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SerffCompany"
+      }
+    },
+    "SerffCompany": {
+      "type": "object",
+      "required": [
+        "name",
+        "serffId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "feinNumber": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "cocode": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "postalCode": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "state": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "country": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "domicileState": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "domicileCountry": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "serffId": {
+          "type": "string",
+          "maxLength": 100,
+          "readOnly": true
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "readOnly": true,
+          "description": "Hex, ref Accounts."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "SerffCompaniesSync": {
+      "type": "object",
+      "required": [
+        "serffInstanceId"
+      ],
+      "properties": {
+        "serffInstanceId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Instances."
+        }
+      }
+    },
+    "SerffContacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SerffContact"
+      }
+    },
+    "SerffContact": {
+      "type": "object",
+      "required": [
+        "serffId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "emailAddress": {
+          "type": "string",
+          "maxLength": 1000,
+          "readOnly": true
+        },
+        "serffId": {
+          "type": "string",
+          "maxLength": 100,
+          "readOnly": true
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "readOnly": true,
+          "description": "Hex, ref Accounts."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "SerffContactsSync": {
+      "type": "object",
+      "required": [
+        "serffInstanceId"
+      ],
+      "properties": {
+        "serffInstanceId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Instances."
+        }
+      }
+    },
+    "SerffFilingScrape": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Projects."
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "AK",
+            "AL",
+            "AR",
+            "AZ",
+            "CA",
+            "CO",
+            "CT",
+            "DC",
+            "DE",
+            "GA",
+            "GU",
+            "HI",
+            "IA",
+            "ID",
+            "IL",
+            "IN",
+            "KS",
+            "KY",
+            "LA",
+            "MA",
+            "MD",
+            "ME",
+            "MI",
+            "MN",
+            "MO",
+            "MS",
+            "MT",
+            "NC",
+            "ND",
+            "NE",
+            "NH",
+            "NJ",
+            "NM",
+            "NV",
+            "NY",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "PR",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VA",
+            "VI",
+            "VT",
+            "WA",
+            "WI",
+            "WV",
+            "WY"
+          ]
+        },
+        "trackingNumber": {
+          "type": "string",
+          "maxLength": 100
+        }
+      }
+    },
+    "SerffInstances": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SerffInstance"
+      }
+    },
+    "SerffInstanceResponse": {
+      "type": "object",
+      "properties": {
+        "serffInstance": {
+          "$ref": "#/definitions/SerffInstance"
+        }
+      }
+    },
+    "SerffInstance": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "ONE_WAY",
+            "TWO_WAY"
+          ]
+        },
+        "protocol": {
+          "type": "string",
+          "enum": [
+            "REST",
+            "SOAP"
+          ]
+        },
+        "accountId": {
+          "type": "string",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "Timeline": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "dateSubmitted": {
+          "type": "string"
+        },
+        "filingType": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "statusId": {
+          "type": "string"
+        },
+        "content": {
+          "type": "object"
+        },
+        "attachment": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "UserCurrentUpdatePayload": {
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "lastName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "color": {
+          "type": "array",
+          "minLength": 5,
+          "maxLength": 5,
+          "items": {
+            "type": "string",
+            "description": "Color hex code."
+          }
+        },
+        "timezone": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "postalCode": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "AA",
+            "AE",
+            "AK",
+            "AL",
+            "AP",
+            "AR",
+            "AS",
+            "AZ",
+            "CA",
+            "CAWC",
+            "CO",
+            "CT",
+            "DC",
+            "DE",
+            "FL",
+            "GA",
+            "GU",
+            "HI",
+            "IA",
+            "ID",
+            "IL",
+            "IN",
+            "KS",
+            "KY",
+            "LA",
+            "MA",
+            "MD",
+            "MDWC",
+            "ME",
+            "MH",
+            "MI",
+            "MN",
+            "MO",
+            "MS",
+            "MT",
+            "NC",
+            "ND",
+            "NE",
+            "NH",
+            "NJ",
+            "NM",
+            "NP",
+            "NV",
+            "NY",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "PR",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VA",
+            "VI",
+            "VT",
+            "WA",
+            "WI",
+            "WV",
+            "WY"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US"
+          ]
+        },
+        "pinnedProject": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Projects. Allows null."
+        }
+      }
+    },
+    "UserCurrentPasswordUpdatePayload": {
+      "type": "object",
+      "required": [
+        "currentPassword",
+        "newPassword"
+      ],
+      "properties": {
+        "currentPassword": {
+          "type": "string",
+          "maxLength": 100,
+          "format": "password"
+        },
+        "newPassword": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100,
+          "format": "password",
+          "description": "Must have lowercase letter. Must have uppercase letter. Must have digit. Must have symbol. Should not have spaces."
+        }
+      }
+    },
+    "UserAccountUpdatePayload": {
+      "type": "object",
+      "required": [
+        "accountId"
+      ],
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Accounts."
+        }
+      }
+    },
+    "UserForgotPasswordPayload": {
+      "type": "object",
+      "required": [
+        "username"
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "maxLength": 50,
+          "format": "email",
+          "description": "Unique."
+        }
+      }
+    },
+    "UserResetPasswordPayload": {
+      "type": "object",
+      "required": [
+        "key",
+        "password"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100,
+          "format": "password",
+          "description": "Must have lowercase letter. Must have uppercase letter. Must have digit. Must have symbol. Should not have spaces."
+        }
+      }
+    },
+    "UserUpdatePayload": {
+      "type": "object",
+      "properties": {
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100,
+          "description": "Must have lowercase letter. Must have uppercase letter. Must have digit. Must have symbol. Should not have spaces."
+        },
+        "firstName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "lastName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "color": {
+          "type": "array",
+          "minLength": 5,
+          "maxLength": 5,
+          "items": {
+            "type": "string",
+            "description": "Color hex code."
+          }
+        },
+        "timezone": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "postalCode": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "AA",
+            "AE",
+            "AK",
+            "AL",
+            "AP",
+            "AR",
+            "AS",
+            "AZ",
+            "CA",
+            "CAWC",
+            "CO",
+            "CT",
+            "DC",
+            "DE",
+            "FL",
+            "GA",
+            "GU",
+            "HI",
+            "IA",
+            "ID",
+            "IL",
+            "IN",
+            "KS",
+            "KY",
+            "LA",
+            "MA",
+            "MD",
+            "MDWC",
+            "ME",
+            "MH",
+            "MI",
+            "MN",
+            "MO",
+            "MS",
+            "MT",
+            "NC",
+            "ND",
+            "NE",
+            "NH",
+            "NJ",
+            "NM",
+            "NP",
+            "NV",
+            "NY",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "PR",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VA",
+            "VI",
+            "VT",
+            "WA",
+            "WI",
+            "WV",
+            "WY"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "MEMBER",
+            "ADMIN",
+            "ACCOUNT_ADMIN"
+          ]
+        },
+        "serffAuthorId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Authors."
+        },
+        "serffContactId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Contacts."
+        }
+      }
+    },
+    "Users": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/User"
+      }
+    },
+    "User": {
+      "type": "object",
+      "required": [
+        "username",
+        "password",
+        "firstName",
+        "lastName",
+        "color"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "username": {
+          "type": "string",
+          "maxLength": 50,
+          "format": "email",
+          "description": "Unique."
+        },
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100,
+          "format": "password",
+          "description": "Must have lowercase letter. Must have uppercase letter. Must have digit. Must have symbol. Should not have spaces."
+        },
+        "firstName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "lastName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "color": {
+          "type": "array",
+          "minLength": 5,
+          "maxLength": 5,
+          "items": {
+            "type": "string",
+            "description": "Color hex code."
+          }
+        },
+        "timezone": {
+          "type": "string",
+          "maxLength": 100,
+          "default": "America/Chicago",
+          "readOnly": true
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "postalCode": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "city": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "AA",
+            "AE",
+            "AK",
+            "AL",
+            "AP",
+            "AR",
+            "AS",
+            "AZ",
+            "CA",
+            "CAWC",
+            "CO",
+            "CT",
+            "DC",
+            "DE",
+            "FL",
+            "GA",
+            "GU",
+            "HI",
+            "IA",
+            "ID",
+            "IL",
+            "IN",
+            "KS",
+            "KY",
+            "LA",
+            "MA",
+            "MD",
+            "MDWC",
+            "ME",
+            "MH",
+            "MI",
+            "MN",
+            "MO",
+            "MS",
+            "MT",
+            "NC",
+            "ND",
+            "NE",
+            "NH",
+            "NJ",
+            "NM",
+            "NP",
+            "NV",
+            "NY",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "PR",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VA",
+            "VI",
+            "VT",
+            "WA",
+            "WI",
+            "WV",
+            "WY"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US"
+          ]
+        },
+        "pinnedProject": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Projects.",
+          "readOnly": true
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "MEMBER",
+            "ACCOUNT_ADMIN",
+            "ADMIN"
+          ],
+          "default": "MEMBER"
+        },
+        "serffAuthorId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Authors."
+        },
+        "serffContactId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Serff-Contacts."
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Accounts.",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "UserPopulated": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/User"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/Account"
+        }
+      }
+    },
+    "WorkflowObjection": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "customTrackingNumber": {
+          "type": "string"
+        },
+        "trackingNumber": {
+          "type": "string"
+        },
+        "filingType": {
+          "type": "string"
+        },
+        "objection": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "readOnly": true
+            },
+            "letterDate": {
+              "type": "string"
+            },
+            "respondByDate": {
+              "type": "string"
+            }
+          }
+        },
+        "product": {
+          "$ref": "#/definitions/ProductBase"
+        },
+        "project": {
+          "$ref": "#/definitions/Project"
+        },
+        "state": {
+          "type": "string"
+        }
+      }
+    },
+    "WorkflowOpenObjections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/WorkflowOpenObjection"
+      }
+    },
+    "WorkflowOpenObjection": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/WorkflowObjection"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "meta": {
+          "type": "object"
+        }
+      }
+    },
+    "WorkflowClosedObjections": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "number"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WorkflowObjection"
+          }
+        }
+      }
+    },
+    "WorkflowObjectionDetails": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "readOnly": true
+        },
+        "companies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "filingId": {
+          "type": "string"
+        },
+        "filingType": {
+          "type": "string"
+        },
+        "objection": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "readOnly": true
+            },
+            "conclusionText": {
+              "type": "string"
+            },
+            "introductionText": {
+              "type": "string"
+            },
+            "respondByDate": {
+              "type": "string"
+            },
+            "hasResponse": {
+              "type": "boolean"
+            },
+            "objections": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "resourceId": {
+                    "type": "string"
+                  },
+                  "objectionOrder": {
+                    "type": "number"
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "references": {
+                    "type": "object",
+                    "properties": {
+                      "forms": {
+                        "type": "array",
+                        "items": {
+                          "type": "object"
+                        }
+                      },
+                      "rates": {
+                        "type": "array",
+                        "items": {
+                          "type": "object"
+                        }
+                      },
+                      "supportings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "response": {
+          "type": "object"
+        },
+        "product": {
+          "$ref": "#/definitions/ProductBase"
+        },
+        "project": {
+          "$ref": "#/definitions/Project"
+        },
+        "state": {
+          "type": "string"
+        },
+        "customTrackingNumber": {
+          "type": "string"
+        },
+        "trackingNumber": {
+          "type": "string"
+        },
+        "responders": {
+          "type": "object"
+        }
+      }
+    },
+    "Workspaces": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Workspace"
+      }
+    },
+    "Workspace": {
+      "type": "object",
+      "required": [
+        "name",
+        "color",
+        "initials",
+        "order"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex.",
+          "readOnly": true
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Unique within account."
+        },
+        "color": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "Color hex code."
+        },
+        "initials": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "order": {
+          "type": "number",
+          "format": "float",
+          "description": "Positive."
+        },
+        "products": {
+          "$ref": "#/definitions/WorkspaceProducts"
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Accounts.",
+          "readOnly": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "WorkspaceProducts": {
+      "type": "array",
+      "readOnly": true,
+      "items": {
+        "$ref": "#/definitions/WorkspaceProduct"
+      }
+    },
+    "WorkspaceProduct": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/WorkspaceProductBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "productId"
+      ],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 24,
+          "description": "Hex, ref Products."
+        }
+      }
+    },
+    "WorkspaceProductBase": {
+      "type": "object",
+      "required": [
+        "order"
+      ],
+      "properties": {
+        "order": {
+          "type": "number",
+          "format": "float",
+          "description": "Positive."
+        }
+      }
+    }
+  }
+}

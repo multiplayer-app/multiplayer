@@ -1,0 +1,30 @@
+{
+    "name": "@multiplayer/clickhouse",
+    "version": "0.0.1",
+    "description": "Multiplayer clickhouse library",
+    "main": "dist/index.js",
+    "engines": {
+        "node": ">=18",
+        "npm": ">=8"
+    },
+    "scripts": {
+        "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+        "preversion": "npm run lint",
+        "postversion": "git push && git push --tags",
+        "build": "tsc --build --force"
+    },
+    "author": "Multiplayer",
+    "keywords": [
+        "clickhouse",
+        "library"
+    ],
+    "dependencies": {
+      "@clickhouse/client": "1.18.2",
+      "@multiplayer/logger": "0.0.1"
+    },
+    "devDependencies": {
+      "@types/node": "25.5.0",
+      "eslint": "10.1.0",
+      "typescript": "6.0.2"
+    }
+}

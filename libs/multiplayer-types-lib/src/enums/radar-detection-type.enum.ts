@@ -1,0 +1,6 @@
+export enum RadarDetectionType {
+  ENDPOINT = 'ENDPOINT',
+  DEPENDENCY = 'DEPENDENCY',
+  SERVICE = 'SERVICE',
+  ENVIRONMENT = 'ENVIRONMENT',
+}

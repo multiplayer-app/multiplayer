@@ -1,0 +1,19 @@
+.sketch-tool-container--inspect,
+.sketch-tool-container--inspect .excalidraw,
+.sketch-tool-container--inspect .excalidraw * {
+  pointer-events: none !important;
+}
+
+.sketch-tool-container .excalidraw {
+  .App-bottom-bar,
+  .LaserToolOverlay,
+  .excalidraw-contextMenuContainer,
+  .excalidraw-eye-dropper-container,
+  .layer-ui__wrapper,
+  .App-toolbar,
+  .FixedSideContainer,
+  .App-sidebar,
+  .App-sidebar-container {
+    display: none !important;
+  }
+}

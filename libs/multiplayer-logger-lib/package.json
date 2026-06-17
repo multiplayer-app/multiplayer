@@ -1,0 +1,32 @@
+{
+    "name": "@multiplayer/logger",
+    "version": "0.0.1",
+    "description": "Multiplayer logger library",
+    "main": "dist/index.js",
+    "engines": {
+        "node": ">=18",
+        "npm": ">=8"
+    },
+    "scripts": {
+        "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+        "preversion": "npm run lint",
+        "postversion": "git push && git push --tags",
+        "build": "tsc --build --force"
+    },
+    "author": "Multiplayer",
+    "keywords": [
+        "logger",
+        "library"
+    ],
+    "dependencies": {
+        "bunyan": "1.8.15",
+        "express": "5.2.1"
+    },
+    "devDependencies": {
+        "@types/bunyan": "1.8.8",
+        "@types/express": "5.0.6",
+        "@types/node": "25.5.0",
+        "eslint": "10.1.0",
+        "typescript": "6.0.2"
+    }
+}

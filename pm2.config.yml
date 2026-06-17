@@ -1,0 +1,226 @@
+.envs: &envs
+  PLATFORM_ENV: local
+  NPM_CONFIG_SHELL: /bin/bash
+  NPM_CONFIG_SCRIPT_SHELL: /bin/bash
+  HTTP_HOST: 127.0.0.1
+  LOG_LEVEL: debug
+  NODE_ENV: development
+
+  CORS_ORIGIN: "*"
+  COOKIE_DOMAIN: localhost
+  COOKIE_SECRET: some_secret
+
+  MONGODB_URI: mongodb://localhost:27017/multiplayer
+  MONGODB_ENCRYPTION_MASTER_KEY_PROVIDER: local
+
+  AMQP_URI: amqp://localhost:5672
+
+  REDIS_URI: redis://localhost:6379
+
+  CLICKHOUSE_URI: http://localhost:8123
+
+  SWAGGER_ENABLED: true
+
+  FRONTEND_DOMAIN: localhost
+  FRONTEND_PROTOCOL: http
+
+  API_DOMAIN: localhost
+  API_PROTOCOL: http
+
+  AWS_ACCESS_KEY_ID: minioadmin
+  AWS_SECRET_ACCESS_KEY: minioadmin
+  AWS_REGION: us-east-1
+  S3_HOST: http://localhost:9000
+  S3_EXPORT_HOST: http://multiplayer-minio:9000
+
+  KAFKA_URI: localhost:29092
+
+  # APM
+  OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: http://localhost/v1/logs
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT_1: http://localhost/jaeger/v1/traces # jaeger
+  OTEL_TRACES_SAMPLER_ARG: 0.3
+  OTEL_TRACES_DOCS_SAMPLER_ARG: 0.3
+
+  # MP_DEBUGGER:
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://localhost/v1/traces # otel collector
+  REACT_APP_SESSION_DEBUGGER_API_BASE_URL: http://localhost
+  REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT: http://localhost/v1/traces
+
+  # OTEL_EXPORTER_OTLP_TRACES_ENDPOINT_2: https://ingest.us.signoz.cloud:443/v1/traces
+  # OTEL_EXPORTER_OTLP_HEADERS_2: signoz-access-token=t6Ngzi8AXQpUlRVzESrD01-h6bKOQsAhZUYD
+
+  OTEL_ENABLED: "true"
+  # OTEL_LOG_LEVEL: DEBUG
+  PROMETHEUS_EXPORTER_ENABLED: "true"
+
+  INTEGRATION_JWT_SECRET: some_secret
+
+  VERSION_SERVICE_URI: http://localhost:3006/v0/version
+  INTERNAL_VERSION_SERVICE_URI: http://localhost:3006/internal/v0/version
+  INTERNAL_GIT_SERVICE_URI: http://localhost:3007/internal/v0/git
+  API_SERVICE_URI: http://localhost:3001/v0/api
+
+  NEW_RELIC_HOME: "../../node_modules/@multiplayer/apm/"
+  NEW_RELIC_ENABLED: "false"
+  MULTIPLAYER_BASE_API_URL: "http://localhost"
+  MULTIPLAYER_CLIENT_DOMAIN: "http://localhost"
+
+.common: &common
+  script: npm
+  args: run dev
+  # script: ./src/index.js
+  watch: false
+  # kill_timeout : 5000
+  # autorestart: true
+  # restart_delay: 3000
+  # combine_logs: true
+  node_args: "--enable-source-maps"
+  ignore_watch: [node_modules, dist, newrelic_agent.log, static]
+  # watch_options:
+  #   followSymlinks: true
+  env:
+    <<: *envs
+
+apps:
+  - name: app
+    <<: *common
+    watch: false
+    script: npm
+    args: start
+    namespace: frontend
+    cwd: ./clients/multiplayer-web-app
+    env:
+      <<: *envs
+      PORT: 3000
+      REACT_APP_API_BASE_URL: http://localhost
+      REACT_APP_API_PREFIX: /v0/api
+      REACT_APP_GIT_PREFIX: /v0/git
+      REACT_APP_AUTH_PREFIX: /v0/auth
+      REACT_APP_COLLABORATION_PREFIX: /v0/collaboration
+      REACT_APP_VERSION_PREFIX: /v0/version
+      REACT_APP_RADAR_PREFIX: /v0/radar
+      REACT_APP_NOTEBOOK_PREFIX: /v0/api # will be changed to notebook when new service is supported
+
+  - name: api
+    <<: *common
+    namespace: back
+    cwd: ./services/multiplayer-api-service
+    # node_args: "--inspect=3500"
+    env:
+      <<: *envs
+      PORT: 3001
+      OTEL_EXPORTER_OTLP_METRICS_PORT: 4001
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/api
+
+  - name: auth
+    <<: *common
+    namespace: back
+    cwd: ./services/multiplayer-auth-service
+    env:
+      <<: *envs
+      PORT: 3002
+      OTEL_EXPORTER_OTLP_METRICS_PORT: 4002
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/auth
+
+  - name: collaboration
+    <<: *common
+    namespace: back
+    cwd: ./services/multiplayer-collaboration-service
+    env:
+      <<: *envs
+      PORT: 3003
+      OTEL_EXPORTER_OTLP_METRICS_PORT: 4003
+      SWAGGER_ENABLED: true
+
+  # - name: directory
+  #   <<: *common
+  #   namespace: back
+  #   cwd: ./services/multiplayer-directory-service
+  #   env:
+  #     <<: *envs
+  #     PORT: 3004
+  #     SWAGGER_ENABLED: true
+  #     API_PREFIX: /v0/directory
+
+  - name: notification
+    <<: *common
+    namespace: back
+    cwd: ./services/multiplayer-notification-service
+    env:
+      <<: *envs
+      PORT: 3005
+      OTEL_EXPORTER_OTLP_METRICS_PORT: 4005
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/notification
+
+  - name: version
+    <<: *common
+    namespace: back
+    cwd: ./services/multiplayer-version-service
+    env:
+      <<: *envs
+      PORT: 3006
+      OTEL_EXPORTER_OTLP_METRICS_PORT: 4006
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/version
+      COMMIT_TIMEOUT_INTERVAL_MS: '10000'
+
+#  - name: notebook
+#    <<: *common
+#    namespace: back
+#    cwd: ./services/multiplayer-notebook-service
+#    env:
+#      <<: *envs
+#      PORT: 3008
+#      OTEL_EXPORTER_OTLP_METRICS_PORT: 4008
+#      SWAGGER_ENABLED: true
+#      API_PREFIX: /v0/notebook
+
+  - name: git
+    <<: *common
+    namespace: back
+    cwd: ./services/multiplayer-git-service
+    env:
+      <<: *envs
+      PORT: 3007
+      OTEL_EXPORTER_OTLP_METRICS_PORT: 4007
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/git
+
+  - name: radar
+    <<: *common
+    namespace: back
+    cwd: ./services/multiplayer-radar-service
+    # node_args: "--inspect=3500"
+    env:
+      <<: *envs
+      OTEL_ENABLED: false
+      OTEL_TRACES_SAMPLER_ARG: 0
+      PORT: 5318
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/radar
+      OTEL_EXPORTER_OTLP_METRICS_PORT: 4008
+      OTLP_METRICS_ENABLED: true
+      # LOG_LEVEL: info
+
+  - name: assets
+    <<: *common
+    namespace: back
+    cwd: ./services/multiplayer-assets-service
+    env:
+      <<: *envs
+      PORT: 3009
+      OTEL_EXPORTER_OTLP_METRICS_PORT: 4009
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/assets
+
+
+  - name: rebuild-services-watch
+    script: npx lerna watch --sort --scope={$(npx lerna list --all --parseable --toposort --long | grep libs | sed -E "s/[^:]+:([^:]+).+/\1/" | paste -d , -s -)} -- npx lerna run --scope=\$LERNA_PACKAGE_NAME build \&\& pm2 restart back
+
+
+  # TODO: replace lerna with turbo
+  # - name: watch-libs
+  #   script: turbo watch build --filter="./libs/*" --filter="./services/*" --experimental-write-cache

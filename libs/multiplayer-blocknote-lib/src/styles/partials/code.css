@@ -1,0 +1,130 @@
+.ProseMirror {
+  code:not(.code-result-code) {
+    @apply caret-white text-white bg-neutral-900 rounded-sm shadow-lg font-mono;
+
+    &::selection {
+      @apply bg-white/30;
+    }
+  }
+
+  .code-result-code {
+    @apply text-sm font-mono;
+  }
+
+  pre:not(.code-result-pre) {
+    /* @apply caret-white bg-neutral-700 text-white rounded my-12 p-4 border border-gray dark:bg-neutral-900 dark:border-neutral-800; */
+    @apply bg-slate-50 text-gray-700 border border-gray-200 rounded my-12 p-4;
+
+    /* *::selection {
+      @apply bg-white/20;
+    } */
+
+    code {
+      @apply caret-inherit bg-inherit text-inherit p-0 shadow-none;
+    }
+
+    .hljs-comment,
+    .hljs-quote {
+      @apply text-neutral-400;
+    }
+
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-attribute,
+    .hljs-tag,
+    .hljs-name,
+    .hljs-regexp,
+    .hljs-link,
+    .hljs-name,
+    .hljs-selector-id,
+    .hljs-selector-class {
+      @apply text-red-500;
+    }
+
+    .hljs-number,
+    .hljs-meta,
+    .hljs-built_in,
+    .hljs-builtin-name,
+    .hljs-literal,
+    .hljs-type,
+    .hljs-params {
+      @apply text-orange-500;
+    }
+
+    .hljs-string,
+    .hljs-symbol,
+    .hljs-bullet {
+      @apply text-lime-500;
+    }
+
+    .hljs-title,
+    .hljs-section {
+      @apply text-yellow-500;
+    }
+
+    .hljs-keyword,
+    .hljs-selector-tag {
+      @apply text-teal-500;
+    }
+
+    .hljs-emphasis {
+      font-style: italic;
+    }
+
+    .hljs-strong {
+      font-weight: 700;
+    }
+  }
+  .monaco-editor .scrollbar.vertical,
+  .monaco-editor .decorationsOverviewRuler {
+    width: 8px !important;
+  }
+
+  .monaco-editor .view-overlays .current-line {
+    border-width: 1px;
+  }
+
+  .monaco-editor .overflow-guard {
+    border-bottom-right-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+  }
+  /* .monaco-editor,
+  [role='presentation'],
+  .monaco-editor .overflow-guard {
+    width: 100% !important;
+  } */
+  .monaco-scrollable-element {
+    overflow: hidden;
+    border-bottom-right-radius: 0.5rem;
+  }
+
+  .monaco-editor .margin {
+    border-bottom-left-radius: 0.5rem;
+  }
+
+  .monaco-editor,
+  .monaco-editor-background {
+    outline-width: 0;
+    border-bottom-right-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+  }
+
+  .view-editor .monaco-editor .view-overlays .current-line {
+    border: 0;
+  }
+  .monaco-editor .margin,
+  .monaco-editor,
+  .monaco-editor-background {
+    background-color: inherit;
+  }
+
+  .variable-decoration {
+    color: #f39c12;
+    font-weight: bold;
+  }
+
+  .handler-decoration {
+    color: #119ef0;
+    font-weight: bold;
+  }
+}

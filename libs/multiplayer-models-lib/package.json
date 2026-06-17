@@ -1,0 +1,36 @@
+{
+  "name": "@multiplayer/models",
+  "version": "0.0.1",
+  "description": "Multiplayer models library",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18",
+    "npm": ">=8"
+  },
+  "scripts": {
+    "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags",
+    "build": "tsc --build --force"
+  },
+  "author": "Multiplayer",
+  "keywords": [
+    "models",
+    "library"
+  ],
+  "dependencies": {
+    "@multiplayer/logger": "0.0.1",
+    "@multiplayer/mongo": "0.0.1",
+    "@multiplayer/types": "0.0.1",
+    "@multiplayer/util": "0.0.1",
+    "@multiplayer/util-shared": "0.0.1",
+    "@multiplayer-app/session-recorder-common": "2.0.85",
+    "bcrypt": "5.1.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "5.0.0",
+    "@types/node": "25.5.0",
+    "eslint": "10.1.0",
+    "typescript": "6.0.2"
+  }
+}

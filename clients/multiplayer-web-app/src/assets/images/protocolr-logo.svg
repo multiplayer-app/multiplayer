@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 128 128" style="enable-background:new 0 0 128 128;" xml:space="preserve">
+<style type="text/css">
+	.st0{display:none;}
+	.st1{display:inline;}
+	.st2{fill-rule:evenodd;clip-rule:evenodd;fill:#F4C464;}
+	.st3{fill-rule:evenodd;clip-rule:evenodd;fill:#E0E0E0;}
+	.st4{fill-rule:evenodd;clip-rule:evenodd;fill:#C9524A;}
+	.st5{opacity:0.9;fill:#A3A3A3;enable-background:new    ;}
+</style>
+    <g class="st0">
+	<g class="st1">
+		<path class="st2" d="M14.5,64c0-27.3,22.2-49.5,49.5-49.5s49.5,22.2,49.5,49.5S91.3,113.5,64,113.5l0,0    C36.6,113.5,14.5,91.3,14.5,64z M24.9,64.5c0,21.7,17.5,39.3,39.2,39.3s39.3-17.5,39.3-39.2S85.9,25.3,64.2,25.3c0,0,0,0-0.1,0    C42.5,25.3,24.9,42.9,24.9,64.5L24.9,64.5z"/>
+	</g>
+</g>
+    <g id="Layer_1_1_">
+	<g>
+		<path class="st3" d="M14.9,64.4c0-27.4,22.2-49.5,49.6-49.5S114,37.1,114,64.5S91.8,114,64.4,114l0,0    C37,113.9,14.9,91.7,14.9,64.4z M25.3,64.9c0,21.7,17.5,39.3,39.2,39.3s39.3-17.5,39.3-39.2S86.3,25.7,64.6,25.7c0,0,0,0-0.1,0    C42.9,25.7,25.3,43.3,25.3,64.9L25.3,64.9z"/>
+        <path class="st4" d="M47.6,90.5h10.1V71.8h11c11.5,0,16.8-6.7,16.8-15.3s-4.9-15.4-16.8-15.4H47.6V90.5z M75.4,56.6    c0,3.6-2,6-6.7,6h-11v-12h11C73.4,50.5,75.4,53,75.4,56.6z"/>
+        <circle class="st5" cx="75.6" cy="21.2" r="9.2"/>
+        <circle class="st5" cx="95.8" cy="96.1" r="9.2"/>
+        <circle class="st5" cx="21.2" cy="76.3" r="9.2"/>
+	</g>
+</g>
+</svg>

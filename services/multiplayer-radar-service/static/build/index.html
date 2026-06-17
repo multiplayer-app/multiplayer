@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Chat · Multiplayer</title>
+  <script src="./js/agent-terminal.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #ccc;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header bar ── */
+    #header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      height: 40px;
+      background: #161616;
+      border-bottom: 1px solid #2a2a2a;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+    #header .logo { color: #6c63ff; font-weight: 700; letter-spacing: 0.04em; margin-right: 4px; }
+    #header .sep { color: #333; }
+    #status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #444;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    #status-dot.connected    { background: #4caf50; }
+    #status-dot.disconnected { background: #f44336; }
+    #status-dot.error        { background: #ff9800; }
+    #status-text { color: #666; }
+    #agent-badge {
+      margin-left: auto;
+      color: #555;
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+    /* ── Setup overlay ── */
+    #setup {
+      position: fixed;
+      inset: 0;
+      background: rgba(13,13,13,0.97);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .card {
+      background: #161616;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 32px;
+      width: 440px;
+      max-width: calc(100vw - 32px);
+    }
+    .card h2 {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .card p { color: #555; font-size: 12px; margin-bottom: 24px; }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      color: #666;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 5px;
+    }
+    .field input {
+      width: 100%;
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      color: #ddd;
+      padding: 8px 10px;
+      border-radius: 5px;
+      font-family: 'Menlo', 'Monaco', monospace;
+      font-size: 12px;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { outline: none; border-color: #6c63ff; }
+    .field input::placeholder { color: #3a3a3a; }
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: #6c63ff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #5a52e0; }
+    .btn:active { background: #4a43c8; }
+    .error-msg {
+      color: #f44336;
+      font-size: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* ── Chat feed ── */
+    #chat-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chat-block {
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      color: #999;
+    }
+    .chat-header.status-processing { color: #ff9800; }
+    .chat-header.status-streaming  { color: #6c63ff; }
+    .chat-header.status-finished   { color: #4caf50; }
+    .chat-header.status-aborted    { color: #f44336; }
+    .chat-header.status-error      { color: #f44336; }
+
+    .message {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1a1a1a;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .message:last-child { border-bottom: none; }
+
+    .msg-meta {
+      font-size: 10px;
+      color: #555;
+      display: block;
+      margin-bottom: 4px;
+      font-family: monospace;
+    }
+
+    .msg-content {
+      color: #ccc;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message.role-user .msg-content { color: #80cbc4; }
+    .message.role-assistant .msg-content { color: #ccc; }
+    .message.role-error .msg-content { color: #f44336; }
+    .message.role-tool .msg-content { color: #ffa726; font-family: monospace; }
+
+    /* ── User input bar ── */
+    #input-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid #2a2a2a;
+      background: #161616;
+      flex-shrink: 0;
+    }
+
+    #msg-input {
+      flex: 1;
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      color: #ddd;
+      padding: 8px 10px;
+      border-radius: 5px;
+      font-size: 13px;
+      resize: none;
+    }
+    #msg-input:focus { outline: none; border-color: #6c63ff; }
+
+    #btn-send {
+      padding: 8px 16px;
+      background: #6c63ff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    #btn-send:hover { background: #5a52e0; }
+  </style>
+</head>
+<body>
+
+<!-- Setup overlay -->
+<div id="setup">
+  <div class="card">
+    <h2>Agent Chat</h2>
+    <p>Connect to a debugging agent's live chat stream</p>
+
+    <div class="field">
+      <label>Radar URL</label>
+      <input id="f-url" type="text" placeholder="https://api.multiplayer.app/v0" />
+    </div>
+    <div class="field">
+      <label>API Key</label>
+      <input id="f-apikey" type="text" placeholder="eyJ..." autocomplete="off" />
+    </div>
+    <div class="field">
+      <label>Agent ID</label>
+      <input id="f-agentid" type="text" placeholder="MongoDB ObjectId" />
+    </div>
+    <div class="field">
+      <label>Workspace ID</label>
+      <input id="f-workspace" type="text" placeholder="Workspace ID" />
+    </div>
+    <div class="field">
+      <label>Project ID</label>
+      <input id="f-project" type="text" placeholder="Project ID" />
+    </div>
+
+    <button class="btn" id="btn-connect">Connect</button>
+    <div class="error-msg" id="err-msg"></div>
+  </div>
+</div>
+
+<!-- Header bar -->
+<div id="header">
+  <span class="logo">multiplayer</span>
+  <span class="sep">/</span>
+  <span>agent chat</span>
+  <div id="status-dot"></div>
+  <span id="status-text">not connected</span>
+  <span id="agent-badge"></span>
+</div>
+
+<!-- Chat message feed -->
+<div id="chat-feed"></div>
+
+<!-- User input bar -->
+<div id="input-bar">
+  <input id="msg-input" type="text" placeholder="Send a message to the agent..." />
+  <button id="btn-send">Send</button>
+</div>
+
+</body>
+</html>

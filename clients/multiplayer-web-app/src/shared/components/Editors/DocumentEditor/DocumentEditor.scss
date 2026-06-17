@@ -1,0 +1,99 @@
+.editor-wrapper {
+  font-size: inherit;
+  &.editor-expanded {
+    .ProseMirror > * {
+      max-width: 100%;
+    }
+  }
+  .ProseMirror > * {
+    max-width: 820px;
+  }
+  .ProseMirror {
+    padding: 48px 48px 0 66px;
+  }
+  &.readonly {
+    .ProseMirror {
+      padding: 24px;
+    }
+  }
+
+  .ProseMirror {
+    ul,
+    ol {
+      padding: 0 1.5rem;
+      &[data-type="taskList"] {
+        padding: 0;
+      }
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    > p {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      word-break: break-word;
+    }
+    code:not(pre code) {
+      background-color: rgba(#616161, 0.1);
+      color: #616161;
+      box-shadow: none;
+      padding: 2px;
+    }
+
+    code {
+      word-break: break-all;
+    }
+
+    mark {
+      background-color: #faf594;
+    }
+
+    hr {
+      margin: 1rem 0;
+    }
+  }
+
+  /* Give a remote user a caret */
+  .collaboration-cursor__caret {
+    border-left: 1px solid #0d0d0d;
+    border-right: 1px solid #0d0d0d;
+    margin-left: -1px;
+    margin-right: -1px;
+    pointer-events: none;
+    position: relative;
+    word-break: normal;
+    font-family: var(--chakra-fonts-body);
+  }
+
+  /* Render the username above the caret */
+  .collaboration-cursor__label {
+    color: white;
+    font-weight: 500;
+    border-radius: 3px 3px 3px 0;
+    left: -1px;
+    font-size: 12px;
+    padding: 0 0.25rem;
+    line-height: 1.25rem;
+    bottom: 100%;
+    position: absolute;
+    user-select: none;
+    white-space: nowrap;
+    transition: opacity 1s ease-in-out;
+  }
+
+  [data-comment] {
+    padding: 0.14em 0;
+  }
+}
+
+div[style="position: absolute; top: -10000px;"] > * {
+  margin-top: 0 !important;
+  margin-left: 20px;
+}

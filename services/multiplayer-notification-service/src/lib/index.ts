@@ -1,0 +1,7 @@
+export { buildEmailTemplate } from './email-templates'
+export { sendEmail } from './postmark.lib'
+// export { sendEmail } from './sparkpost.lib'
+// export { sendEmail } from './sendgrid.lib'
+// export { sendEmail } from './mandrill.lib'
+export * as slackLib from './slack.lib'
+export { buildSlackTemplate } from './slack-templates'

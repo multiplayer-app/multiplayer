@@ -1,0 +1,9 @@
+.git
+.turbo
+node_modules
+**/node_modules
+
+**/__tests__
+**/*.log
+.env*
+.DS_Store

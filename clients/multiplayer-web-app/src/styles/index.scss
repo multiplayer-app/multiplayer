@@ -1,0 +1,151 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@import "@multiplayer-app/ai-agent-react/style.css";
+
+@font-face {
+  font-family: "PP Neue Montreal";
+  src: url("../assets/fonts/PPNeueMontreal-Medium.woff2") format("woff2"),
+    url("../assets/fonts/PPNeueMontreal-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PP Neue Machina";
+  src: url("../assets/fonts/PPNeueMachina-Regular.woff2") format("woff2"),
+    url("../assets/fonts/PPNeueMachina-Regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+// @import "~reactflow/dist/style.css";
+@import "styles/variables.scss";
+
+:root {
+  --comment-cursor: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTAgOEMwIDMuNTgxNzIgMy41ODE3MiAwIDggMFYwQzEyLjQxODMgMCAxNiAzLjU4MTcyIDE2IDhWOEMxNiAxMi40MTgzIDEyLjQxODMgMTYgOCAxNkgwVjhaIiBmaWxsPSJjdXJyZW50Q29sb3IiLz4KPC9zdmc+Cg==)
+      0 16,
+    auto;
+}
+
+* {
+  box-sizing: border-box;
+  outline: none;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+svg {
+  vertical-align: middle;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-size: 14px;
+  &.no-select {
+    user-select: none; /* Disable text selection */
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 500;
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+.brand-shadow {
+  position: relative;
+  &:before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 91%;
+    aspect-ratio: 1044 / 248;
+    left: 0;
+    right: 0;
+    top: 0;
+    margin: auto;
+
+    // z-index: -1;
+    background: linear-gradient(90deg, #5047e5 0%, #1ae6f3 100%);
+    opacity: 0.5;
+    filter: blur(125px);
+  }
+}
+
+[data-tippy-root] {
+  z-index: 9 !important;
+}
+
+*,
+.custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--chakra-colors-border-primary);
+    border-radius: 8px;
+  }
+}
+.hidden-scrollbar {
+  ::-webkit-scrollbar,
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+input[type="color"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: var(--chakra-sizes-12);
+  height: calc(var(--chakra-sizes-10) - 2px);
+  padding: 0 4px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border-radius: var(--chakra-radii-md);
+  border: none;
+}
+
+input[type="color"]::-moz-color-swatch {
+  border-radius: var(--chakra-radii-md);
+  border: none;
+}
+
+.chakra-tabs__tablist[role="tablist"] {
+  z-index: 5;
+}
+
+.mp-agent-composer-error {
+  margin: 0 auto;
+}

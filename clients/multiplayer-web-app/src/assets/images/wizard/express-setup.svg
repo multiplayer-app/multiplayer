@@ -1,0 +1,12 @@
+<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="28" height="28" rx="14" fill="url(#paint0_linear_23695_14853)" style=""/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M15.3006 5.04633C15.7169 5.17755 16 5.5636 16 6.00007V11.0001L20 11.0001C20.3729 11.0001 20.7148 11.2075 20.887 11.5383C21.0592 11.869 21.0331 12.2681 20.8192 12.5735L13.8192 22.5735C13.5689 22.9311 13.1156 23.085 12.6994 22.9538C12.2831 22.8226 12 22.4365 12 22.0001L12 17.0001H8C7.62713 17.0001 7.28522 16.7926 7.11302 16.4619C6.94083 16.1312 6.96694 15.7321 7.18077 15.4266L14.1808 5.42661C14.4311 5.06904 14.8844 4.91511 15.3006 5.04633Z" fill="white" style="fill:white;fill-opacity:1;"/>
+<defs>
+<linearGradient id="paint0_linear_23695_14853" x1="5.66406" y1="1.30208" x2="29.3945" y2="37.5651" gradientUnits="userSpaceOnUse">
+<stop stop-color="#6B29EF" style="stop-color:#6B29EF;stop-color:color(display-p3 0.4196 0.1608 0.9373);stop-opacity:1;"/>
+<stop offset="0.286458" stop-color="#B739E0" style="stop-color:#B739E0;stop-color:color(display-p3 0.7176 0.2235 0.8784);stop-opacity:1;"/>
+<stop offset="0.614583" stop-color="#EC8436" style="stop-color:#EC8436;stop-color:color(display-p3 0.9255 0.5176 0.2118);stop-opacity:1;"/>
+<stop offset="0.953125" stop-color="#F3B040" style="stop-color:#F3B040;stop-color:color(display-p3 0.9529 0.6902 0.2510);stop-opacity:1;"/>
+</linearGradient>
+</defs>
+</svg>

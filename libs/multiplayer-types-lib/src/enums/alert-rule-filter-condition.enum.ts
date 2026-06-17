@@ -1,0 +1,8 @@
+export enum AlertRuleFilterCondition {
+  EQUALS = 'EQUALS',
+  NOT_EQUALS = 'NOT_EQUALS',
+  CONTAINS = 'CONTAINS',
+  NOT_CONTAINS = 'NOT_CONTAINS',
+  EXISTS = 'EXISTS',
+  NOT_EXISTS = 'NOT_EXISTS',
+}

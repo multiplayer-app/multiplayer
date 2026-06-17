@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#000000" />
+    <title>Multiplayer Debug Sessions - VS Code</title>
+    <meta
+      name="description"
+      content="Debug sessions for Multiplayer platform in VS Code extension"
+    />
+
+    <!-- VS Code webview specific styles -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: var(--vscode-editor-background);
+        color: var(--vscode-editor-foreground);
+      }
+
+      #root {
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+      }
+
+      /* Ensure proper theming in VS Code */
+      * {
+        box-sizing: border-box;
+      }
+
+      /* Hide scrollbars for cleaner look in VS Code */
+      /* ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--vscode-scrollbarSlider-background);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--vscode-scrollbarSlider-hoverBackground);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--vscode-scrollbarSlider-activeBackground);
+      } */
+    </style>
+  </head>
+  <body translate="no">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <!-- VS Code webview API script -->
+    <script>
+      // VS Code webview API will be available as acquireVsCodeApi()
+      // This is injected by VS Code when the webview is created
+    </script>
+  </body>
+</html>

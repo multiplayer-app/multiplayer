@@ -1,0 +1,9 @@
+@import "styles/variables";
+
+.schemas-diagram-wrapper {
+  height: 100%;
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: 460px 1fr;
+}

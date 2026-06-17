@@ -1,0 +1,11 @@
+export enum IssueCategoryEnum {
+  ERROR = 'ERROR',
+  EXCEPTION = 'EXCEPTION',
+  FEEDBACK = 'FEEDBACK',
+  OUTAGE = 'OUTAGE',
+  METRIC = 'METRIC',
+  DB_QUERY = 'DB_QUERY',
+  HTTP_CLIENT = 'HTTP_CLIENT',
+  FRONTEND = 'FRONTEND',
+  MOBILE = 'MOBILE',
+}

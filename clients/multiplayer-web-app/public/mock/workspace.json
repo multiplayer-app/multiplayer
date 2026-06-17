@@ -1,0 +1,111 @@
+{
+  "id": "test-workspace",
+  "name": "Workspace name",
+  "handle": "@multiplayer",
+  "icon": "",
+  "settings": {
+    "saml": null,
+    "googleSSO": false,
+    "magicLink": false,
+    "allowedDomains": "multiplayer.app"
+  },
+  "members": [
+    {
+      "id": "user1",
+      "name": "Member Name",
+      "email": "test-user@multiplayer.app",
+      "avatar": "",
+      "role": 1
+    },
+    {
+      "id": "user2",
+      "name": "Member Name",
+      "email": "test-user@multiplayer.app",
+      "avatar": "",
+      "role": 2
+    },
+    {
+      "id": "user3",
+      "name": "Member Name",
+      "email": "test-user@multiplayer.app",
+      "avatar": "",
+      "role": 2
+    }
+  ],
+  "integrations": [],
+  "billing": {},
+  "teams": [
+    {
+      "id": "filing-ramp",
+      "name": "FilingRamp",
+      "logo": "/assets/teams/FilingRamp.png",
+      "members": [
+        {
+          "id": "user2",
+          "name": "Member Name",
+          "email": "test-user@multiplayer.app",
+          "avatar": "",
+          "role": 2
+        },
+        {
+          "id": "user3",
+          "name": "Member Name",
+          "email": "test-user@multiplayer.app",
+          "avatar": "",
+          "role": 2
+        }
+      ],
+      "projects": [
+        {
+          "id": "c0d181b8",
+          "name": "web",
+          "version": "1.0",
+          "type": "platform",
+          "team_id": "filing-ramp",
+          "screenshot": "/assets/teams/projects/web.png"
+        },
+        {
+          "id": "9d0995a3",
+          "name": "voice",
+          "version": "1.0",
+          "type": "environment",
+          "team_id": "filing-ramp",
+          "screenshot": "/assets/teams/projects/voice.png"
+        },
+        {
+          "id": "d1038273",
+          "name": "video",
+          "version": "1.0",
+          "type": "cloud",
+          "team_id": "filing-ramp",
+          "screenshot": "/assets/teams/projects/video.png"
+        },
+        {
+          "id": "61f097a4",
+          "name": "auth",
+          "version": "1.0",
+          "type": "platform",
+          "team_id": "filing-ramp",
+          "screenshot": "/assets/teams/projects/auth.png"
+        }
+      ],
+      "filesCount": 31
+    },
+    {
+      "id": "motion-figures",
+      "name": "MotionFigures",
+      "logo": "/assets/teams/MotionFigures.png",
+      "members": [],
+      "projects": [],
+      "filesCount": 12
+    },
+    {
+      "id": "simplan",
+      "name": "simplan",
+      "logo": "/assets/teams/simplan.png",
+      "members": [],
+      "projects": [],
+      "filesCount": 3
+    }
+  ]
+}

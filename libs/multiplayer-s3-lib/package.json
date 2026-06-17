@@ -1,0 +1,33 @@
+{
+  "name": "@multiplayer/s3",
+  "version": "0.0.1",
+  "description": "Multiplayer s3 library",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18",
+    "npm": ">=8"
+  },
+  "scripts": {
+    "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
+    "preversion": "npm run lint",
+    "postversion": "git push && git push --tags",
+    "build": "tsc --build --force"
+  },
+  "author": "Multiplayer",
+  "keywords": [
+    "s3",
+    "library"
+  ],
+  "dependencies": {
+    "@multiplayer/logger": "0.0.1",
+    "@aws-sdk/client-s3": "3.354.0",
+    "@aws-sdk/s3-request-presigner": "3.354.0",
+    "@aws-sdk/util-create-request": "3.347.0",
+    "@aws-sdk/util-format-url": "3.347.0",
+    "@aws-sdk/lib-storage": "3.354.0"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "typescript": "6.0.2"
+  }
+}
