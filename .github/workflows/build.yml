@@ -244,9 +244,9 @@ jobs:
           - "@multiplayer/assets"
           - "@multiplayer/signup-stats"
     name: Build service ${{ matrix.service }} (${{ matrix.env }})
-    # needs:
-    #   - lint
-    #   - test-backend
+    needs:
+      - lint
+      - test-backend
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: ${{ matrix.env }}
@@ -399,251 +399,251 @@ jobs:
             --service="${{ env.SERVICE_NAME }}" \
             --release="${{ env.SERVICE_VERSION }}"
 
-  # build-frontend:
-  #   name: Build Frontend
-  #   needs: lint
-  #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+  build-frontend:
+    name: Build Frontend
+    needs: lint
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - name: Setup SSH
-  #       uses: MrSquaare/ssh-setup-action@v1
-  #       with:
-  #         host: github.com
-  #         private-key: ${{ secrets.SSH_PRIVATE_KEY_BLOCKNOTE_REPO }}
+      - name: Setup SSH
+        uses: MrSquaare/ssh-setup-action@v1
+        with:
+          host: github.com
+          private-key: ${{ secrets.SSH_PRIVATE_KEY_BLOCKNOTE_REPO }}
 
-  #     - uses: pnpm/action-setup@v4
-  #       name: Install pnpm
-  #       with:
-  #         cache: true
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          cache: true
 
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 24
-  #         cache: "pnpm"
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          cache: "pnpm"
 
-  #     - name: Cache turbo
-  #       uses: actions/cache@v4
-  #       id: turbo-cache
-  #       with:
-  #         path: turbo
-  #         key: turbo-cache-${{ github.sha }}
-  #         restore-keys: |
-  #           turbo-cache-
+      - name: Cache turbo
+        uses: actions/cache@v4
+        id: turbo-cache
+        with:
+          path: turbo
+          key: turbo-cache-${{ github.sha }}
+          restore-keys: |
+            turbo-cache-
 
-  #     - name: Cache pnpm
-  #       uses: actions/cache@v4
-  #       id: pnpm-cache
-  #       with:
-  #         path: |
-  #           pnpm
-  #         key: pnpm-cache-${{ hashFiles('pnpm-lock.yaml') }}
-  #         restore-keys: |
-  #           pnpm-cache-
+      - name: Cache pnpm
+        uses: actions/cache@v4
+        id: pnpm-cache
+        with:
+          path: |
+            pnpm
+          key: pnpm-cache-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-cache-
 
-  #     - name: Add tiptap registry to .npmrc
-  #       run: |
-  #         NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
-  #         echo "" >> $NPM_CONFIG_USERCONFIG
-  #         echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> $NPM_CONFIG_USERCONFIG
-  #         echo "//registry.tiptap.dev/:_authToken=\${TIPTAP_PRO_TOKEN}" >> $NPM_CONFIG_USERCONFIG
+      - name: Add tiptap registry to .npmrc
+        run: |
+          NPM_CONFIG_USERCONFIG="$HOME/.npmrc"
+          echo "" >> $NPM_CONFIG_USERCONFIG
+          echo "@tiptap-pro:registry=https://registry.tiptap.dev/" >> $NPM_CONFIG_USERCONFIG
+          echo "//registry.tiptap.dev/:_authToken=\${TIPTAP_PRO_TOKEN}" >> $NPM_CONFIG_USERCONFIG
 
-  #     - name: Set release tag
-  #       run: |
-  #         echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+      - name: Set release tag
+        run: |
+          echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-  #     - name: Install dependencies
-  #       run: |
-  #         pnpm -F "@multiplayer/multiplayer-web-app..." install --frozen-lockfile
-  #       env:
-  #         TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
+      - name: Install dependencies
+        run: |
+          pnpm -F "@multiplayer/multiplayer-web-app..." install --frozen-lockfile
+        env:
+          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
 
-  #     - name: Build lib dependencies
-  #       run: npx turbo run build --filter=@multiplayer/types
-  #         --filter=@multiplayer/entity --filter=@multiplayer/blocknote
-  #         --filter=@multiplayer/util-shared
+      - name: Build lib dependencies
+        run: npx turbo run build --filter=@multiplayer/types
+          --filter=@multiplayer/entity --filter=@multiplayer/blocknote
+          --filter=@multiplayer/util-shared
 
-  #     - name: Build Frontend
-  #       run: npm --prefix clients/multiplayer-web-app run build
-  #       env:
-  #         NODE_OPTIONS: "--max_old_space_size=6144"
-  #         CI: false
+      - name: Build Frontend
+        run: npm --prefix clients/multiplayer-web-app run build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=6144"
+          CI: false
 
-  #     - name: Upload build artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: frontend-build-${{ github.sha }}
-  #         path: clients/multiplayer-web-app/build/
-  #         retention-days: 1
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ github.sha }}
+          path: clients/multiplayer-web-app/build/
+          retention-days: 1
 
-  # deploy-frontend:
-  #   strategy:
-  #     matrix:
-  #       env: [staging, production]
-  #   name: Deploy Frontend (${{ matrix.env }})
-  #   environment: ${{ matrix.env }}
-  #   needs: build-frontend
-  #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-  #   runs-on: ubuntu-22.04
+  deploy-frontend:
+    strategy:
+      matrix:
+        env: [staging, production]
+    name: Deploy Frontend (${{ matrix.env }})
+    environment: ${{ matrix.env }}
+    needs: build-frontend
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
 
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - uses: pnpm/action-setup@v4
-  #       name: Install pnpm
-  #       with:
-  #         cache: true
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          cache: true
 
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 24
-  #         cache: "pnpm"
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          cache: "pnpm"
 
-  #     - name: Set release tag
-  #       run: |
-  #         echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
-  #         echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+      - name: Set release tag
+        run: |
+          echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-  #     - name: Download build artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: frontend-build-${{ github.sha }}
-  #         path: clients/multiplayer-web-app/build/
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-${{ github.sha }}
+          path: clients/multiplayer-web-app/build/
 
-  #     - name: Generate config.js
-  #       env:
-  #         REACT_APP_API_BASE_URL: ${{ vars.REACT_APP_API_BASE_URL }}
-  #         REACT_APP_API_PREFIX: ${{ vars.REACT_APP_API_PREFIX }}
-  #         REACT_APP_GIT_PREFIX: ${{ vars.REACT_APP_GIT_PREFIX }}
-  #         REACT_APP_AUTH_PREFIX: ${{ vars.REACT_APP_AUTH_PREFIX }}
-  #         REACT_APP_VERSION_PREFIX: ${{ vars.REACT_APP_VERSION_PREFIX }}
-  #         REACT_APP_RADAR_PREFIX: ${{ vars.REACT_APP_RADAR_PREFIX }}
-  #         REACT_APP_ASSETS_PREFIX: ${{ vars.REACT_APP_ASSETS_PREFIX }}
-  #         REACT_APP_NOTEBOOK_PREFIX: ${{ vars.REACT_APP_NOTEBOOK_PREFIX }}
-  #         REACT_APP_COLLABORATION_PREFIX: ${{ vars.REACT_APP_COLLABORATION_PREFIX }}
-  #         REACT_APP_PLATFORM_ENV: ${{ vars.REACT_APP_PLATFORM_ENV }}
-  #         REACT_APP_IS_PRODUCTION: ${{ vars.REACT_APP_IS_PRODUCTION }}
-  #         REACT_APP_SANDBOX_URL: ${{ vars.REACT_APP_SANDBOX_URL }}
-  #         REACT_APP_DEMO_PUBLIC: ${{ vars.REACT_APP_DEMO_PUBLIC }}
-  #         REACT_APP_NEWRELIC_ACCOUNT_ID: ${{ vars.REACT_APP_NEWRELIC_ACCOUNT_ID }}
-  #         REACT_APP_NEWRELIC_APPLICATION_ID: ${{ vars.REACT_APP_NEWRELIC_APPLICATION_ID }}
-  #         REACT_APP_SESSION_DEBUGGER_API_BASE_URL: ${{ vars.REACT_APP_SESSION_DEBUGGER_API_BASE_URL }}
-  #         REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT: ${{ vars.REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT }}
-  #         REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID: ${{ vars.REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID }}
-  #         REACT_APP_STRIPE_FREE_PRODUCT_ID: ${{ vars.REACT_APP_STRIPE_FREE_PRODUCT_ID }}
-  #         REACT_APP_POSTHOG_KEY: ${{ secrets.REACT_APP_POSTHOG_KEY }}
-  #         REACT_APP_SESSION_DEBUGGER_KEY: ${{ secrets.REACT_APP_SESSION_DEBUGGER_KEY }}
-  #         REACT_APP_SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
-  #       run: |
-  #         cat > clients/multiplayer-web-app/build/config.js << EOF
-  #         window.__ENV__ = {
-  #           "REACT_APP_API_BASE_URL": "${REACT_APP_API_BASE_URL}",
-  #           "REACT_APP_API_PREFIX": "${REACT_APP_API_PREFIX}",
-  #           "REACT_APP_GIT_PREFIX": "${REACT_APP_GIT_PREFIX}",
-  #           "REACT_APP_AUTH_PREFIX": "${REACT_APP_AUTH_PREFIX}",
-  #           "REACT_APP_VERSION_PREFIX": "${REACT_APP_VERSION_PREFIX}",
-  #           "REACT_APP_RADAR_PREFIX": "${REACT_APP_RADAR_PREFIX}",
-  #           "REACT_APP_ASSETS_PREFIX": "${REACT_APP_ASSETS_PREFIX}",
-  #           "REACT_APP_NOTEBOOK_PREFIX": "${REACT_APP_NOTEBOOK_PREFIX}",
-  #           "REACT_APP_COLLABORATION_PREFIX": "${REACT_APP_COLLABORATION_PREFIX}",
-  #           "REACT_APP_PLATFORM_ENV": "${REACT_APP_PLATFORM_ENV}",
-  #           "REACT_APP_IS_PRODUCTION": "${REACT_APP_IS_PRODUCTION}",
-  #           "REACT_APP_SANDBOX_URL": "${REACT_APP_SANDBOX_URL}",
-  #           "REACT_APP_DEMO_PUBLIC": "${REACT_APP_DEMO_PUBLIC}",
-  #           "REACT_APP_NEWRELIC_ACCOUNT_ID": "${REACT_APP_NEWRELIC_ACCOUNT_ID}",
-  #           "REACT_APP_NEWRELIC_APPLICATION_ID": "${REACT_APP_NEWRELIC_APPLICATION_ID}",
-  #           "REACT_APP_SESSION_DEBUGGER_API_BASE_URL": "${REACT_APP_SESSION_DEBUGGER_API_BASE_URL}",
-  #           "REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT": "${REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT}",
-  #           "REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID": "${REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID}",
-  #           "REACT_APP_STRIPE_FREE_PRODUCT_ID": "${REACT_APP_STRIPE_FREE_PRODUCT_ID}",
-  #           "REACT_APP_POSTHOG_KEY": "${REACT_APP_POSTHOG_KEY}",
-  #           "REACT_APP_SESSION_DEBUGGER_KEY": "${REACT_APP_SESSION_DEBUGGER_KEY}",
-  #           "REACT_APP_SERVICE_VERSION": "${REACT_APP_SERVICE_VERSION}"
-  #         };
-  #         EOF
+      - name: Generate config.js
+        env:
+          REACT_APP_API_BASE_URL: ${{ vars.REACT_APP_API_BASE_URL }}
+          REACT_APP_API_PREFIX: ${{ vars.REACT_APP_API_PREFIX }}
+          REACT_APP_GIT_PREFIX: ${{ vars.REACT_APP_GIT_PREFIX }}
+          REACT_APP_AUTH_PREFIX: ${{ vars.REACT_APP_AUTH_PREFIX }}
+          REACT_APP_VERSION_PREFIX: ${{ vars.REACT_APP_VERSION_PREFIX }}
+          REACT_APP_RADAR_PREFIX: ${{ vars.REACT_APP_RADAR_PREFIX }}
+          REACT_APP_ASSETS_PREFIX: ${{ vars.REACT_APP_ASSETS_PREFIX }}
+          REACT_APP_NOTEBOOK_PREFIX: ${{ vars.REACT_APP_NOTEBOOK_PREFIX }}
+          REACT_APP_COLLABORATION_PREFIX: ${{ vars.REACT_APP_COLLABORATION_PREFIX }}
+          REACT_APP_PLATFORM_ENV: ${{ vars.REACT_APP_PLATFORM_ENV }}
+          REACT_APP_IS_PRODUCTION: ${{ vars.REACT_APP_IS_PRODUCTION }}
+          REACT_APP_SANDBOX_URL: ${{ vars.REACT_APP_SANDBOX_URL }}
+          REACT_APP_DEMO_PUBLIC: ${{ vars.REACT_APP_DEMO_PUBLIC }}
+          REACT_APP_NEWRELIC_ACCOUNT_ID: ${{ vars.REACT_APP_NEWRELIC_ACCOUNT_ID }}
+          REACT_APP_NEWRELIC_APPLICATION_ID: ${{ vars.REACT_APP_NEWRELIC_APPLICATION_ID }}
+          REACT_APP_SESSION_DEBUGGER_API_BASE_URL: ${{ vars.REACT_APP_SESSION_DEBUGGER_API_BASE_URL }}
+          REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT: ${{ vars.REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT }}
+          REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID: ${{ vars.REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID }}
+          REACT_APP_STRIPE_FREE_PRODUCT_ID: ${{ vars.REACT_APP_STRIPE_FREE_PRODUCT_ID }}
+          REACT_APP_POSTHOG_KEY: ${{ secrets.REACT_APP_POSTHOG_KEY }}
+          REACT_APP_SESSION_DEBUGGER_KEY: ${{ secrets.REACT_APP_SESSION_DEBUGGER_KEY }}
+          REACT_APP_SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+        run: |
+          cat > clients/multiplayer-web-app/build/config.js << EOF
+          window.__ENV__ = {
+            "REACT_APP_API_BASE_URL": "${REACT_APP_API_BASE_URL}",
+            "REACT_APP_API_PREFIX": "${REACT_APP_API_PREFIX}",
+            "REACT_APP_GIT_PREFIX": "${REACT_APP_GIT_PREFIX}",
+            "REACT_APP_AUTH_PREFIX": "${REACT_APP_AUTH_PREFIX}",
+            "REACT_APP_VERSION_PREFIX": "${REACT_APP_VERSION_PREFIX}",
+            "REACT_APP_RADAR_PREFIX": "${REACT_APP_RADAR_PREFIX}",
+            "REACT_APP_ASSETS_PREFIX": "${REACT_APP_ASSETS_PREFIX}",
+            "REACT_APP_NOTEBOOK_PREFIX": "${REACT_APP_NOTEBOOK_PREFIX}",
+            "REACT_APP_COLLABORATION_PREFIX": "${REACT_APP_COLLABORATION_PREFIX}",
+            "REACT_APP_PLATFORM_ENV": "${REACT_APP_PLATFORM_ENV}",
+            "REACT_APP_IS_PRODUCTION": "${REACT_APP_IS_PRODUCTION}",
+            "REACT_APP_SANDBOX_URL": "${REACT_APP_SANDBOX_URL}",
+            "REACT_APP_DEMO_PUBLIC": "${REACT_APP_DEMO_PUBLIC}",
+            "REACT_APP_NEWRELIC_ACCOUNT_ID": "${REACT_APP_NEWRELIC_ACCOUNT_ID}",
+            "REACT_APP_NEWRELIC_APPLICATION_ID": "${REACT_APP_NEWRELIC_APPLICATION_ID}",
+            "REACT_APP_SESSION_DEBUGGER_API_BASE_URL": "${REACT_APP_SESSION_DEBUGGER_API_BASE_URL}",
+            "REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT": "${REACT_APP_SESSION_DEBUGGER_EXPORTER_ENDPOINT}",
+            "REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID": "${REACT_APP_STRIPE_DEFAULT_PRO_PRICE_ID}",
+            "REACT_APP_STRIPE_FREE_PRODUCT_ID": "${REACT_APP_STRIPE_FREE_PRODUCT_ID}",
+            "REACT_APP_POSTHOG_KEY": "${REACT_APP_POSTHOG_KEY}",
+            "REACT_APP_SESSION_DEBUGGER_KEY": "${REACT_APP_SESSION_DEBUGGER_KEY}",
+            "REACT_APP_SERVICE_VERSION": "${REACT_APP_SERVICE_VERSION}"
+          };
+          EOF
 
-  #     - name: Configure AWS Credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         aws-region: ${{ vars.AWS_REGION }}
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  #     - name: Deploy to S3
-  #       env:
-  #         WEB_APP_S3_BUCKET: ${{ vars.WEB_APP_S3_BUCKET }}
-  #         SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
-  #       run: |
-  #         npm --prefix clients/multiplayer-web-app run deploy-s3
+      - name: Deploy to S3
+        env:
+          WEB_APP_S3_BUCKET: ${{ vars.WEB_APP_S3_BUCKET }}
+          SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+        run: |
+          npm --prefix clients/multiplayer-web-app run deploy-s3
 
-  # release-frontend:
-  #   strategy:
-  #     matrix:
-  #       env: [production]
-  #   name: Release frontend
-  #   environment: ${{ matrix.env }}
-  #   needs: deploy-frontend
-  #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-  #   runs-on: ubuntu-22.04
+  release-frontend:
+    strategy:
+      matrix:
+        env: [production]
+    name: Release frontend
+    environment: ${{ matrix.env }}
+    needs: deploy-frontend
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
 
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  #     - uses: pnpm/action-setup@v4
-  #       name: Install pnpm
-  #       with:
-  #         cache: true
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          cache: true
 
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 24
-  #         cache: "pnpm"
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+          cache: "pnpm"
 
-  #     - name: Set release tag
-  #       run: |
-  #         echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
-  #         echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+      - name: Set release tag
+        run: |
+          echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-  #     - name: Login to Octopus Deploy
-  #       uses: OctopusDeploy/login@v1
-  #       with:
-  #         server: ${{ secrets.OCTOPUS_HOST }}
-  #         service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
+      - name: Login to Octopus Deploy
+        uses: OctopusDeploy/login@v1
+        with:
+          server: ${{ secrets.OCTOPUS_HOST }}
+          service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
 
-  #     - name: Install OctopusCLI
-  #       uses: OctopusDeploy/install-octopus-cli-action@v3
-  #       with:
-  #         version: 1.2.0
+      - name: Install OctopusCLI
+        uses: OctopusDeploy/install-octopus-cli-action@v3
+        with:
+          version: 1.2.0
 
-  #     - name: Create a release in Octopus Deploy
-  #       uses: OctopusDeploy/create-release-action@v3
-  #       with:
-  #         project: web-app
-  #         server: ${{ secrets.OCTOPUS_HOST }}
-  #         space: ${{ secrets.OCTOPUS_SPACE }}
-  #         release_number: ${{ env.SERVICE_VERSION }}
-  #         release_notes: "[GitHub commit: ${{
-  #           steps.commit.outputs.sha_short}}](https://github.com/${{
-  #           github.event.repository.full_name }}/commit/${{
-  #           steps.commit.outputs.sha_short}}) / [GitHub branch: ${{
-  #           env.BRANCH_NAME }}](https://github.com/${{
-  #           github.event.repository.full_name }}/compare/${{ env.BRANCH_NAME
-  #           }})"
+      - name: Create a release in Octopus Deploy
+        uses: OctopusDeploy/create-release-action@v3
+        with:
+          project: web-app
+          server: ${{ secrets.OCTOPUS_HOST }}
+          space: ${{ secrets.OCTOPUS_SPACE }}
+          release_number: ${{ env.SERVICE_VERSION }}
+          release_notes: "[GitHub commit: ${{
+            steps.commit.outputs.sha_short}}](https://github.com/${{
+            github.event.repository.full_name }}/commit/${{
+            steps.commit.outputs.sha_short}}) / [GitHub branch: ${{
+            env.BRANCH_NAME }}](https://github.com/${{
+            github.event.repository.full_name }}/compare/${{ env.BRANCH_NAME
+            }})"
 
-  #     - name: Install multiplayer-app/cli
-  #       run: npm install -g @multiplayer-app/cli@latest
+      - name: Install multiplayer-app/cli
+        run: npm install -g @multiplayer-app/cli@latest
 
-  #     - name: Create release in multiplayer
-  #       env:
-  #         MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
-  #         COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
-  #         COMMIT_SHA: ${{ github.sha }}
-  #         BRANCH_NAME: ${{ env.BRANCH_NAME }}
-  #         SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
-  #         REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
-  #       run: |
-  #         npx lerna run multiplayer:release --scope @multiplayer/multiplayer-web-app
+      - name: Create release in multiplayer
+        env:
+          MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
+          COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
+          COMMIT_SHA: ${{ github.sha }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+          SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+          REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
+        run: |
+          npx lerna run multiplayer:release --scope @multiplayer/multiplayer-web-app

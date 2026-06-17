@@ -1,8 +1,8 @@
 ![Multiplayer](./docs/img/header-js.png)
 
 <div align="center">
-  <a href="https://github.com/multiplayer-app/multiplayer-platform/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/multiplayer-app/multiplayer-platform" alt="License">
+  <a href="https://github.com/multiplayer-app/multiplayer/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/multiplayer-app/multiplayer" alt="License">
   </a>
   <a href="https://multiplayer.app">
     <img src="https://img.shields.io/badge/Visit-multiplayer.app-blue" alt="Visit Multiplayer">
