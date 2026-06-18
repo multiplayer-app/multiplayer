@@ -18,7 +18,7 @@
       <img src="https://img.shields.io/badge/Follow%20on%20LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="Follow on LinkedIn" />
     </a>
     <a href="https://bsky.app/profile/multiplayer.app">
-      <img src="https://img.shields.io/badge/Join%20our%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Follow on Bluesky" />
+      <img src="https://img.shields.io/badge/Follow-Bluesky-0085ff?style=for-the-badge&logo=bluesky&logoColor=white" alt="Follow on Bluesky" />
     </a>
   </p>
 </div>
