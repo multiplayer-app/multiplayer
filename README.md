@@ -119,7 +119,7 @@ Copy the example env file into the `docker/` directory, where the compose file e
 cp .env.example docker/.env
 ```
 
-Edit `docker/.env` and fill in any required credentials. Stripe and email integrations can be left blank unless you need them.
+Edit `docker/.env` and fill in any required credentials. Email integrations can be left blank unless you need them.
 
 ### 2. Start the platform
 
@@ -150,7 +150,7 @@ pnpm install
 cp .env.example .env
 ```
 
-Review `.env` before starting the platform. Most local defaults are defined in `pm2.config.yml`; external provider credentials such as Stripe or email providers are only needed when testing those integrations.
+Review `.env` before starting the platform. Most local defaults are defined in `pm2.config.yml`; external provider credentials such as email providers are only needed when testing those integrations.
 
 ### 3. Start infrastructure
 
