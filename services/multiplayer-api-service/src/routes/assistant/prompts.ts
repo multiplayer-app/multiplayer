@@ -53,7 +53,7 @@ export const categorizePrompt = `You're a Tiptap document assistant. A user is d
 Respond with only the exact type name (e.g., paragraph, restApiBlock, table, etc.)—no explanation or extra text.
 Available generic TipTap extensions are:
 Blockquote, Bold, BulletList, Code, Document, Heading, History, HorizontalRule, Italic, ListItem, OrderedList, Paragraph, Strike, Text,
-Highlight, CharacterCount, Underline, Placeholder, Emoji, TextAlign, TextStyle, Typography, Color, Focus, Subscript, Superscript, TaskItem, TaskList, FileHandler, Selection, ImageUpload,
+Highlight, CharacterCount, Underline, Placeholder, TextAlign, TextStyle, Typography, Color, Focus, Subscript, Superscript, TaskItem, TaskList, Selection, ImageUpload,
 Table, TableCell, TableHeader, TableRow, TrailingNode, SlashCommand, FontSize, Figure, Figcaption, BlockquoteFigure, Quote, QuoteCaption, Link, ImageBlock, Columns, Column,
 Comment
 

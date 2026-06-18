@@ -14,8 +14,6 @@ x-default-network: &networks
 services:
   nginx:
     image: nginx:latest
-    # container_name: multiplayer-nginx
-    # hostname: multiplayer-nginx
     restart: on-failure
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -29,8 +27,6 @@ services:
   # Jaeger
   jaeger-all-in-one:
     image: jaegertracing/all-in-one:latest
-    # container_name: multiplayer-jaeger
-    # hostname: multiplayer-jaeger
     restart: always
     ports:
       - "16686:16686"
@@ -47,8 +43,6 @@ services:
 
   mongo:
     image: mongo:8.0.0
-    # container_name: multiplayer-mongo
-    # hostname: multiplayer-mongo
     restart: on-failure
     ports:
       - 27017-27020:27017-27020
@@ -60,27 +54,14 @@ services:
       # - MONGO_INITDB_ROOT_PASSWORD=admin
       - MONGO_INITDB_DATABASE=multiplayer
     volumes:
-      - multiplayer-mongo-data:/data/db
+      - multiplayer-platform-dev-mongo-data:/data/db
     networks: *networks
-
-  # mongocryptd:
-  #     image: local-mongocryptd
-  #     container_name: mongocryptd
-  #     entrypoint: mongocryptd
-  #     restart: on-failure
-  #     tty: true
-  #     volumes:
-  #       - multiplayer-mongocryptd-data:/data/db
 
   rabbit:
     image: rabbitmq:3.10-management
-    # container_name: multiplayer-rabbit
-    # hostname: multiplayer-rabbit
     restart: on-failure
     volumes:
-      - multiplayer-rabbit-data:/var/lib/rabbitmq/mnesia/
-    # env_file:
-    #   - ../scripts/.env.rabbit
+      - multiplayer-platform-dev-rabbit-data:/var/lib/rabbitmq/mnesia/
     ports:
       - 15672:15672
       - 5672:5672
@@ -88,8 +69,6 @@ services:
 
   redis:
     image: redis:alpine
-    # container_name: multiplayer-redis
-    # hostname: multiplayer-redis
     command: redis-server
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
@@ -104,12 +83,10 @@ services:
   #   ports:
   #     - 8001:8001 # http://localhost:8001
   #   volumes:
-  #     - multiplayer-redis-ui-data:/db
+  #     - multiplayer-platform-dev-redis-ui-data:/db
 
   minio:
     image: quay.io/minio/minio:RELEASE.2023-02-27T18-10-45Z
-    # container_name: multiplayer-minio
-    # hostname: multiplayer-minio
     restart: on-failure
     command: server --address 0.0.0.0:9000 --console-address :9001 /data
     ports:
@@ -125,11 +102,10 @@ services:
       timeout: 20s
       retries: 3
     volumes:
-      - multiplayer-minio-data:/data
+      - multiplayer-platform-dev-minio-data:/data
     networks: *networks
 
   createbuckets:
-    # container_name: multiplayer-minio-createbuckets
     image: minio/mc
     restart: on-failure
     depends_on:
@@ -168,28 +144,13 @@ services:
   #   cap_add:
   #     - IPC_LOCK
   #   volumes:
-  #     - multiplayer-elasticsearch-data:/usr/share/elasticsearch/data
+  #     - multiplayer-platform-dev-elasticsearch-data:/usr/share/elasticsearch/data
   #   ports:
   #     - 9200:9200
   #     - 9300:9300
 
-  # api:
-  #   container_name: multiplayer-api
-  #   image: docker.io/local/api:master
-  #   restart: on-failure
-  #   environment:
-  #     - PORT=3001
-  #     - SWAGGER_ENABLED=true
-  #     - API_PREFIX=/v0/api
-  #     - MONGODB_ENCRYPTION_MASTER_KEY_PROVIDER=local
-  #     - MONGODB_URI=mongodb://multiplayer-mongo:27017/multiplayer
-  #     - AMQP_URI=amqp://multiplayer-rabbit:5672
-  # - REDIS_URI=redis://localhost:6379
-
   otel-collector:
     image: multiplayerapp/multiplayer-opentelemetry-collector-contrib:${OTEL_COLLECTOR_RELEASE_TAG:-latest}
-    # container_name: multiplayer-otel-collector
-    # hostname: multiplayer-otel-collector
     restart: on-failure
     command: ["--config=/etc/otel/config.yaml"]
     depends_on:
@@ -209,15 +170,13 @@ services:
 
   clickhouse:
     image: clickhouse/clickhouse-server:24.6.2.17-alpine
-    # container_name: multiplayer-clickhouse
-    # hostname: multiplayer-clickhouse
     restart: on-failure
     ports:
       - 8000:9000
       - 8123:8123
     volumes:
-      - multiplayer-clickhouse-data:/var/lib/clickhouse
-      - multiplayer-clickhouse-logs:/var/log/clickhouse-server
+      - multiplayer-platform-dev-clickhouse-data:/var/lib/clickhouse
+      - multiplayer-platform-dev-clickhouse-logs:/var/log/clickhouse-server
       - ../scripts/volumes/clickhouse/etc/clickhouse-server/config.d/config.xml:/etc/clickhouse-server/config.d/config.xml
       - ../scripts/volumes/clickhouse/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
       - ../scripts/volumes/clickhouse/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
@@ -225,8 +184,6 @@ services:
 
   zookeeper:
     image: bitnamilegacy/zookeeper:3.9.2
-    # container_name: multiplayer-zookeeper
-    # hostname: multiplayer-zookeeper
     environment:
       ALLOW_ANONYMOUS_LOGIN: yes
     ports:
@@ -235,15 +192,13 @@ services:
 
   kafka:
     image: bitnamilegacy/kafka:3.4.1
-    # container_name: multiplayer-kafka
-    # hostname: multiplayer-kafka
     depends_on:
       - zookeeper
     ports:
       - 9092:9092
       - 29092:29092
     # volumes:
-    #   - "multiplayer-kafka-data:/bitnami"
+    #   - "multiplayer-platform-dev-kafka-data:/bitnami"
     environment:
       KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
       ALLOW_PLAINTEXT_LISTENER: yes
@@ -289,28 +244,28 @@ services:
   #     # KAFKA_CLUSTERS_1_SCHEMAREGISTRY: http://schemaregistry1:8085
   #     DYNAMIC_CONFIG_ENABLED: 'true'
   #   networks: *networks
+
   opensearch:
     image: opensearchproject/opensearch:latest
-    # hostname: opensearch
     environment:
       - discovery.type=single-node
       - plugins.security.disabled=true
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=El3ph@nt___123
     volumes:
-      - opensearch-data:/data/opensearch
+      - multiplayer-platform-dev-opensearch-data:/data/opensearch
     ports:
       - 9200:9200 # REST API
       - 9600:9600 # Performance Analyzer
 
 volumes:
-  multiplayer-mongo-data:
-  multiplayer-mongocryptd-data:
-  multiplayer-rabbit-data:
-  multiplayer-minio-data:
-  multiplayer-redis-ui-data:
-  multiplayer-clickhouse-logs:
-  multiplayer-clickhouse-data:
-  opensearch-data:
-  # multiplayer-kafka-data:
-  # multiplayer-elasticsearch-data:
+  multiplayer-platform-dev-mongo-data:
+  multiplayer-platform-dev-mongocryptd-data:
+  multiplayer-platform-dev-rabbit-data:
+  multiplayer-platform-dev-minio-data:
+  multiplayer-platform-dev-redis-ui-data:
+  multiplayer-platform-dev-clickhouse-logs:
+  multiplayer-platform-dev-clickhouse-data:
+  multiplayer-platform-dev-opensearch-data:
+  # multiplayer-platform-dev-kafka-data:
+  # multiplayer-platform-dev-elasticsearch-data:
   #   driver: local
