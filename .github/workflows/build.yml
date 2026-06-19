@@ -16,9 +16,9 @@ permissions:
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   # aws ecr
-  # DOCKER_REPOSITORY_PREFIX: multiplayer-staging-
+  DOCKER_REPOSITORY_PREFIX_AWS_ECR: multiplayer-staging-
   # docker hub
-  DOCKER_REPOSITORY_PREFIX: multiplayer-
+  DOCKER_REPOSITORY_PREFIX_DOCKERHUB: multiplayer-
   MONGODB_URI: mongodb://localhost
   AMQP_URI: amqp://localhost
   REDIS_URI: redis://localhost:6379
@@ -219,6 +219,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Login to AWS ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -280,15 +290,16 @@ jobs:
           echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
           echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE=${{ vars.DOCKERHUB_ORGANIZATION }}/${{ env.DOCKER_REPOSITORY_PREFIX }}${SERVICE_NAME}" >> $GITHUB_ENV
-        # echo "DOCKER_IMAGE= ${{ steps.ecr-login.outputs.registry }}/${{ env.DOCKER_REPOSITORY_PREFIX }}${SERVICE_NAME}" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_DOCKERHUB=${{ vars.DOCKERHUB_ORGANIZATION }}/${{ env.DOCKER_REPOSITORY_PREFIX_DOCKERHUB }}${SERVICE_NAME}" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_AWS_ECR=${{ steps.ecr-login.outputs.registry }}/${{ env.DOCKER_REPOSITORY_PREFIX_AWS_ECR }}${SERVICE_NAME}" >> $GITHUB_ENV
 
       - name: Set Docker tags
         run: |
-          TAGS="${{ env.DOCKER_IMAGE }}:${{ env.SERVICE_VERSION }}"
+          TAGS="${{ env.DOCKER_IMAGE_DOCKERHUB }}:${{ env.SERVICE_VERSION }}"
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            TAGS="$TAGS,${{ env.DOCKER_IMAGE }}:latest"
+            TAGS="$TAGS,${{ env.DOCKER_IMAGE_DOCKERHUB }}:latest"
           fi
+          TAGS="$TAGS,${{ env.DOCKER_IMAGE_AWS_ECR }}:${{ env.SERVICE_VERSION }}"
           echo "DOCKER_TAGS=$TAGS" >> $GITHUB_ENV
 
       - name: Build
@@ -354,7 +365,7 @@ jobs:
           SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
           REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
         run: |
-          CONTAINER_ID=$(docker create "${{ env.DOCKER_IMAGE }}:${{ env.SERVICE_VERSION }}")
+          CONTAINER_ID=$(docker create "${{ env.DOCKER_IMAGE_DOCKERHUB }}:${{ env.SERVICE_VERSION }}")
           mkdir -p ${{ env.SERVICE_FOLDER_PATH }}/dist
           docker cp "$CONTAINER_ID:/app/${{ env.SERVICE_FOLDER_PATH }}/dist/." ${{ env.SERVICE_FOLDER_PATH }}/dist
           docker rm "$CONTAINER_ID"
