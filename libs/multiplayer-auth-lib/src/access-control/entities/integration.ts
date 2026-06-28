@@ -3,14 +3,17 @@ import {
   RoleWorkspacePermissionEntity,
   RoleProjectPermissionEntity,
   RoleAccessAction,
-  WorkspaceBillingFeatures,
   IntegrationTypeEnum,
+  ErrorMessage,
+  RoleType,
 } from '@multiplayer/types'
+import logger from '@multiplayer/logger'
 import { IntegrationModel } from '@multiplayer/models'
 import { EntityBaseWorkspaceLevel } from '../base/base-entity-workspace'
 import { Joi } from '@multiplayer/util'
-import * as WorkspaceFeaturesCache from '../../cache/workspace-features.cache'
+import { ForbiddenError } from 'restify-errors'
 import {
+  roles,
   getWorkspaceEntityAccessActions,
   getProjectAggregatedEntityAccessActions,
 } from '../role'
@@ -156,6 +159,92 @@ export class Integration extends EntityBaseWorkspaceLevel {
     }
 
     return contextParams
+  }
+
+  async ability(action: RoleAccessAction): Promise<boolean> {
+    const allowed = await super.ability(action)
+
+    if (
+      allowed
+      && [RoleAccessAction.CREATE, RoleAccessAction.UPDATE].includes(action)
+    ) {
+      if (this.params.workspaceRole) {
+        this.assertWorkspaceRoleNotEscalated(this.params.workspaceRole)
+      }
+      if (this.params.projectRole) {
+        this.assertProjectRoleNotEscalated(this.params.projectRole)
+      }
+    }
+
+    return allowed
+  }
+
+  private assertWorkspaceRoleNotEscalated(roleId: string): void {
+    if (this.context.superAdmin || this.context.workspaceOwner || this.context.workspaceAdmin) return
+
+    const targetRole = roles[RoleType.WORKSPACE].find(r => r._id.toString() === roleId)
+    if (!targetRole) {
+      logger.warn(`[ACCESS_CONTROL_INTEGRATION] Workspace role not found: ${roleId}`)
+      throw new ForbiddenError(ErrorMessage.ACTION_NOT_ALLOWED)
+    }
+
+    const callerRole = this.context.workspaceRoleId
+      ? roles[RoleType.WORKSPACE].find(r => r._id.toString() === this.context.workspaceRoleId)
+      : undefined
+
+    const callerPermissionMap = new Map<string, Set<RoleAccessAction>>(
+      (callerRole?.permissions ?? []).map(p => [p.entity, new Set(p.access)]),
+    )
+
+    for (const { entity, access } of targetRole.permissions) {
+      const callerActions = callerPermissionMap.get(entity)
+      for (const action of access) {
+        if (!callerActions?.has(action)) {
+          logger.warn(`[ACCESS_CONTROL_INTEGRATION] Attempted to assign workspace role with elevated permission ${entity}:${action}`)
+          throw new ForbiddenError(ErrorMessage.ACTION_NOT_ALLOWED)
+        }
+      }
+    }
+  }
+
+  private assertProjectRoleNotEscalated(roleId: string): void {
+    if (this.context.superAdmin || this.context.workspaceOwner || this.context.workspaceAdmin) return
+
+    const targetRole = roles[RoleType.PROJECT].find(r => r._id.toString() === roleId)
+    if (!targetRole) {
+      logger.warn(`[ACCESS_CONTROL_INTEGRATION] Project role not found: ${roleId}`)
+      throw new ForbiddenError(ErrorMessage.ACTION_NOT_ALLOWED)
+    }
+
+    const projectId = this.params.projectId
+    const callerProjectRoleIds = projectId
+      ? (this.context.projects.find(p => p.projectId === projectId)?.projectRoleIds ?? [])
+      : this.context.projects.flatMap(p => p.projectRoleIds)
+
+    const callerProjectRoles = roles[RoleType.PROJECT]
+      .filter(r => callerProjectRoleIds.includes(r._id.toString()))
+
+    const callerPermissionMap = new Map<string, Set<RoleAccessAction>>()
+    for (const role of callerProjectRoles) {
+      for (const { entity, access } of role.permissions) {
+        if (!callerPermissionMap.has(entity)) {
+          callerPermissionMap.set(entity, new Set())
+        }
+        for (const action of access) {
+          callerPermissionMap.get(entity)!.add(action)
+        }
+      }
+    }
+
+    for (const { entity, access } of targetRole.permissions) {
+      const callerActions = callerPermissionMap.get(entity)
+      for (const action of access) {
+        if (!callerActions?.has(action)) {
+          logger.warn(`[ACCESS_CONTROL_INTEGRATION] Attempted to assign project role with elevated permission ${entity}:${action}`)
+          throw new ForbiddenError(ErrorMessage.ACTION_NOT_ALLOWED)
+        }
+      }
+    }
   }
 
   async hasContextResourceAccess(): Promise<boolean> {

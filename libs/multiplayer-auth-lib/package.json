@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/express": "5.0.6",
     "@types/express-session": "1.17.7",
+    "@types/jest": "30.0.0",
     "@types/node": "25.5.0",
     "@types/passport": "1.0.12",
     "@types/restify-errors": "4.3.5",
@@ -40,6 +41,7 @@
     "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
     "preversion": "npm run lint",
     "postversion": "git push && git push --tags",
-    "build": "tsc --build --force"
+    "build": "tsc --build --force",
+    "test": "jest --forceExit"
   }
 }
