@@ -21,6 +21,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       grant_types,
       response_types,
       scope,
+      token_endpoint_auth_method,
     } = req.body
 
     const clientId = new ObjectId()
@@ -50,7 +51,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       scope: scope as string || 'debug-sessions',
     })
 
-    return res.status(200).json({
+    return res.status(201).json({
       client_id: client._id,
       client_secret: clientSecret,
       client_id_issued_at: Math.floor(new Date(client.createdAt).getTime() / 1000),
@@ -59,6 +60,12 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       registration_client_uri: `${API_PROTOCOL}://${API_DOMAIN}${API_PREFIX}/public/oauth-clients/${clientId}`,
       redirect_uris: client.redirectUris,
       grant_types: client.grantTypes,
+      response_types: client.responseTypes,
+      client_name: client.clientName,
+      client_uri: client.clientUri,
+      logo_uri: client.logoUri,
+      token_endpoint_auth_method: token_endpoint_auth_method || 'none',
+      scope: client.scope,
     })
   } catch (err) {
     return next(err)
