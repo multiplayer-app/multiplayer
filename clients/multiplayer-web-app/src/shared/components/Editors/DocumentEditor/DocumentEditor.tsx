@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from "react";
 import { Flex, UseDisclosureReturn, useColorMode } from "@chakra-ui/react";
-import { BlockEditor, useBlockEditor } from "@multiplayer/blocknote";
+import { BlockEditor, useBlockEditor } from "@multiplayer-app/blocknote";
 import { ScrollSyncPane } from "react-scroll-sync";
 import { UndoManager } from "yjs";
 
-import "@multiplayer/blocknote/dist/style.css";
+import "@multiplayer-app/blocknote/dist/style.css";
 
 import DocumentComments from "./DocumentComments";
 

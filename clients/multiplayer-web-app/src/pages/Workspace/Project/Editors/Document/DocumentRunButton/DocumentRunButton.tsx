@@ -1,7 +1,7 @@
 import { Icon, Button, Spinner } from "@chakra-ui/react";
 import debounce from "lodash.debounce";
 import { useState, useEffect } from "react";
-import { getRunnableBlocks } from "@multiplayer/blocknote";
+import { getRunnableBlocks } from "@multiplayer-app/blocknote";
 
 import { BroomIcon, PlayCircleIcon } from "shared/icons";
 import useMessage from "shared/hooks/useMessage";

@@ -1,6 +1,6 @@
 {
-  "name": "@multiplayer/blocknote",
-  "version": "1.0.0",
+  "name": "@multiplayer-app/blocknote",
+  "version": "1.0.2",
   "description": "",
   "type": "module",
   "main": "./dist/index.umd.js",
@@ -97,8 +97,6 @@
   "peerDependencies": {
     "@monaco-editor/react": "4.6.0",
     "@multiplayer-app/session-recorder-common": "2.0.85",
-    "@multiplayer/entity": "0.0.1",
-    "@multiplayer/types": "0.0.1",
     "axios": "1.8.4",
     "lodash.debounce": "4.0.8",
     "lodash.get": "4.4.2",

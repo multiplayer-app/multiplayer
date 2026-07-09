@@ -12,7 +12,7 @@
     "@monaco-editor/react": "4.6.0",
     "@multiplayer-app/ai-agent-react": "0.1.0-beta.92",
     "@multiplayer-app/session-recorder-react": "2.0.85",
-    "@multiplayer/blocknote": "1.0.0",
+    "@multiplayer-app/blocknote": "1.0.2",
     "@multiplayer/entity": "0.0.1",
     "@multiplayer/types": "0.0.1",
     "@multiplayer/util-shared": "0.0.1",

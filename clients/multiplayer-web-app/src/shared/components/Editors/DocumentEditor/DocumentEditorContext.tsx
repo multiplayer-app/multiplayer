@@ -1,4 +1,4 @@
-import { useBlockEditor } from "@multiplayer/blocknote";
+import { useBlockEditor } from "@multiplayer-app/blocknote";
 import debounce from "lodash.debounce";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";

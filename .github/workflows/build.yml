@@ -423,7 +423,7 @@ jobs:
 
       - name: Build lib dependencies
         run: npx turbo run build --filter=@multiplayer/types
-          --filter=@multiplayer/entity --filter=@multiplayer/blocknote
+          --filter=@multiplayer/entity --filter=@multiplayer-app/blocknote
           --filter=@multiplayer/util-shared
 
       - name: Build Frontend
