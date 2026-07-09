@@ -7,7 +7,7 @@ import { Surface } from '../ui/Surface'
 import { FORMAT_BLOCKS, INSERTION_BLOCKS } from 'src/extensions/SlashCommand/groups'
 import { Icon } from '../ui/Icon'
 import AiForm from '../AiForm'
-import { moveCursorToEnd } from 'src/lib/utils'
+import { getExtensionOptions, moveCursorToEnd } from 'src/lib/utils'
 
 const otherBlocks = [...FORMAT_BLOCKS, ...INSERTION_BLOCKS]
 
@@ -17,6 +17,8 @@ interface PlaceholderBlockProps {
 
 const PlaceholderBlock = ({ editor }: PlaceholderBlockProps) => {
   if (!editor.isEditable) return null
+
+  const { allowApiBlocks = true } = getExtensionOptions(editor, 'runnableBlocksContext')
 
   const handleInsertBlock = (insertBlock: () => void) => {
     moveCursorToEnd(editor)
@@ -54,7 +56,24 @@ const PlaceholderBlock = ({ editor }: PlaceholderBlockProps) => {
             Add a code block
           </button>
 
-          {/* API call */}
+          {allowApiBlocks && (
+            <button
+              className="
+              flex items-center justify-center gap-2 flex-1 py-2
+              rounded-none
+              focus:outline-none focus:ring
+              text-neutral-700 dark:text-neutral-100
+              hover:bg-gray-50 dark:hover:bg-neutral-800
+            "
+              onClick={() => handleInsertBlock(() => editor.chain().setRestApiBlock().run())}
+              onKeyDown={e => e.key === 'Enter' && handleInsertBlock(() => editor.chain().setRestApiBlock().run())}
+            >
+              <GlobeIcon />
+              Make an API call
+            </button>
+          )}
+
+          {/* SQL block */}
           <button
             className="
               flex items-center justify-center gap-2 flex-1 py-2
@@ -63,11 +82,11 @@ const PlaceholderBlock = ({ editor }: PlaceholderBlockProps) => {
               text-neutral-700 dark:text-neutral-100
               hover:bg-gray-50 dark:hover:bg-neutral-800
             "
-            onClick={() => handleInsertBlock(() => editor.chain().setRestApiBlock().run())}
-            onKeyDown={e => e.key === 'Enter' && handleInsertBlock(() => editor.chain().setRestApiBlock().run())}
+            onClick={() => handleInsertBlock(() => editor.chain().setSqlBlock().run())}
+            onKeyDown={e => e.key === 'Enter' && handleInsertBlock(() => editor.chain().setSqlBlock().run())}
           >
-            <GlobeIcon />
-            Make an API call
+            <Icon name="Database" className="text-blue-500" />
+            Run a SQL query
           </button>
 
           {/* UI block */}

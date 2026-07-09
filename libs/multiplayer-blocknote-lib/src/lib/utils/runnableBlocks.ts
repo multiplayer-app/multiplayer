@@ -1,8 +1,8 @@
 import { Editor, Node } from '@tiptap/core'
 import { EditorState } from '@tiptap/pm/state'
-import { RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME } from 'src/lib/constants'
+import { RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME, SQL_BLOCK_NAME } from 'src/lib/constants'
 
-export const runnableBlocks = new Set([RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME])
+export const runnableBlocks = new Set([RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME, SQL_BLOCK_NAME])
 
 export function generateId(): string {
   return `${Date.now()}-${Math.random()}`

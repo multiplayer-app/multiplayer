@@ -405,8 +405,8 @@ async function applyDebugHeadersIfNeeded(
     instance.getDebugHeaders(spanId).forEach(header => {
       requestData.headers[header.key] = header.value
     })
-  } catch (error) {
-    console.log('Failed to initialize debugger:', error)
+  } catch {
+    // Debugger is optional; continue without trace headers.
   }
 }
 
@@ -416,8 +416,8 @@ async function stopDebuggerIfNeeded(debug: IDebugOptions, hasActiveSession: bool
 
   try {
     await instance.stopSession()
-  } catch (error) {
-    console.error('Failed to stop debugger:', error)
+  } catch {
+    // Ignore cleanup failures for optional debugger sessions.
   }
 }
 export const isUrl = (str: string) => {

@@ -1,28 +1,44 @@
-import { RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME } from 'src/lib/constants'
+import { RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME, SQL_BLOCK_NAME } from 'src/lib/constants'
 import { Group, Command } from './types'
 
-export const EXECUTABLE_BLOCKS: Command[] = [
-  {
-    name: RUNNABLE_API_BLOCK_NAME,
-    label: 'API Block',
-    iconName: 'ArrowRightLeft',
-    description: 'Run and document API calls.',
-    shouldBeHidden: editor => editor.isActive('columns'),
-    action: editor => {
-      editor.chain().focus().setRestApiBlock().run()
-    },
+const API_BLOCK_COMMAND: Command = {
+  name: RUNNABLE_API_BLOCK_NAME,
+  label: 'API Block',
+  iconName: 'ArrowRightLeft',
+  description: 'Run and document API calls.',
+  shouldBeHidden: editor => editor.isActive('columns'),
+  action: editor => {
+    editor.chain().focus().setRestApiBlock().run()
   },
-  {
-    name: RUNNABLE_CODE_BLOCK_NAME,
-    label: 'Executable Code Block',
-    iconName: 'FileCode2',
-    description: 'Write and run JavaScript code.',
-    shouldBeHidden: editor => editor.isActive('columns'),
-    action: editor => {
-      editor.chain().focus().setRunnableCodeBlock({ _runnable: true }).run()
-    },
+}
+
+const CODE_BLOCK_COMMAND: Command = {
+  name: RUNNABLE_CODE_BLOCK_NAME,
+  label: 'Executable Code Block',
+  iconName: 'FileCode2',
+  description: 'Write and run JavaScript code.',
+  shouldBeHidden: editor => editor.isActive('columns'),
+  action: editor => {
+    editor.chain().focus().setRunnableCodeBlock({ _runnable: true }).run()
   },
-]
+}
+
+const SQL_BLOCK_COMMAND: Command = {
+  name: SQL_BLOCK_NAME,
+  label: 'SQL Block',
+  iconName: 'Database',
+  description: 'Write and run SQL queries with table results.',
+  shouldBeHidden: editor => editor.isActive('columns'),
+  action: editor => {
+    editor.chain().focus().setSqlBlock().run()
+  },
+}
+
+export const EXECUTABLE_BLOCKS: Command[] = [API_BLOCK_COMMAND, CODE_BLOCK_COMMAND, SQL_BLOCK_COMMAND]
+
+export function getExecutableBlocks(allowApiBlocks = true): Command[] {
+  return allowApiBlocks ? EXECUTABLE_BLOCKS : [CODE_BLOCK_COMMAND, SQL_BLOCK_COMMAND]
+}
 
 export const FORMAT_BLOCKS: Command[] = [
   {
@@ -179,20 +195,15 @@ export const BASE_BLOCKS: Group[] = [
   },
 ]
 
-export const ALL_BLOCKS: Group[] = [
-  {
-    name: 'runnableBlocks',
-    title: 'Executable Blocks',
-    commands: EXECUTABLE_BLOCKS,
-  },
-  {
-    name: 'format',
-    title: 'Format',
-    commands: FORMAT_BLOCKS,
-  },
-  {
-    name: 'insert',
-    title: 'Insert',
-    commands: INSERTION_BLOCKS,
-  },
-]
+export function buildAllBlockGroups(allowApiBlocks = true): Group[] {
+  return [
+    {
+      name: 'runnableBlocks',
+      title: 'Executable Blocks',
+      commands: getExecutableBlocks(allowApiBlocks),
+    },
+    ...BASE_BLOCKS,
+  ]
+}
+
+export const ALL_BLOCKS: Group[] = buildAllBlockGroups(true)

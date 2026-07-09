@@ -3,6 +3,7 @@ import { PropsWithChildren, ReactNode, useMemo, useState, useRef, useCallback } 
 import MonacoEditor, { Monaco, OnChange, OnMount } from '@monaco-editor/react'
 import LanguagePicker from 'src/extensions/RunnableCodeBlock/component/LanguagePicker'
 import { cn } from 'src/lib/utils'
+import { NOTEBOOK_DARK_MONACO_THEME_ID, registerNotebookMonacoThemes } from 'src/lib/monacoTheme'
 import { Icon } from '../ui/Icon'
 import { Toolbar } from '../ui/Toolbar'
 import { useTheme } from '../../providers'
@@ -48,6 +49,12 @@ const CodeEditor = ({
   const editorRef = useRef<HTMLDivElement>(null)
   const childrenRef = useRef<HTMLDivElement>(null)
   const { theme } = useTheme()
+  const monacoTheme = theme === 'dark' ? NOTEBOOK_DARK_MONACO_THEME_ID : 'light'
+
+  const handleBeforeMount = (monaco: Monaco) => {
+    registerNotebookMonacoThemes(monaco)
+  }
+
   const handleOnMount = (monacoEditor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
     if (onMount) {
       onMount(monacoEditor, monaco)
@@ -101,8 +108,12 @@ const CodeEditor = ({
   }, [])
 
   const editorOptions = useMemo<editor.IStandaloneEditorConstructionOptions>(() => {
-    return { ...options, ...defaultOptions }
-  }, [options])
+    return {
+      ...defaultOptions,
+      ...options,
+      renderLineHighlight: theme === 'dark' ? 'line' : 'all',
+    }
+  }, [options, theme])
 
   return (
     <div
@@ -128,11 +139,12 @@ const CodeEditor = ({
           <MonacoEditor
             value={value}
             loading={null}
-            key={language}
+            key={`${language}-${monacoTheme}`}
             language={language}
             options={editorOptions}
             height={`${editorHeight}px`}
-            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            theme={monacoTheme}
+            beforeMount={handleBeforeMount}
             onChange={onChange}
             onMount={handleOnMount}
           />

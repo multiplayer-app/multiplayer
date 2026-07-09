@@ -91,16 +91,24 @@ export const BlockEditor = forwardRef<BlockEditorRef, TiptapProps>((options, ref
   }
 
   return (
-    <div ref={menuContainerRef} className={cn('flex flex-1 min-w-0 relative', theme === 'dark' ? 'dark' : undefined)}>
+    <div
+      ref={menuContainerRef}
+      className={cn(
+        'flex flex-col flex-1 min-h-0 min-w-0 h-full overflow-hidden relative',
+        theme === 'dark' ? 'dark' : undefined,
+      )}
+    >
       <ThemeProvider theme={theme}>
         <VariablesProvider editor={editor} secretsManager={secretsManager}>
-          <TableOfContents editor={editor} />
-          <div
-            ref={scrollContainerRef}
-            className={cn('flex-1 min-w-0 overflow-auto', !allowRunnableBlocks ? 'pb-10' : 'pb-0')}
-          >
-            <EditorContent editor={editor}>{children}</EditorContent>
-            {allowRunnableBlocks && <PlaceholderBlock editor={editor} />}
+          <div className='flex flex-1 min-h-0 min-w-0 overflow-hidden'>
+            <TableOfContents editor={editor} />
+            <div
+              ref={scrollContainerRef}
+              className={cn('flex-1 min-h-0 min-w-0 overflow-auto', !allowRunnableBlocks ? 'pb-10' : 'pb-0')}
+            >
+              <EditorContent editor={editor}>{children}</EditorContent>
+              {allowRunnableBlocks && <PlaceholderBlock editor={editor} />}
+            </div>
           </div>
           <TextMenu editor={editor} customBlockExclusions={customBlockExclusions} />
           <SearchAndReplaceMenu editor={editor} appendTo={menuContainerRef} />

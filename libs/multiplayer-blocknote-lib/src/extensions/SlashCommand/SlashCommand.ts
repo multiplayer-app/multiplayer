@@ -4,7 +4,7 @@ import Suggestion, { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/sug
 import { PluginKey } from '@tiptap/pm/state'
 import tippy from 'tippy.js'
 
-import { ALL_BLOCKS, BASE_BLOCKS } from './groups'
+import { ALL_BLOCKS, BASE_BLOCKS, buildAllBlockGroups } from './groups'
 import { MenuList } from './MenuList'
 
 const extensionName = 'slashCommand'
@@ -17,6 +17,7 @@ export const SlashCommand = Extension.create({
   addOptions() {
     return {
       allowRunnableBlocks: false,
+      allowApiBlocks: true,
     }
   },
   onCreate() {
@@ -71,7 +72,9 @@ export const SlashCommand = Extension.create({
           view.focus()
         },
         items: ({ query }: { query: string }) => {
-          const blockGroups = this.options.allowRunnableBlocks ? ALL_BLOCKS : BASE_BLOCKS
+          const blockGroups = this.options.allowRunnableBlocks
+            ? buildAllBlockGroups(this.options.allowApiBlocks !== false)
+            : BASE_BLOCKS
           const withFilteredCommands = blockGroups.map(group => ({
             ...group,
             commands: group.commands

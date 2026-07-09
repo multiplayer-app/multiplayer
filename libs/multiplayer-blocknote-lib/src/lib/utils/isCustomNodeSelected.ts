@@ -10,6 +10,7 @@ import {
   Comment,
   RestApiBlock,
   RunnableCodeBlock,
+  SqlBlock,
   ChartBlock,
 } from '../../extensions'
 
@@ -43,6 +44,7 @@ const DEFAULT_CUSTOM_NODES = [
   RestApiBlock.name,
   HorizontalRule.name,
   RunnableCodeBlock.name,
+  SqlBlock.name,
 ]
 
 export const isCustomNodeSelected = (editor: Editor, node: HTMLElement, additionalCustomNodes: string[] = []) => {

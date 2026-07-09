@@ -28,6 +28,11 @@ export interface BlockEditorAiAssistantOptions {
   path: string
 }
 
+export interface BlockEditorSqlProxyOptions {
+  apiInstance?: any
+  path: string
+}
+
 export interface BlockEditorProxyOptions {
   apiInstance?: any
   path: string
@@ -39,8 +44,10 @@ export interface BlockEditorOptions extends EditorOptions {
   allowComments?: boolean
   environments?: Y.Map<string>
   allowRunnableBlocks?: boolean
+  allowApiBlocks?: boolean
 
   proxy?: BlockEditorProxyOptions
+  sqlProxy?: BlockEditorSqlProxyOptions
   secretsManager?: ISecretsManager
   notebookDebugger?: IMultiplayerDebugger
   aiAssistant?: BlockEditorAiAssistantOptions

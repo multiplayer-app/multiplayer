@@ -1,5 +1,5 @@
 import { Editor, Extension } from '@tiptap/core'
-import { CHART_BLOCK_NAME, RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME } from 'src/lib/constants'
+import { CHART_BLOCK_NAME, RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME, SQL_BLOCK_NAME } from 'src/lib/constants'
 import { generateId, generateUniqueName, moveCursorToEnd } from 'src/lib/utils'
 
 interface AiAssistantOptions {
@@ -167,6 +167,9 @@ function insertBlock(block: any, editor: Editor) {
       break
     case CHART_BLOCK_NAME:
       editor.commands.setChartBlock(attrs)
+      break
+    case SQL_BLOCK_NAME:
+      editor.commands.setSqlBlock(attrs)
       break
     default:
       editor.chain().focus().insertContent(block).run()

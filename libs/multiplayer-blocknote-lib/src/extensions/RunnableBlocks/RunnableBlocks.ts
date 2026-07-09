@@ -1,8 +1,9 @@
 import { Node } from '@tiptap/core'
-import { RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME } from 'src/lib/constants'
+import { RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME, SQL_BLOCK_NAME } from 'src/lib/constants'
 import { getRunnableBlocks } from 'src/lib/utils'
 import { clearApiBlockState } from '../RestApiBlock/plugins'
 import { clearCodeBlockState } from '../RunnableCodeBlock/plugins'
+import { clearSqlBlockState } from '../SqlBlock/plugins'
 import { IMultiplayerDebugger, ISecretsManager } from 'src/types'
 
 declare module '@tiptap/core' {
@@ -17,6 +18,7 @@ declare module '@tiptap/core' {
 
 export interface RunnableBlocksOptions {
   allowRunnableBlocks: boolean
+  allowApiBlocks: boolean
   noteBookDebugger: IMultiplayerDebugger | null
   secretsManager: ISecretsManager | null
 }
@@ -24,7 +26,7 @@ export interface RunnableBlocksOptions {
 export const RunnableBlocksExtension = Node.create<RunnableBlocksOptions>({
   name: 'runnableBlocksContext',
   addOptions() {
-    return { noteBookDebugger: null, allowRunnableBlocks: false, secretsManager: null }
+    return { noteBookDebugger: null, allowRunnableBlocks: false, allowApiBlocks: true, secretsManager: null }
   },
   addStorage() {
     return {
@@ -39,6 +41,7 @@ export const RunnableBlocksExtension = Node.create<RunnableBlocksOptions>({
         ({ editor }) => {
           clearApiBlockState(editor.view)
           clearCodeBlockState(editor.view)
+          clearSqlBlockState(editor.view)
         },
 
       cancelAllBlocks: () => () => {
@@ -78,6 +81,9 @@ export const RunnableBlocksExtension = Node.create<RunnableBlocksOptions>({
                 }
                 if (type.name === RUNNABLE_CODE_BLOCK_NAME) {
                   await editor.commands.runCodeBlock(attrs, { signal })
+                }
+                if (type.name === SQL_BLOCK_NAME) {
+                  await editor.commands.runSqlBlock(attrs, { signal })
                 }
               } catch (error) {
                 console.error(error)

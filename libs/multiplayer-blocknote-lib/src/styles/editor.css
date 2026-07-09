@@ -112,15 +112,6 @@
   .search-result-current {
     background-color: #ff9632;
   }
-  [data-ai-id],
-  .ai-assistant-temp-block {
-    @apply rounded-md outline outline-[#473cfb52] outline-4 outline-offset-4 relative;
-  }
-  [data-ai-id]:before,
-  .ai-assistant-temp-block:before {
-    content: '';
-    @apply rounded-md outline outline-[#473cfb] outline-1 outline-offset-4 w-full h-full absolute top-0 left-0 z-[-1];
-  }
 }
 
 @media (max-width: 768px) {

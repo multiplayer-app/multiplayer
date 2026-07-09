@@ -22,7 +22,9 @@
     "composite": true,
     "skipLibCheck": true,
     "paths": {
-      "react": ["./node_modules/@types/react"]
+      "react": ["./node_modules/@types/react"],
+      "@multiplayer/types": ["./src/compat/multiplayer-types"],
+      "@multiplayer/entity": ["./src/compat/multiplayer-entity"]
     },
     "types": ["vite-plugin-svgr/client"]
   },

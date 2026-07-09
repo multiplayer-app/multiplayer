@@ -4,28 +4,33 @@ import iconImage from '../../assets/ai-icon.png?inline'
 import SendIcon from '../../assets/send-arrow.svg?react'
 import CancelIcon from '../../assets/cancel-icon.svg?react'
 import StarsIcon from '../../assets/ai-stars.svg?react'
-import { cn } from 'src/lib/utils'
+import { cn, getExtensionOptions } from 'src/lib/utils'
 import { Icon } from '../ui/Icon'
 import { Button } from '../ui/Button'
-import { RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME, CHART_BLOCK_NAME } from 'src/lib/constants'
+import { RUNNABLE_API_BLOCK_NAME, RUNNABLE_CODE_BLOCK_NAME, CHART_BLOCK_NAME, SQL_BLOCK_NAME } from 'src/lib/constants'
 import { Spinner } from '../ui/Spinner'
 
 interface AiFormProps {
   editor: Editor
 }
 
-const SUGGESTIONS = ['Generate a code block', 'Make an API call']
+const SUGGESTIONS_WITH_API = ['Generate a code block', 'Make an API call'] as const
+const SUGGESTIONS_WITHOUT_API = ['Generate a code block', 'Run a SQL query on the users table'] as const
 
 const ADJUSTMENT_SUGGESTIONS = {
   [RUNNABLE_CODE_BLOCK_NAME]: ['Add error handling to the code', 'Optimize the code performance'],
   [RUNNABLE_API_BLOCK_NAME]: ['Add more request parameters', 'Add query parameters'],
   [CHART_BLOCK_NAME]: ['Add more data to the chart', 'Change the chart type'],
+  [SQL_BLOCK_NAME]: ['Add a JOIN to orders', 'Filter by status', 'Add LIMIT and sort by date'],
   default: ['Make it more concise', 'Add more details'],
 }
 
 let aiFormIndex = 0
 
 const AiForm = ({ editor }: AiFormProps) => {
+  const { allowApiBlocks = true } = getExtensionOptions(editor, 'runnableBlocksContext')
+  const suggestions = allowApiBlocks ? SUGGESTIONS_WITH_API : SUGGESTIONS_WITHOUT_API
+
   const [prompt, setPrompt] = useState('')
   const [initialMessage, setInitialMessage] = useState('')
   const [isFocused, setIsFocused] = useState(false)
@@ -233,7 +238,7 @@ const AiForm = ({ editor }: AiFormProps) => {
         >
           <div className="flex-1">
             <div className="text-gray-400 mb-2">Suggestions</div>
-            {(adjusting ? getAdjustmentSuggestions() : SUGGESTIONS).map((suggestion, index) => (
+            {(adjusting ? getAdjustmentSuggestions() : suggestions).map((suggestion, index) => (
               <button
                 key={index}
                 onClick={() => handleSuggestionClick(suggestion)}

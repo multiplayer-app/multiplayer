@@ -43,6 +43,7 @@ import {
   RunnableBlocksExtension,
   TableOfContents,
   ChartBlock,
+  SqlBlock,
   AiAssistant,
 } from '.'
 
@@ -52,6 +53,7 @@ const defaultUser = { id: 'guest', name: 'Guest', color: 'orange' }
 export const ExtensionKit = ({
   proxy,
   aiAssistant,
+  sqlProxy,
   showOutline,
   environments,
   allowComments,
@@ -59,6 +61,7 @@ export const ExtensionKit = ({
   notebookDebugger,
   secretsManager,
   allowRunnableBlocks,
+  allowApiBlocks = true,
   user = defaultUser,
 }) => {
   const extensions = [
@@ -123,7 +126,7 @@ export const ExtensionKit = ({
     BlockquoteFigure,
     SearchAndReplace.configure(),
     TableOfContents.configure({ showOutline }),
-    SlashCommand.configure({ allowRunnableBlocks }),
+    SlashCommand.configure({ allowRunnableBlocks, allowApiBlocks }),
     Dropcursor.configure({ width: 4, class: 'ProseMirror-dropcursor border-blue' }),
     RunnableCodeBlock.configure({
       proxy,
@@ -132,9 +135,12 @@ export const ExtensionKit = ({
       allowRunnableBlocks,
       defaultLanguage: 'javascript',
     }),
-    RestApiBlock.configure({ proxy, notebookDebugger, secretsManager, allowRunnableBlocks }),
-    RunnableBlocksExtension.configure({ allowRunnableBlocks, secretsManager }),
+    ...(allowApiBlocks
+      ? [RestApiBlock.configure({ proxy, notebookDebugger, secretsManager, allowRunnableBlocks })]
+      : []),
+    RunnableBlocksExtension.configure({ allowRunnableBlocks, allowApiBlocks, secretsManager }),
     ChartBlock.configure({ proxy, notebookDebugger }),
+    SqlBlock.configure({ allowRunnableBlocks, sqlProxy }),
   ]
 
   if (allowComments) {
