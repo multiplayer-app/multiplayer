@@ -322,6 +322,10 @@ jobs:
             SERVICE_VERSION=${{ env.SERVICE_VERSION }}
             NODE_ENV=production
 
+      - name: Docker logout
+        if: always()
+        run: docker logout
+
       - name: Login to Octopus Deploy
         uses: OctopusDeploy/login@v1
         with:
