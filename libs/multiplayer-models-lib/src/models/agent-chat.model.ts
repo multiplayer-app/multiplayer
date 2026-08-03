@@ -53,6 +53,13 @@ export interface IAgentChatModel extends Model<IAgentChatDocument> {
     payload: Partial<IAgentChat | IAgentChatDocument>,
   ): Promise<IAgentChatDocument | undefined>
 
+  finalizeAgentChatStatus(
+    id: string | ObjectId,
+    status: AgentChatStatus,
+  ): Promise<IAgentChatDocument | null>
+
+  countActiveChatsByAgent(agentId: string | ObjectId): Promise<number>
+
   bulkUpdateAgentChats(
     conditions: Record<string, unknown>,
     payload: Partial<Pick<IAgentChat, 'title' | 'archived' | 'metadata' | 'model' | 'agentName'>>,
@@ -154,6 +161,12 @@ const AgentChatSchema = new Schema({
     key: { type: String },
     bucket: { type: String },
     url: { type: String },
+  },
+  // Persisted AI-response deadline enforced by the stuck-chat sweep, so
+  // timeouts survive service restarts. Cleared on response / terminal status.
+  respondBy: {
+    type: Date,
+    default: null,
   },
 }, {
   timestamps: true,
@@ -290,6 +303,44 @@ AgentChatSchema.statics.updateAgentChatById = function (
     },
     { new: true, runValidators: true },
   )
+}
+
+const ACTIVE_AGENT_CHAT_STATUSES = [
+  AgentChatStatus.Processing,
+  AgentChatStatus.Streaming,
+]
+
+/**
+ * Atomically moves a chat from an active status into `status`, returning the
+ * PRIOR document — or null when the chat was already out of the active states.
+ * This makes "transition to terminal" a run-once operation, so capacity-slot
+ * release can't double-fire when several terminal-ish events arrive for the
+ * same chat (e.g. a `finished` chat update followed by `fix-pushed`).
+ */
+AgentChatSchema.statics.finalizeAgentChatStatus = function (
+  id: string | ObjectId,
+  status: AgentChatStatus,
+) {
+  return this.findOneAndUpdate(
+    {
+      _id: id,
+      status: { $in: ACTIVE_AGENT_CHAT_STATUSES },
+    },
+    {
+      $set: { status },
+      $unset: { respondBy: 1 },
+    },
+    { new: false, runValidators: true },
+  )
+}
+
+AgentChatSchema.statics.countActiveChatsByAgent = function (
+  agentId: string | ObjectId,
+): Promise<number> {
+  return this.countDocuments({
+    agent: new ObjectId(agentId),
+    status: { $in: ACTIVE_AGENT_CHAT_STATUSES },
+  })
 }
 
 AgentChatSchema.statics.bulkUpdateAgentChats = async function (

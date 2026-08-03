@@ -204,3 +204,11 @@ export const CHAT_AI_RESPONSE_TIMEOUT_MS = process.env.CHAT_AI_RESPONSE_TIMEOUT_
 export const AGENT_CONSECUTIVE_TIMEOUT_LIMIT = process.env.AGENT_CONSECUTIVE_TIMEOUT_LIMIT
   ? Number(process.env.AGENT_CONSECUTIVE_TIMEOUT_LIMIT)
   : 2
+
+// Grace period (ms) after an agent's socket disappears before it is hard-reaped
+// (chats failed, issues released, agent doc deleted). Must comfortably exceed a
+// socket.io reconnect after a network blip or a rolling deploy of this service.
+// Defaults to 5 minutes.
+export const AGENT_DISCONNECT_GRACE_MS = process.env.AGENT_DISCONNECT_GRACE_MS
+  ? Number(process.env.AGENT_DISCONNECT_GRACE_MS)
+  : 5 * 60 * 1000

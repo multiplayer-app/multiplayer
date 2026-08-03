@@ -44,6 +44,7 @@ import { sseBus } from '../services/sse-bus.service'
 import { AgentSessionCache } from '../cache'
 import {
   disarmChatTimeout,
+  noteAgentResponded,
   resetAgentConsecutiveTimeouts,
 } from '../services/chat-timeout.service'
 import {
@@ -62,6 +63,19 @@ const TERMINAL_CHAT_STATUSES = new Set([
 const SUCCESSFUL_TERMINAL_STATUSES = new Set([
   AgentChatStatus.Finished,
   AgentChatStatus.Aborted,
+])
+
+// Statuses that put a chat (back) into active processing.
+const RESUMABLE_CHAT_STATUSES = new Set([
+  AgentChatStatus.Processing,
+  AgentChatStatus.Streaming,
+])
+
+// Failure statuses an agent may resurrect a chat from after a reconnect
+// (deliberate terminal states — finished/aborted — are not resumable).
+const FAILED_CHAT_STATUSES = new Set([
+  AgentChatStatus.Error,
+  AgentChatStatus.Timedout,
 ])
 
 const AGENT_NAMESPACE_REGEX =
@@ -139,20 +153,29 @@ export class AgentNamespaceHandler {
           return next(new Error('Could not resolve workspaceUser for agent'))
         }
 
-        const agent = await AgentModel.createAgent({
+        // Upsert on stable identity so reconnects (blips, deploys) reuse the
+        // same agent document instead of leaking a new one per socket.
+        const agent = await AgentModel.upsertAgentByIdentity({
           workspace: socket.data.workspaceId,
           project: socket.data.projectId,
           socketId: socket.id,
           name: agentName,
           type: AgentType.DEBUGGING,
           maxConcurrentIssues,
-          issuesInProgress: 0,
           contextPath,
           noGitBranch,
           model,
           availableModels,
           workspaceUser,
         })
+
+        // The counter survives reconnects, but a restarted CLI has no memory
+        // of old claims — re-baseline against the chats actually in flight.
+        const activeChats = await AgentChatModel.countActiveChatsByAgent(agent._id)
+        if ((agent.issuesInProgress ?? 0) !== activeChats) {
+          await AgentModel.syncIssuesInProgress(agent._id, activeChats)
+          agent.issuesInProgress = activeChats
+        }
 
         socket.data.agent = agent
         socket.data.agentId = agent._id.toString()
@@ -189,6 +212,37 @@ export class AgentNamespaceHandler {
 
     target.emit(event, data)
     logger.debug({ room, event }, '[AGENT_WEBSOCKET] Emit message to room')
+  }
+
+  /**
+   * Emits to a room and waits for acknowledgments from the sockets in it.
+   * Returns the ack payloads received before the timeout. An empty array means
+   * nobody acked — either no socket is in the room, or the client predates ack
+   * support — callers must treat that as "unknown", not as failure.
+   */
+  async emitToRoomWithAck<T>(
+    workspaceId: string,
+    projectId: string,
+    room: string,
+    event: string,
+    data: unknown,
+    timeoutMs: number,
+  ): Promise<T[]> {
+    const namespaceName = `/workspaces/${workspaceId}/projects/${projectId}/agents`
+
+    try {
+      const responses = await this.io
+        .of(namespaceName)
+        .in(room)
+        .timeout(timeoutMs)
+        .emitWithAck(event, data)
+      return (responses ?? []).filter((r: unknown) => r !== undefined && r !== null) as T[]
+    } catch (error) {
+      // Timeout: some sockets did not ack (old clients never will) — return
+      // whatever we can distinguish, which for socket.io is nothing.
+      logger.debug({ room, event, error: String(error) }, '[AGENT_WEBSOCKET] Ack emit timed out')
+      return []
+    }
   }
 
   /**
@@ -340,48 +394,14 @@ export class AgentNamespaceHandler {
     try {
       if (!socket.data.agentId) return
 
-      const { agentId, workspaceId, projectId } = socket.data
+      const { agentId } = socket.data
 
-      for await (const chat of AgentChatModel.findAgentChatCursor({
-        workspace: workspaceId,
-        project: projectId,
-        agent: agentId,
-        status: [AgentChatStatus.Processing, AgentChatStatus.Streaming],
-      })) {
-        const chatId = chat._id.toString()
-        const updated = await AgentChatModel.updateAgentChatById(chatId, {
-          status: AgentChatStatus.Error,
-        })
-        if (updated) {
-          const chatRoom = WebSocketHelper.getChatRoom(workspaceId, projectId, chatId)
-
-          const errorMessage = await AgentChatMessageModel.createMessage({
-            workspace: workspaceId,
-            project: projectId,
-            chat: chatId,
-            role: AgentChatMessageRole.Error,
-            content: 'Agent disconnected unexpectedly. Please retry.',
-            agentName: chat.agentName ?? 'debugging-agent',
-          })
-          this.broadcastEvent(
-            socket,
-            AgentEvents.AGENT_MESSAGE_NEW,
-            errorMessage.toObject(),
-            chatId,
-            { room: chatRoom },
-          )
-          this.broadcastEvent(
-            socket,
-            AgentEvents.AGENT_CHAT_UPDATE,
-            updated,
-            chatId,
-            { room: chatRoom },
-          )
-        }
-      }
-
-      await AgentModel.deleteAgentById(agentId)
-      await AgentSessionCache.unsetByAgent(agentId)
+      // Do NOT kill chats or delete the agent here: disconnects are often
+      // transient (network blip, service deploy) and the CLI keeps working
+      // and reconnects. Mark the timestamp; the stuck-agent sweep hard-reaps
+      // (fails chats, resets issues, deletes the doc) only after the grace
+      // period expires without a reconnect.
+      await AgentModel.markAgentDisconnected(agentId)
 
       this.broadcastEvent(
         socket,
@@ -418,6 +438,10 @@ export class AgentNamespaceHandler {
       }
 
       const agentChatId = data.chat
+
+      // The agent is alive and producing output — clear the AI-response
+      // deadline so the stuck-chat sweep doesn't time this chat out.
+      noteAgentResponded(agentChatId)
 
       data = ChatService.prepareMessageAttachments(data)
 
@@ -470,6 +494,35 @@ export class AgentNamespaceHandler {
       data = JoiValidator.validate(data, updateChatInHandlerSchema)
       const agentChatId = data._id
 
+      // For terminal statuses, transition atomically first so the capacity
+      // slot is released exactly once per chat (a `finished` update followed
+      // by `fix-pushed` must not double-release) and is charged to the chat's
+      // owning agent rather than whichever socket reported the status.
+      let releaseAgentId: string | undefined
+      if (TERMINAL_CHAT_STATUSES.has(data.status)) {
+        const prior = await AgentChatModel.finalizeAgentChatStatus(agentChatId, data.status)
+        if (prior) {
+          releaseAgentId = prior.agent?.toString()
+        }
+      } else if (RESUMABLE_CHAT_STATUSES.has(data.status)) {
+        // Resurrection: an agent re-adopting work after a reconnect flips an
+        // error/timedout chat back to processing. Re-claim the capacity slot
+        // that was released when the chat was failed, so the counter matches
+        // the work actually in flight.
+        const existing = await AgentChatModel.findAgentChatById(agentChatId)
+        if (
+          existing
+          && FAILED_CHAT_STATUSES.has(existing.status)
+          && existing.agent
+        ) {
+          await AgentModel.claimIssueCapacitySlot(
+            socket.data.workspaceId,
+            socket.data.projectId,
+            existing.agent.toString(),
+          )
+        }
+      }
+
       const agentChat = await AgentChatModel.updateAgentChatById(
         agentChatId,
         data,
@@ -483,11 +536,11 @@ export class AgentNamespaceHandler {
         { room: WebSocketHelper.getChatRoom(socket.data.workspaceId, socket.data.projectId, agentChatId), except: socket.id },
       )
 
-      // Release capacity slot when chat reaches a terminal status.
-      // releaseIssueCapacitySlot is guarded by $gt:0 so double-release is safe.
       if (TERMINAL_CHAT_STATUSES.has(data.status)) {
         disarmChatTimeout(agentChatId)
-        await AgentModel.releaseIssueCapacitySlot(socket.data.agentId)
+        if (releaseAgentId) {
+          await AgentModel.releaseIssueCapacitySlot(releaseAgentId)
+        }
         await AgentSessionCache.unset(agentChatId)
 
         // Reset consecutive-timeout counter when the agent successfully finishes
@@ -705,6 +758,10 @@ export class AgentNamespaceHandler {
       }),
     )
 
+    // Set only when this event performed the chat's active→terminal
+    // transition; the matching capacity slot is released exactly once.
+    let releaseAgentId: string | undefined
+
     try {
       const {
         issue: { componentHash },
@@ -719,6 +776,14 @@ export class AgentNamespaceHandler {
         },
       } = data
       let prUrl = initialPrUrl
+
+      const prior = await AgentChatModel.finalizeAgentChatStatus(
+        data.chatId,
+        AgentChatStatus.Finished,
+      )
+      if (prior) {
+        releaseAgentId = prior.agent?.toString()
+      }
 
       let agentChat = (await AgentChatModel.findAgentChatById(
         data.chatId,
@@ -834,7 +899,9 @@ export class AgentNamespaceHandler {
         '[WEBSOCKET] Error handling debugging agent fix pushed',
       )
     } finally {
-      await AgentModel.releaseIssueCapacitySlot(socket.data.agentId)
+      if (releaseAgentId) {
+        await AgentModel.releaseIssueCapacitySlot(releaseAgentId)
+      }
       await AgentSessionCache.unset(data.chatId)
     }
   }
@@ -844,6 +911,10 @@ export class AgentNamespaceHandler {
     data: AgentEventsMap[AgentEvents.DEBUGGING_AGENT_FIX_FAILED]['requestParams'],
     callback?: WSCallback<void>,
   ) {
+    // Set only when this event performed the chat's active→terminal
+    // transition; the matching capacity slot is released exactly once.
+    let releaseAgentId: string | undefined
+
     try {
       data = JoiValidator.validate(
         data,
@@ -871,9 +942,17 @@ export class AgentNamespaceHandler {
         },
       )
 
-      const agentChat = (await AgentChatModel.updateAgentChatById(data.chatId, {
-        status: AgentChatStatus.Error,
-      })) as IAgentChatDocument
+      const prior = await AgentChatModel.finalizeAgentChatStatus(
+        data.chatId,
+        AgentChatStatus.Error,
+      )
+      if (prior) {
+        releaseAgentId = prior.agent?.toString()
+      }
+
+      const agentChat = (await AgentChatModel.findAgentChatById(
+        data.chatId,
+      )) as IAgentChatDocument
 
       const errorMessage = await AgentChatMessageModel.createMessage({
         workspace: socket.data.workspaceId,
@@ -912,7 +991,9 @@ export class AgentNamespaceHandler {
         '[WEBSOCKET] Error handling debugging agent fix failed',
       )
     } finally {
-      await AgentModel.releaseIssueCapacitySlot(socket.data.agentId)
+      if (releaseAgentId) {
+        await AgentModel.releaseIssueCapacitySlot(releaseAgentId)
+      }
       await AgentSessionCache.unset(data.chatId)
     }
   }

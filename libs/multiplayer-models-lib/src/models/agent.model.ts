@@ -17,6 +17,12 @@ export interface IAgentDocument extends Omit<IAgent, '_id'>, Document {
 export interface IAgentModel extends Model<IAgentDocument> {
   createAgent(payload: Partial<IAgentDocument>): Promise<IAgentDocument>;
 
+  upsertAgentByIdentity(payload: Partial<IAgent>): Promise<IAgentDocument>;
+
+  markAgentDisconnected(id: string | ObjectId): Promise<void>;
+
+  syncIssuesInProgress(id: string | ObjectId, count: number): Promise<void>;
+
   findAgentById(id: string | ObjectId): Promise<IAgentDocument | undefined>;
 
   findAgentByIdAndProjectAndWorkspace(
@@ -68,6 +74,10 @@ export interface IAgentModel extends Model<IAgentDocument> {
     agentId: string | ObjectId,
   ): Promise<IAgentDocument | null>;
 
+  claimIssueCapacitySlotIfAvailable(
+    agentId: string | ObjectId,
+  ): Promise<IAgentDocument | null>;
+
   releaseIssueCapacitySlot(id: string | ObjectId): Promise<void>;
 
   incrementConsecutiveTimeouts(id: string | ObjectId): Promise<IAgentDocument | null>;
@@ -93,6 +103,12 @@ const AgentSchema = new Schema(
       type: String,
       required: true,
       unique: true,
+    },
+    // Set on socket disconnect, cleared on reconnect. Agents are hard-reaped
+    // only after a grace period so blips/deploys don't kill in-flight work.
+    disconnectedAt: {
+      type: Date,
+      default: null,
     },
     name: {
       type: String,
@@ -161,6 +177,71 @@ const AgentSchema = new Schema(
 
 AgentSchema.statics.createAgent = function (payload: Partial<IAgent>) {
   return new this(payload).save()
+}
+
+/**
+ * Upserts an agent keyed on its stable identity (workspace/project/user/name/
+ * dir/type) so reconnects reuse the same document instead of creating a new
+ * one per socket. Keeps `issuesInProgress` across reconnects; callers should
+ * re-sync it against actual active chats via `syncIssuesInProgress`.
+ */
+AgentSchema.statics.upsertAgentByIdentity = function (payload: Partial<IAgent>) {
+  const {
+    workspace,
+    project,
+    workspaceUser,
+    name,
+    contextPath,
+    type,
+    ...volatile
+  } = payload
+
+  return this.findOneAndUpdate(
+    {
+      workspace: new ObjectId(workspace),
+      project: new ObjectId(project),
+      workspaceUser: new ObjectId(workspaceUser),
+      name: name ?? null,
+      contextPath: contextPath ?? null,
+      type,
+    },
+    {
+      $set: {
+        ...volatile,
+        disconnectedAt: null,
+        errored: false,
+      },
+      $setOnInsert: {
+        workspace: new ObjectId(workspace),
+        project: new ObjectId(project),
+        workspaceUser: new ObjectId(workspaceUser),
+        name,
+        contextPath,
+        type,
+        issuesInProgress: 0,
+        consecutiveTimeouts: 0,
+      },
+    },
+    { upsert: true, new: true },
+  )
+}
+
+AgentSchema.statics.markAgentDisconnected = function (id: string | ObjectId): Promise<void> {
+  return this.findOneAndUpdate(
+    { _id: id },
+    { $set: { disconnectedAt: new Date() } },
+  )
+}
+
+/** Overwrites the capacity counter with the observed number of active chats. */
+AgentSchema.statics.syncIssuesInProgress = function (
+  id: string | ObjectId,
+  count: number,
+): Promise<void> {
+  return this.findOneAndUpdate(
+    { _id: id },
+    { $set: { issuesInProgress: count } },
+  )
 }
 
 AgentSchema.statics.findAgentById = function (id: string | ObjectId) {
@@ -400,6 +481,30 @@ AgentSchema.statics.claimIssueCapacitySlot = function (
         issuesInProgress: 1,
       },
     },
+    { new: true },
+  )
+}
+
+/**
+ * Atomically claims a slot on a specific agent only if it has capacity.
+ * Returns null when the agent is at (or above) maxConcurrentIssues, errored,
+ * or missing — callers must not dispatch in that case.
+ */
+AgentSchema.statics.claimIssueCapacitySlotIfAvailable = function (
+  agentId: string | ObjectId,
+): Promise<IAgentDocument | null> {
+  return this.findOneAndUpdate(
+    {
+      _id: new ObjectId(agentId),
+      errored: { $ne: true },
+      $expr: {
+        $lt: [
+          { $ifNull: ['$issuesInProgress', 0] },
+          { $ifNull: ['$maxConcurrentIssues', 2] },
+        ],
+      },
+    },
+    { $inc: { issuesInProgress: 1 } },
     { new: true },
   )
 }

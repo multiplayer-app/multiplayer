@@ -17,6 +17,7 @@ import {
   AgentChatStatus,
   AgentChatType,
   AgentChatStartReasonEnum,
+  AgentChatMessageRole,
   IIssue,
   OtelAgentSelectionMode,
   IntegrationTypeEnum,
@@ -33,15 +34,22 @@ import * as EntityService from './entity.service'
 import * as ProjectService from './project.service'
 import * as IssueService from './issue.service'
 import * as websocket from '../websocket'
+import { sseBus } from './sse-bus.service'
 import { AgentChatLib } from '../libs'
 import { AgentSessionCache } from '../cache'
 import {
   REDIS_ISSUE_RESOLVE_LOCK_PREFIX,
   REDIS_ISSUE_RESOLVE_LOCK_TTL,
   DEFAULT_AGENT_FIXABILITY_SCORE_THRESHOLD,
+  CHAT_AI_RESPONSE_TIMEOUT_MS,
 } from '../config'
 
 const MAX_AGENT_CHAT_ASSIGN_ATTEMPTS = 5
+
+// How long to wait for the CLI to ack a DEBUGGING_AGENT_RESOLVE_ISSUE dispatch.
+// The accept/reject decision on the agent side is synchronous, so this only
+// needs to cover network round-trip time.
+const RESOLVE_ISSUE_ACK_TIMEOUT_MS = 10_000
 
 export type AgentChatBulkFilter = {
   ids?: string[]
@@ -266,6 +274,11 @@ export const notifyDebuggingAgentToFixIssue = async (
       type: AgentChatType.Agent,
       agentType: agent.type,
       status: AgentChatStatus.Processing,
+      // Persisted deadline: if the dispatch below is lost (agent vanished at
+      // the wrong moment, service restarted mid-flight) the stuck-chat sweep
+      // recovers this chat instead of it staying Processing forever. Cleared
+      // when the agent's first message arrives.
+      respondBy: new Date(Date.now() + CHAT_AI_RESPONSE_TIMEOUT_MS).toISOString(),
       startReason,
       ...(agent.model ? { model: agent.model } : {}),
       title: AgentChatLib.getChatTitle({
@@ -299,6 +312,24 @@ export const notifyDebuggingAgentToFixIssue = async (
     const workspaceId = issue.workspace.toString()
     const projectId = issue.project.toString()
 
+    // Mark the issue in-progress BEFORE the ack round-trip: the ack wait can
+    // last up to RESOLVE_ISSUE_ACK_TIMEOUT_MS, which is as long as the redis
+    // dispatch lock TTL — writing afterwards would leave a window where the
+    // lock has expired but the issue still looks dispatchable.
+    await IssueModel.bulkUpdateIssues(
+      workspaceId,
+      projectId,
+      {
+        componentHash: [issue.componentHash],
+      },
+      {
+        solution: {
+          inProgress: true,
+          agent: agent._id.toString(),
+        },
+      },
+    )
+
     // Join agent's socket(s) to the session room
     const agentChatRoom = WebSocketHelper.getChatRoom(workspaceId, projectId, agentChatId)
     const agentSockets = await websocket.io.in(agentRoom).fetchSockets()
@@ -309,8 +340,12 @@ export const notifyDebuggingAgentToFixIssue = async (
     const project = await ProjectService.getProject(projectId)
     const issueUrl = await IssueService.getIssueUrl(issue as IIssue)
 
-    // Send DEBUGGING_AGENT_RESOLVE_ISSUE to the agent — prompt is built on the agent side
-    websocket.agentNamespaceHandler.emitMessageToRoom(
+    // Send DEBUGGING_AGENT_RESOLVE_ISSUE to the agent — prompt is built on the
+    // agent side. Waits for an acknowledgment so an agent that is at capacity
+    // (or already fixing this issue) can reject the assignment synchronously.
+    // No ack at all (old CLI, lost socket) is treated as "unknown" and left to
+    // the respondBy deadline + sweeps to recover.
+    const acks = await websocket.agentNamespaceHandler.emitToRoomWithAck<{ accepted?: boolean, reason?: string }>(
       workspaceId,
       projectId,
       agentRoom,
@@ -329,7 +364,38 @@ export const notifyDebuggingAgentToFixIssue = async (
           }
           : undefined,
       } as AgentEventsMap[AgentEvents.DEBUGGING_AGENT_RESOLVE_ISSUE]['responseParams'],
+      RESOLVE_ISSUE_ACK_TIMEOUT_MS,
     )
+
+    const explicitlyRejected = acks.length > 0 && acks.every(ack => ack?.accepted === false)
+    if (explicitlyRejected) {
+      logger.warn(
+        {
+          agentId: agent._id.toString(),
+          issueComponentHash: issue.componentHash,
+          reasons: acks.map(ack => ack?.reason).filter(Boolean),
+        },
+        '[AGENT_SERVICE] Agent rejected issue assignment — rolling back',
+      )
+      await AgentChatModel.finalizeAgentChatStatus(agentChatId, AgentChatStatus.Error)
+      await AgentModel.releaseIssueCapacitySlot(agent._id)
+      // Make the issue dispatchable again for other agents.
+      await IssueModel.bulkUpdateIssues(
+        workspaceId,
+        projectId,
+        {
+          componentHash: [issue.componentHash],
+        },
+        {
+          solution: {
+            inProgress: false,
+            fixWithAgentFailed: false,
+            agent: undefined,
+          },
+        },
+      )
+      return undefined
+    }
 
     // Broadcast to viewers (excluding the agent) so they know a new chat started
     websocket.agentNamespaceHandler.emitMessageToRoom(
@@ -354,20 +420,6 @@ export const notifyDebuggingAgentToFixIssue = async (
       agentChatId,
       agentRoom,
     }, '[AGENT_SERVICE] Notified debugging agent to fix issue')
-
-    await IssueModel.bulkUpdateIssues(
-      issue.workspace.toString(),
-      issue.project.toString(),
-      {
-        componentHash: [issue.componentHash],
-      },
-      {
-        solution: {
-          inProgress: true,
-          agent: agent._id.toString(),
-        },
-      },
-    )
 
     return agentChat
   } catch (error) {
@@ -578,20 +630,84 @@ export const findAndAssignIssueToAgent = async (
       }
     }
 
-    const issueLockKey = `${REDIS_ISSUE_RESOLVE_LOCK_PREFIX}${issue._id.toString()}`
+    // Lock on componentHash — the OTLP dispatch path locks on the same key,
+    // so the two routes can't dispatch the same issue to two agents.
+    const issueLockKey = `${REDIS_ISSUE_RESOLVE_LOCK_PREFIX}${issue.componentHash}`
     const issueLocked = await redis.lockKey(issueLockKey, REDIS_ISSUE_RESOLVE_LOCK_TTL)
 
     if (!issueLocked) {
       return
     }
 
-    await notifyDebuggingAgentToFixIssue(agent, issue, startReason)
+    // Claim a capacity slot on this specific agent before dispatching. The
+    // agent may be full (it emits `ready` on connect regardless of local
+    // occupancy) — in that case assign nothing and leave the issue for an
+    // agent that actually has room.
+    const claimed = await AgentModel.claimIssueCapacitySlotIfAvailable(agent._id)
+    if (!claimed) {
+      logger.debug(
+        { agentId: agent._id.toString(), issueComponentHash: issue.componentHash },
+        '[AGENT_SERVICE] Agent has no free capacity slot — skipping assignment',
+      )
+      return
+    }
+
+    try {
+      await notifyDebuggingAgentToFixIssue(agent, issue, startReason)
+    } catch (error) {
+      // Dispatch failed — return the claimed slot so it doesn't leak.
+      await AgentModel.releaseIssueCapacitySlot(agent._id)
+      throw error
+    }
   } catch (error) {
     logger.error(error, '[AGENT_SERVICE] Failed to find and assign issue to agent')
   }
 }
 
 export const disconnectAgent = async (agent: IAgentDocument): Promise<void> => {
+  const workspaceId = agent.workspace.toString()
+  const projectId = agent.project.toString()
+
+  // Fail any chats still marked active for this agent so they don't linger as
+  // zombies. finalizeAgentChatStatus is a no-op for chats already terminal.
+  for await (const chat of AgentChatModel.findAgentChatCursor({
+    workspace: workspaceId,
+    project: projectId,
+    agent: agent._id,
+    status: [AgentChatStatus.Processing, AgentChatStatus.Streaming],
+  })) {
+    const chatId = chat._id.toString()
+    const prior = await AgentChatModel.finalizeAgentChatStatus(chatId, AgentChatStatus.Error)
+    if (!prior) continue
+
+    const errorMessage = await AgentChatMessageModel.createMessage({
+      workspace: workspaceId,
+      project: projectId,
+      chat: chatId,
+      role: AgentChatMessageRole.Error,
+      content: 'Agent disconnected unexpectedly. Please retry.',
+      agentName: chat.agentName ?? 'debugging-agent',
+    })
+    websocket.agentNamespaceHandler.emitToChatRoom(
+      workspaceId,
+      projectId,
+      chatId,
+      AgentEvents.AGENT_MESSAGE_NEW,
+      errorMessage.toObject(),
+    )
+    const updated = await AgentChatModel.findAgentChatById(chatId)
+    if (updated) {
+      websocket.agentNamespaceHandler.emitToChatRoom(
+        workspaceId,
+        projectId,
+        chatId,
+        AgentEvents.AGENT_CHAT_UPDATE,
+        updated.toObject(),
+      )
+      sseBus.publish(chatId, AgentEvents.AGENT_CHAT_UPDATE, updated.toObject())
+    }
+  }
+
   await AgentModel.deleteAgentById(agent._id)
   await IssueModel.bulkUpdateIssues(
     agent.workspace,

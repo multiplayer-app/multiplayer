@@ -1,4 +1,4 @@
-import { AgentChatModel, AgentModel } from '@multiplayer/models'
+import { AgentChatModel, AgentModel, IssueModel } from '@multiplayer/models'
 import { AgentChatStatus, AgentEvents } from '@multiplayer/types'
 import logger from '@multiplayer/logger'
 import { AgentSessionCache } from '../cache'
@@ -20,9 +20,9 @@ const activeTimers = new Map<string, TimerEntry>()
 
 /**
  * Arms an AI-response timeout for the given chat.
- * If the AI does not respond within CHAT_AI_RESPONSE_TIMEOUT_MS the chat is
- * marked as `timedout`, the agent's capacity slot is released, and consecutive
- * timeout tracking is updated for the agent.
+ * The deadline is persisted on the chat document (`respondBy`) so it survives
+ * service restarts — the stuck-chat sweep enforces it when the in-memory timer
+ * is gone. The local setTimeout is just the fast path.
  *
  * Safe to call multiple times for the same chatId — previous timer is replaced.
  */
@@ -32,11 +32,18 @@ export const armChatTimeout = (
   workspaceId: string,
   projectId: string,
 ): void => {
-  disarmChatTimeout(chatId)
+  cancelTimer(chatId)
+  clearedDeadlines.delete(chatId)
   const timer = setTimeout(() => {
-    void handleChatTimeout(chatId, agentId, workspaceId, projectId)
+    void timeoutChatNow(chatId, agentId, workspaceId, projectId)
   }, CHAT_AI_RESPONSE_TIMEOUT_MS)
   activeTimers.set(chatId, { timer, agentId, workspaceId, projectId })
+
+  void AgentChatModel.updateAgentChatById(chatId, {
+    respondBy: new Date(Date.now() + CHAT_AI_RESPONSE_TIMEOUT_MS).toISOString(),
+  }).catch((err) => {
+    logger.error(err, '[CHAT_TIMEOUT] Failed to persist respondBy deadline')
+  })
 
   logger.debug(
     { chatId, agentId, timeoutMs: CHAT_AI_RESPONSE_TIMEOUT_MS },
@@ -45,15 +52,51 @@ export const armChatTimeout = (
 }
 
 /**
- * Cancels any pending timeout for the given chat.
- * Should be called as soon as the AI starts responding (first message or
- * terminal status update).
+ * Cancels any pending timeout for the given chat and clears the persisted
+ * deadline. Should be called as soon as the AI starts responding (first
+ * message or terminal status update).
  */
-export const disarmChatTimeout = (chatId: string): void => {
+const cancelTimer = (chatId: string): void => {
   const entry = activeTimers.get(chatId)
   if (!entry) return
   clearTimeout(entry.timer)
   activeTimers.delete(chatId)
+}
+
+// Chats whose persisted deadline this instance already cleared — avoids one
+// DB write per streamed message chunk. Re-arming removes the entry again.
+const clearedDeadlines = new Set<string>()
+
+/**
+ * Signals that the agent produced output for this chat: cancels the local
+ * timer and clears the persisted `respondBy` deadline (once per arm cycle).
+ * Call on every agent-originated message; debounced internally.
+ */
+export const noteAgentResponded = (chatId: string): void => {
+  cancelTimer(chatId)
+
+  if (clearedDeadlines.has(chatId)) return
+  clearedDeadlines.add(chatId)
+  if (clearedDeadlines.size > 10_000) {
+    clearedDeadlines.clear()
+    clearedDeadlines.add(chatId)
+  }
+
+  void AgentChatModel.updateAgentChatById(chatId, {
+    respondBy: null,
+  }).catch((err) => {
+    logger.error(err, '[CHAT_TIMEOUT] Failed to clear respondBy deadline')
+  })
+}
+
+export const disarmChatTimeout = (chatId: string): void => {
+  cancelTimer(chatId)
+
+  void AgentChatModel.updateAgentChatById(chatId, {
+    respondBy: null,
+  }).catch((err) => {
+    logger.error(err, '[CHAT_TIMEOUT] Failed to clear respondBy deadline')
+  })
 
   logger.debug({ chatId }, '[CHAT_TIMEOUT] Disarmed AI-response timeout')
 }
@@ -71,7 +114,18 @@ export const resetAgentConsecutiveTimeouts = async (agentId: string): Promise<vo
   }
 }
 
-const handleChatTimeout = async (
+/**
+ * Times out a chat immediately: marks it `timedout`, releases the agent's
+ * capacity slot, and updates consecutive-timeout tracking.
+ *
+ * Idempotent — finalizeAgentChatStatus only transitions chats that are still
+ * active, so a chat that completed (or was already timed out by another
+ * instance) is left untouched and no slot is double-released.
+ *
+ * Called by the in-memory timer AND by the stuck-chat sweep (which enforces
+ * the persisted `respondBy` deadline after restarts).
+ */
+export const timeoutChatNow = async (
   chatId: string,
   agentId: string,
   workspaceId: string,
@@ -79,36 +133,57 @@ const handleChatTimeout = async (
 ): Promise<void> => {
   activeTimers.delete(chatId)
 
-  logger.warn(
-    { chatId, agentId, timeoutMs: CHAT_AI_RESPONSE_TIMEOUT_MS },
-    '[CHAT_TIMEOUT] Chat timed out waiting for AI response',
-  )
-
   try {
-    // Mark the chat as timedout (only if it is still in an active state)
-    const updated = await AgentChatModel.updateAgentChatById(chatId, {
-      status: AgentChatStatus.Timedout,
-    })
-
-    if (!updated) {
-      // Chat was already completed/deleted before the timer fired
+    // Atomically transition active → timedout; null means the chat was
+    // already resolved (or reaped elsewhere) — nothing to do.
+    const prior = await AgentChatModel.finalizeAgentChatStatus(
+      chatId,
+      AgentChatStatus.Timedout,
+    )
+    if (!prior) {
       logger.debug({ chatId }, '[CHAT_TIMEOUT] Chat already resolved before timeout fired')
       return
     }
+
+    logger.warn(
+      { chatId, agentId, timeoutMs: CHAT_AI_RESPONSE_TIMEOUT_MS },
+      '[CHAT_TIMEOUT] Chat timed out waiting for AI response',
+    )
 
     // Release the capacity slot so the agent can accept new chats
     await AgentModel.releaseIssueCapacitySlot(agentId)
     await AgentSessionCache.unset(chatId)
 
+    // Make the chat's issue dispatchable again — otherwise it stays
+    // solution.inProgress forever and no agent ever picks it up.
+    const componentHash = prior.metadata?.issue?.componentHash
+    if (componentHash) {
+      await IssueModel.bulkUpdateIssues(
+        workspaceId,
+        projectId,
+        { componentHash: [componentHash] },
+        {
+          solution: {
+            inProgress: false,
+            fixWithAgentFailed: false,
+            agent: undefined,
+          },
+        },
+      )
+    }
+
     // Broadcast the timedout status to all subscribers
-    websocket.agentNamespaceHandler.emitToChatRoom(
-      workspaceId,
-      projectId,
-      chatId,
-      AgentEvents.AGENT_CHAT_UPDATE,
-      updated.toObject(),
-    )
-    sseBus.publish(chatId, AgentEvents.AGENT_CHAT_UPDATE, updated.toObject())
+    const updated = await AgentChatModel.findAgentChatById(chatId)
+    if (updated) {
+      websocket.agentNamespaceHandler.emitToChatRoom(
+        workspaceId,
+        projectId,
+        chatId,
+        AgentEvents.AGENT_CHAT_UPDATE,
+        updated.toObject(),
+      )
+      sseBus.publish(chatId, AgentEvents.AGENT_CHAT_UPDATE, updated.toObject())
+    }
 
     // Increment consecutive timeout counter for the agent
     const agentAfterTimeout = await AgentModel.incrementConsecutiveTimeouts(agentId)
