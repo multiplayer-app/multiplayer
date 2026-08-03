@@ -180,4 +180,14 @@ new CronJob(
   true,
 )
 
+// Stuck-chat sweep: boot pass (recover state orphaned by the previous deploy)
+// plus a cron so persisted respondBy deadlines are enforced even when the
+// in-memory timers died with a previous instance.
+new CronJob(
+  '*/2 * * * *',
+  ChatWorker.clearStuckProcessingChats,
+  null,
+  true,
+)
+
 void ChatWorker.clearStuckProcessingChats()

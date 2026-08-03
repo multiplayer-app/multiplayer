@@ -16,6 +16,12 @@ export interface IAgent {
   model?: string
   availableModels?: string[]
   workspaceUser: string
+  /**
+   * Set when the agent's socket disconnects; cleared on reconnect. Agents are
+   * only hard-reaped after a grace period so transient blips and service
+   * deploys don't kill in-flight work.
+   */
+  disconnectedAt?: string | null
 
   settings?: {
     issueSubscription?: {

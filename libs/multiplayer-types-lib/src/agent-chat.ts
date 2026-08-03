@@ -126,6 +126,13 @@ export interface IAgentChat {
   model?: string
   dir?: string
 
+  /**
+   * Persisted AI-response deadline. Enforced by the stuck-chat sweep so
+   * timeouts survive service restarts (in-memory timers are only a fast path).
+   * Cleared when the agent responds or the chat reaches a terminal status.
+   */
+  respondBy?: string | null
+
   git?: {
     branchName?: string
     branchUrl?: string

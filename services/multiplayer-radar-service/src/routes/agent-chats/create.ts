@@ -32,6 +32,20 @@ export const createChat = async (req: Request, res: Response, next: NextFunction
       throw new BadRequestError('No available agent of the requested type')
     }
 
+    // findAgentWithAvailableSlot claims a capacity slot as a side effect; an
+    // explicitly-requested agent hasn't claimed one yet. Keep the claim state
+    // symmetric per branch: issue dispatch must hold a claim (released on the
+    // chat's terminal transition or on dispatch rollback), while
+    // startAgentChatWithoutIssue doesn't consume capacity at all.
+    if (issueComponentHash && agentId) {
+      const claimed = await AgentModel.claimIssueCapacitySlotIfAvailable(agent._id)
+      if (!claimed) {
+        throw new BadRequestError('Agent is at maximum concurrent issues capacity')
+      }
+    }
+    if (!issueComponentHash && !agentId) {
+      await AgentModel.releaseIssueCapacitySlot(agent._id)
+    }
 
     if (issueComponentHash) {
       const { data: [issue] } = await IssueModel.findIssues(
