@@ -15,12 +15,12 @@ import {
   ProjectLinkObjectType,
   IProjectBranch, GetConflictsResponse,
 } from '@multiplayer/types'
-import { INTERNAL_VERSION_SERVICE_URI } from '../config'
+import { INTERNAL_API_SERVICE_URI } from '../config'
 import { AbstractService } from './abstract-service'
 
 export class InternalVersionService extends AbstractService {
   protected getBaseUrl(): string {
-    return INTERNAL_VERSION_SERVICE_URI
+    return `${INTERNAL_API_SERVICE_URI}/version`
   }
 
   createCommit(params: {

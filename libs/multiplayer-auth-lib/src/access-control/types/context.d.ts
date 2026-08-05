@@ -9,7 +9,7 @@ export interface Context {
   workspaceId: string
   workspaceOwner?: boolean
   workspaceAdmin?: boolean
-  superAdmin?: boolean
+  superadmin?: boolean
   workspaceRoleId?: string
   teams: {
     teamId: string

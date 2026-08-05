@@ -7,7 +7,7 @@ import {
   RadarDetectionSource,
   RadarDetectionEndpointType,
 } from '@multiplayer/types'
-import { ClickHouseTypes } from '@multiplayer/clickhouse'
+import { ClickHouseSortOrder } from '../../../store'
 
 export const listRadarDetectionsSchema = Joi.object({
   params: Joi.object({
@@ -16,7 +16,7 @@ export const listRadarDetectionsSchema = Joi.object({
   }).required(),
   query: Joi.object({
     sortDirection: Joi.array().items(
-      Joi.number().valid(...Object.values(ClickHouseTypes.ClickHouseSortOrder)),
+      Joi.number().valid(...Object.values(ClickHouseSortOrder)),
     ),
     sortKey: Joi.array().items(
       Joi.string().max(100),
@@ -68,7 +68,7 @@ export const listRadarDetectedDependenciesSchema = Joi.object({
   }).required(),
   query: Joi.object({
     sortDirection: Joi.array().items(
-      Joi.number().valid(...Object.values(ClickHouseTypes.ClickHouseSortOrder)),
+      Joi.number().valid(...Object.values(ClickHouseSortOrder)),
     ),
     sortKey: Joi.array().items(
       Joi.string().max(100),

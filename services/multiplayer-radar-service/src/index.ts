@@ -2,11 +2,11 @@ import '@multiplayer/apm'
 import 'dotenv/config'
 import http from 'http'
 import logger from '@multiplayer/logger'
-import * as Clickhouse from '@multiplayer/clickhouse'
 import { app } from './app'
 import { PORT } from './config'
 import * as websocket from './websocket'
 import { kafkaConsumer, kafkaProducer } from './libs'
+import { Store } from './store'
 
 const httpServer = http.createServer(app)
 
@@ -28,7 +28,7 @@ const exitHandler = async (error: any) => {
   if (error) {
     logger.error(error, 'Server exited with error')
   }
-  await Clickhouse.disconnect()
+  await Store.disconnect()
   await kafkaConsumer.disconnect()
   await kafkaProducer.disconnect()
   events.forEach(event => process.removeListener(event, exitHandler))

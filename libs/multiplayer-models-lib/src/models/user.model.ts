@@ -10,7 +10,6 @@ import {
   WorkspaceUserStatus,
   IUserSession,
 } from '@multiplayer/types'
-import { CounterModel } from './counter.model'
 import { IWorkspaceUserDocument } from './workspace-user.model'
 import { SALT_ROUNDS } from '../config'
 
@@ -163,16 +162,13 @@ export interface IUserModel extends Model<IUserDocument> {
 }
 
 const UserSchema = new Schema({
-  superAdmin: {
+  superadmin: {
     type: Boolean,
   },
   invite: {
     refUser: {
       type: ObjectId,
       ref: 'User',
-    },
-    queueNumber: {
-      type: Number,
     },
   },
   firstName: {
@@ -272,7 +268,6 @@ UserSchema.statics.createByGitlabProfile = async function (
     ...(payload || {}),
   }
 
-  const queueNumber = await CounterModel.getNextSequenceValue('User-Counter')
   const userPayload = {
     primaryEmail: _email,
     primaryEmailSource: UserPrimaryEmailSourceEnum.GITLAB,
@@ -285,7 +280,6 @@ UserSchema.statics.createByGitlabProfile = async function (
     invite: {},
     ..._payload,
   }
-  userPayload.invite.queueNumber = queueNumber
 
   const user = await new this(userPayload).save()
 
@@ -309,7 +303,6 @@ UserSchema.statics.createByGithubProfile = async function (
     _payload.lastName = _payload.lastName || lastName
   }
 
-  const queueNumber = await CounterModel.getNextSequenceValue('User-Counter')
   const userPayload = {
     primaryEmail: _email,
     primaryEmailSource: UserPrimaryEmailSourceEnum.GITHUB,
@@ -322,7 +315,6 @@ UserSchema.statics.createByGithubProfile = async function (
     invite: {},
     ..._payload,
   }
-  userPayload.invite.queueNumber = queueNumber
 
   const user = await new this(userPayload).save()
 
@@ -346,7 +338,6 @@ UserSchema.statics.createByGoogleProfile = async function (
     _payload.lastName = _payload.lastName || lastName
   }
 
-  const queueNumber = await CounterModel.getNextSequenceValue('User-Counter')
   const userPayload = {
     primaryEmail: _email,
     primaryEmailSource: UserPrimaryEmailSourceEnum.GOOGLE,
@@ -359,7 +350,6 @@ UserSchema.statics.createByGoogleProfile = async function (
     invite: {},
     ..._payload,
   }
-  userPayload.invite.queueNumber = queueNumber
 
   const user = await new this(userPayload).save()
 
@@ -389,7 +379,6 @@ UserSchema.statics.createByLocalEmail = async function (
     _payload.lastName = _payload.lastName || lastName
   }
 
-  const queueNumber = await CounterModel.getNextSequenceValue('User-Counter')
   const userPayload = {
     primaryEmail: _email,
     primaryEmailSource: UserPrimaryEmailSourceEnum.LOCAL,
@@ -403,7 +392,6 @@ UserSchema.statics.createByLocalEmail = async function (
     invite: {},
     ..._payload,
   }
-  userPayload.invite.queueNumber = queueNumber
 
   const user = await new this(userPayload).save()
 
@@ -427,14 +415,12 @@ UserSchema.statics.createWithoutProfile = async function (
     _payload.lastName = _payload.lastName || lastName
   }
 
-  const queueNumber = await CounterModel.getNextSequenceValue('User-Counter')
   const userPayload = {
     primaryEmail: _email,
     invite: {},
     ..._payload,
     profiles: {},
   }
-  userPayload.invite.queueNumber = queueNumber
 
   if (payload?.profiles?.local?.isEmailConfirmed) {
     userPayload.profiles = {
@@ -667,7 +653,7 @@ UserSchema.statics.getUserSession = function (
     $project: {
       _id: 1,
       enabled: 1,
-      superAdmin: 1,
+      superadmin: 1,
       firstName: 1,
       lastName: 1,
       primaryEmail: 1,
@@ -764,7 +750,7 @@ UserSchema.statics.getUserSession = function (
     $project: {
       _id: 1,
       enabled: 1,
-      superAdmin: 1,
+      superadmin: 1,
       firstName: 1,
       lastName: 1,
       primaryEmail: 1,
@@ -855,7 +841,7 @@ UserSchema.statics.getUserSession = function (
   }, {
     $group: {
       _id: '$_id',
-      superAdmin: { $first: '$superAdmin' },
+      superadmin: { $first: '$superadmin' },
       enabled: { $first: '$enabled' },
       firstName: { $first: '$firstName' },
       lastName: { $first: '$lastName' },
@@ -866,7 +852,7 @@ UserSchema.statics.getUserSession = function (
   }, {
     $project: {
       _id: 1,
-      superAdmin: 1,
+      superadmin: 1,
       enabled: 1,
       firstName: 1,
       lastName: 1,
@@ -1172,11 +1158,5 @@ UserSchema.statics.deleteUserByIds = function (
     _id: { $in: ids },
   })
 }
-
-UserSchema.index({
-  'invite.queueNumber': 1,
-}, {
-  unique: true,
-})
 
 export const UserModel = mongoose.model<IUserDocument, IUserModel>('User', UserSchema)

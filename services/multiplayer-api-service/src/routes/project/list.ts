@@ -20,7 +20,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     if (
       !context.workspaceOwner
       && !context.workspaceAdmin
-      && !context.superAdmin
+      && !context.superadmin
     ) {
       filter._ids = context.projects.map(({ projectId }) => projectId)
     }
@@ -38,7 +38,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     if (
       !context.workspaceAdmin
       && !context.workspaceOwner
-      && !context.superAdmin
+      && !context.superadmin
     ) {
       projects.data = projects.data.map(project => {
         project.teams = project.teams.filter(team => accessibleTeamIds.find(id => (team as any)._id.equals(id)))

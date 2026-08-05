@@ -1,4 +1,3 @@
-import * as Clickhouse from '@multiplayer/clickhouse'
 import logger from '@multiplayer/logger'
 import {
   type IFlow,
@@ -13,6 +12,7 @@ import {
 } from '@opentelemetry/semantic-conventions'
 import { slugifyString } from '@multiplayer/util-shared'
 import {
+  FlowModel,
   FlowMetadataModel,
 } from '@multiplayer/models'
 import {
@@ -24,91 +24,23 @@ import { ICachedFlow } from '../types'
 import {
   replaceIdInString,
 } from '../helpers'
-import {
-  CLICKHOUSE_RADAR_DB,
-  CLICKHOUSE_RADAR_FLOWS_TABLE_NAME,
-} from '../config'
 
-export const createFlow = async (flow: Omit<IFlow, 'id'>) => {
-  await Clickhouse.insert(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_FLOWS_TABLE_NAME}`,
-    [flow],
-    true,
-  )
+export const createFlow = async (flow: IFlow) => {
+  await FlowModel.upsertFlow(flow)
 
-  logger.debug('Inserted flow to clickhouse')
-}
-
-export const listFlows = async (
-  filter: {
-    workspaceId: string,
-    projectId: string,
-    componentName?: string[] | string | { $like: string } | { $not: null },
-    Timestamp?: {
-      $lt?: { $date: Date },
-      $gt?: { $date: Date }
-    }
-  },
-  cursor?: {
-    skip: number,
-    limit: number,
-  },
-): Promise<IFlow[]> => {
-  const detectedItems = await Clickhouse.selectDistinct(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_FLOWS_TABLE_NAME}`,
-    'ON (id) *',
-    filter,
-    cursor,
-    'ORDER BY id',
-    'ASC COLLATE \'en\'',
-  )
-
-  return detectedItems as IFlow[]
+  logger.debug('Upserted flow to mongo')
 }
 
 export const getFlowById = async (id: string): Promise<IFlow | undefined> => {
-  const [flow] = await Clickhouse.selectDistinct(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_FLOWS_TABLE_NAME}`,
-    'ON (id) *',
-    { id },
-    {
-      skip: 0,
-      limit: 1,
-    },
-  )
+  const flow = await FlowModel.findFlowById(id)
 
-  return flow as IFlow | undefined
-}
-
-export const getTotalFlowsCount = async (
-  filter: {
-    workspaceId: string,
-    projectId: string,
-    componentName?: string[] | string | { $like: string } | { $not: null },
-    Timestamp?: {
-      $lt?: { $date: Date },
-      $gt?: { $date: Date }
-    }
-  },
-): Promise<number> => {
-  const flowsCount = await Clickhouse.countTotalDistinctValues(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_FLOWS_TABLE_NAME}`,
-    'id',
-    filter,
-  )
-
-  return flowsCount
+  return flow?.toObject() as IFlow | undefined
 }
 
 export const deleteFlowById = async (
   id: string,
 ): Promise<void> => {
-  await Clickhouse.remove(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_FLOWS_TABLE_NAME}`,
-    {
-      id,
-    },
-  )
+  await FlowModel.deleteFlowById(id)
 }
 
 export const deleteFlows = async (
@@ -120,16 +52,13 @@ export const deleteFlows = async (
 ): Promise<void> => {
   const { id, ..._filter } = filter
 
-  const conditions: any = _filter
+  const conditions: Record<string, unknown> = _filter
 
   if (id?.length) {
-    conditions.id = id
+    conditions.id = { $in: id }
   }
 
-  await Clickhouse.remove(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_FLOWS_TABLE_NAME}`,
-    conditions,
-  )
+  await FlowModel.deleteFlows(conditions)
 }
 
 export const saveTemporaryFlowData = async (
@@ -217,15 +146,5 @@ export const listUniqueComponentsFromFlows = async (
     projectId: string,
   },
 ): Promise<string[]> => {
-  const _filter = Clickhouse.ClickhouseQueryBuilder.buildFilter(filter)
-
-  const query = `
-    SELECT arrayDistinct(groupArray(arrayJoin(arrayMap((x) -> tupleElement(x, 'componentName'), sequence)))) AS unique_components
-    FROM ${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_FLOWS_TABLE_NAME}
-    WHERE ${_filter}
-  `
-
-  const [{ unique_components }] = await Clickhouse.rawSelect(query)
-
-  return unique_components
+  return FlowModel.listUniqueComponentNames(filter)
 }

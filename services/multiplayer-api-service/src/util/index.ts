@@ -1,2 +1,7 @@
 export { default as autoAddWorkspace } from './auto-add-workspace'
 export { default as forkTemplateProject } from './fork-template-project'
+export * as GitProviderUtil from './git-provider.util'
+export * as ForkUtil from './fork.util'
+export * as CleanupUtil from './cleanup.util'
+export * as PlatformUtil from './platform.util'
+export * as ExtensionUtil from './extension.util'

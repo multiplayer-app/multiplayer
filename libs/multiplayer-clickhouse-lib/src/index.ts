@@ -2,7 +2,7 @@ import {
   type ClickHouseClient,
   createClient,
 } from '@clickhouse/client'
-import { type Readable } from 'stream'
+import { type Readable, Transform } from 'stream'
 import logger from '@multiplayer/logger'
 import {
   CLICKHOUSE_URI,
@@ -108,6 +108,29 @@ export const select = async (
   return rows
 }
 
+// The @clickhouse/client's own .stream() pushes one ARRAY of { text: rawJsonString }
+// per network chunk (its native wire format). DuckDB's equivalent streams
+// (services/multiplayer-radar-service's duckdb store) push one plain parsed row
+// object per chunk instead, via Readable.from(rows). Normalizing here means callers
+// (e.g. transformClickhouseStream) get the same one-plain-row-per-chunk contract
+// regardless of which analytics backend is active, instead of leaking ClickHouse's
+// wire format past this lib.
+const normalizeStream = (rawStream: Readable): Readable => {
+  const normalized = new Transform({
+    objectMode: true,
+    transform(rows: { text: string }[], _encoding, callback) {
+      for (const row of rows) {
+        this.push(JSON.parse(row.text))
+      }
+      callback()
+    },
+  })
+
+  rawStream.on('error', (error) => normalized.destroy(error))
+
+  return rawStream.pipe(normalized)
+}
+
 export const selectStream = async (
   table: string,
   filter: _ClickHouseTypes.FilterQuery,
@@ -147,7 +170,7 @@ export const selectStream = async (
     logger.error('[CLICKHOUSE] stream select query error', error)
   })
 
-  return stream
+  return normalizeStream(stream)
 }
 
 export const rawSelect = async (query: string, returnStream = false): Promise<any> => {
@@ -168,7 +191,7 @@ export const rawSelect = async (query: string, returnStream = false): Promise<an
     logger.error('[CLICKHOUSE] stream select query error', error)
   })
 
-  return stream
+  return normalizeStream(stream)
 }
 
 export const countTotal = async (

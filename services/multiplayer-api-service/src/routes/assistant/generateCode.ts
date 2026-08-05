@@ -3,8 +3,7 @@ import { AIService } from '../../services/ai.service'
 import { Blocknote, EntityType } from '@multiplayer/types'
 import logger from '@multiplayer/logger'
 import { BlocknoteHelper, EntityConverter } from '@multiplayer/entity'
-import { openai } from '../../lib'
-import { multiplayerInternalVersionService } from '../../services'
+import { openai, EntityLib } from '../../lib'
 import {
   apiBlockPrompt,
   categorizePrompt,
@@ -115,8 +114,6 @@ async function generateCodeBlock(params: {
   adjustmentMessage?: string,
 }) {
   const {
-    workspaceId,
-    projectId,
     projectBranchId,
     message,
     system,
@@ -126,12 +123,7 @@ async function generateCodeBlock(params: {
   let context = ''
   if (entityId) {
     try {
-      const data = await multiplayerInternalVersionService.getEntityContent({
-        workspaceId,
-        projectId,
-        projectBranchId,
-        entityId: entityId as string,
-      })
+      const data = await EntityLib.getEntityContent(projectBranchId, entityId as string)
       if (data) {
         context = '#Context: \n' + EntityConverter.stringifyData(data.type, data.data) + '\n'
       }

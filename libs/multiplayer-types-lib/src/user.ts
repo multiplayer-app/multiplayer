@@ -8,9 +8,8 @@ export interface IUser {
 
   invite: {
     refUser?: string
-    queueNumber?: number
   }
-  superAdmin: boolean
+  superadmin: boolean
   enabled: boolean
   lastLoginAt?: string | Date
   firstName?: string

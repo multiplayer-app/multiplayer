@@ -109,7 +109,7 @@ export const getProjectAggregatedAccessActions = (
   if (
     context?.workspaceAdmin
     || context?.workspaceOwner
-    || context?.superAdmin
+    || context?.superadmin
   ) {
     return {
       _id: '',

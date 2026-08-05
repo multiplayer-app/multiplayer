@@ -6,9 +6,9 @@ import {
   IWorkspaceDocument,
 } from '@multiplayer/models'
 import { ErrorMessage, TokenTypeEnum } from '@multiplayer/types'
-import AMQP from '@multiplayer/amqp'
+import logger from '@multiplayer/logger'
 import { isFreeEmail } from '@multiplayer/util-shared'
-import { AMQP_NOTIFICATION_QUEUE } from '../../config'
+import { NotificationLib } from '../../lib'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -43,19 +43,14 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       },
     )
 
-    await AMQP.publish(
-      AMQP_NOTIFICATION_QUEUE,
-      {
-        variables: {
-          template: 'VERIFY_DOMAIN',
-          email,
-          data: {
-            code: token.token,
-            workspace,
-          },
-        },
+    NotificationLib.sendNotification({
+      template: 'VERIFY_DOMAIN',
+      email,
+      data: {
+        code: token.token,
+        workspace,
       },
-    )
+    }).catch(err => logger.error(err, 'Failed to send VERIFY_DOMAIN notification'))
 
     return res.sendStatus(204)
   } catch (err) {

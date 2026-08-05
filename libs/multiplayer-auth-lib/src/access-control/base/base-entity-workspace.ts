@@ -10,7 +10,7 @@ export abstract class EntityBaseWorkspaceLevel extends EntityBase {
     if (
       this.context.workspaceOwner
       || this.context.workspaceAdmin
-      || this.context.superAdmin
+      || this.context.superadmin
     ) {
       return Object.values(RoleAccessAction)
     }

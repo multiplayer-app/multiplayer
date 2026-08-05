@@ -1,10 +1,10 @@
 import { AbstractService } from './abstract.service'
-import { INTERNAL_GIT_SERVICE_URI } from '../config'
+import { INTERNAL_API_SERVICE_URI } from '../config'
 import { IGitRef } from '@multiplayer/types'
 
 export class InternalGitService extends AbstractService {
   protected getBaseUrl(): string {
-    return INTERNAL_GIT_SERVICE_URI
+    return `${INTERNAL_API_SERVICE_URI}/git`
   }
 
   createPullRequest(

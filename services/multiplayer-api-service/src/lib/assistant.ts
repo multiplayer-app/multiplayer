@@ -1,4 +1,5 @@
 import {
+  Config as ModelConfig,
   EntityCommitModel, IEntityCommitDocument, IEntityDocument, IPopulatedEntityStateDocument,
 } from '@multiplayer/models'
 import {
@@ -11,9 +12,8 @@ import { EntityConverter } from '@multiplayer/entity'
 import { s3 } from '@multiplayer/s3'
 import { S3_PRIVATE_BUCKET } from '../config'
 import { InternalError } from 'restify-errors'
-import { Opensearch } from '../lib'
+import { Opensearch, ProjectBranchLib, GitRepositoryLib } from '../lib'
 import chunk from 'lodash.chunk'
-import { multiplayerInternalGitService, multiplayerInternalVersionService } from '../services'
 import { ObjectId } from '@multiplayer/mongo'
 
 export interface DeleteEntityVectorsMessage {
@@ -39,12 +39,11 @@ export class AssistantController {
 
 
   static async createVectorData(data: CreateEntityVectorMessage, override = false) {
-    const state = await multiplayerInternalVersionService.getProjectBranchState({
-      workspaceId: data.workspaceId,
-      projectId: data.projectId,
-      projectBranchId: data.branchId,
-      entityId: data.entityId,
-    })
+    const state = await ProjectBranchLib.getProjectBranchState(
+      data.branchId,
+      { entityId: data.entityId },
+      { skip: ModelConfig.SKIP, limit: ModelConfig.LIMIT },
+    )
     if (!state.data.length || !state.data[0].entityCommit) {
       return
     }
@@ -75,7 +74,7 @@ export class AssistantController {
       )
     } else if (entityCommit.storageType === EntityCommitStorageType.GIT && entity.gitRef) {
       const extension = entity.gitRef.path ? entity.gitRef.path.split('.').pop()?.toLowerCase() : 'txt'
-      const contents = await multiplayerInternalGitService.getContents(entity.gitRef, entity.project.toString(), entity.workspace.toString())
+      const contents = await GitRepositoryLib.getFileContentsByGitId(entity.workspace.toString(), entity.project.toString(), entity.gitRef)
       if (!contents) return
       entityData = EntityConverter.convertSourceToData(entity.type, entity.key, contents, extension)
     }
@@ -144,14 +143,11 @@ export class AssistantController {
     if (!chunks.length) return platform
 
     const states: DataWithCursor<IPopulatedEntityStateDocument>[] = await Promise.all(
-      chunks.map((ids) => multiplayerInternalVersionService.getProjectBranchState({
-        workspaceId: params.workspaceId,
-        projectId: params.projectId,
-        projectBranchId: params.projectBranchId,
-        skip: 0,
-        limit: ids.length,
-        entityId: ids,
-      })),
+      chunks.map((ids) => ProjectBranchLib.getProjectBranchState(
+        params.projectBranchId,
+        { entityId: ids },
+        { skip: 0, limit: ids.length },
+      )),
     )
 
     states.forEach((state) => {

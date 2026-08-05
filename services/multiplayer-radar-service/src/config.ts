@@ -4,31 +4,24 @@ export const API_PREFIX = process.env.API_PREFIX || '/v0/radar'
 export const SWAGGER_ENABLED = (process.env.SWAGGER_ENABLED || 'false') === 'true'
 
 export const AMQP_RADAR_DETECTION_APPLY_QUEUE = process.env.AMQP_RADAR_DETECTION_APPLY_QUEUE || 'radar-detection-apply'
-export const AMQP_COLLABORATION_RPC_QUEUE = process.env.AMQP_COLLABORATION_RPC_QUEUE || 'collaboration-rpc'
 export const AMQP_EVENT_QUEUE = process.env.AMQP_EVENT_QUEUE || 'event'
 export const AMQP_RADAR_EVENT_QUEUE = process.env.AMQP_RADAR_EVENT_QUEUE || 'radar-event'
 export const AMQP_DEBUG_SESSION_MOVE_S3_QUEUE = process.env.AMQP_DEBUG_SESSION_MOVE_S3_QUEUE || 'debug-session-move-s3'
-export const AMQP_NOTIFICATION_QUEUE = process.env.AMQP_NOTIFICATION_QUEUE || 'notification'
 
+// Analytics store backend for detections/params/flows/otel traces & logs/rrweb events.
+// 'clickhouse' (default) keeps the existing behavior unchanged. 'duckdb' is a
+// lightweight, fully self-hosted alternative (see services/multiplayer-radar-service/src/store).
+export const ANALYTICS_DB_ENGINE = process.env.ANALYTICS_DB_ENGINE || 'clickhouse'
 
-export const CLICKHOUSE_OTEL_DB = process.env.CLICKHOUSE_OTEL_DB || 'otel'
-export const CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME = process.env.CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME || 'otel_metrics_gauge'
-// export const CLICKHOUSE_OTEL_TRACES_NAME = process.env.CLICKHOUSE_OTEL_TRACES_NAME || 'otel_traces'
-
-export const CLICKHOUSE_RADAR_DB = process.env.CLICKHOUSE_RADAR_DB || 'radar'
-export const CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME = process.env.CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME || 'detections'
-export const CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME = process.env.CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME || 'detection_params'
-export const CLICKHOUSE_RADAR_FLOWS_TABLE_NAME = process.env.CLICKHOUSE_RADAR_FLOWS_TABLE_NAME || 'flows'
+// Only used when ANALYTICS_DB_ENGINE=duckdb. Must be on a persistent volume in any real
+// deployment - a container restart wipes this path otherwise, and (until the Phase 3
+// leader-election work lands) only a single radar-service replica may run against it.
+export const DUCKDB_FILE_PATH = process.env.DUCKDB_FILE_PATH || './data/radar.duckdb'
 
 export const CLICKHOUSE_DEBUG_SESSION_DB = process.env.CLICKHOUSE_DEBUG_SESSION_DB || 'debug_session'
 export const CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME || 'rrweb_events'
 export const CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME || 'otel_traces'
 export const CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME || 'otel_logs'
-
-export const CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_DB = process.env.CLICKHOUSE_DEBUG_SESSION_DB || 'continuous_debug_session'
-export const CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_RRWEB_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME || 'rrweb_events'
-export const CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_TRACES_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME || 'otel_traces'
-export const CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_LOGS_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME || 'otel_logs'
 
 export const REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_PREFIX = process.env.REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_PREFIX || 'auto_merge:'
 export const REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_LOCK_PREFIX = process.env.REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_LOCK_PREFIX || 'auto_merge_lock:'
@@ -104,9 +97,9 @@ export const REDIS_CLIENT_ID_END_USER_TTL = process.env.REDIS_CLIENT_ID_END_USER
   ? Number(process.env.REDIS_CLIENT_ID_END_USER_TTL)
   : 1 * 60 // 1 minute
 
-export const VERSION_SERVICE_URI = process.env.VERSION_SERVICE_URI || 'http://localhost:3000/v0/version'
-export const INTERNAL_VERSION_SERVICE_URI = process.env.INTERNAL_VERSION_SERVICE_URI || 'http://localhost:3000/internal/v0/version'
-export const INTERNAL_GIT_SERVICE_URI = process.env.INTERNAL_GIT_SERVICE_URI || 'http://localhost:3000/internal/v0/git'
+export const API_SERVICE_URI = process.env.API_SERVICE_URI || 'http://localhost:3001/v0/api'
+export const INTERNAL_API_SERVICE_URI = process.env.INTERNAL_API_SERVICE_URI || 'http://localhost:3001/internal/v0/api'
+export const INTERNAL_COLLABORATION_SERVICE_URI = process.env.INTERNAL_COLLABORATION_SERVICE_URI || 'http://localhost:3002/internal/v0/collaboration'
 
 export const INTEGRATION_JWT_SECRET = process.env.INTEGRATION_JWT_SECRET || 'sample_jwt_secret'
 

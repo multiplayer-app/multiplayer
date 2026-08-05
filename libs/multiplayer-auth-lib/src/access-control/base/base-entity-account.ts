@@ -7,7 +7,7 @@ import { roles, getAccountEntityAccessActions } from '../role'
 
 export abstract class EntityBaseAccountLevel extends EntityBase {
   protected async getAccessActions() {
-    if (this.context.superAdmin) {
+    if (this.context.superadmin) {
       return Object.values(RoleAccessAction)
     }
 

@@ -27,7 +27,7 @@ export class Integration extends EntityBaseWorkspaceLevel {
     if (
       this.context.workspaceOwner
       || this.context.workspaceAdmin
-      || this.context.superAdmin
+      || this.context.superadmin
     ) {
       return Object.values(RoleAccessAction)
     }
@@ -180,7 +180,7 @@ export class Integration extends EntityBaseWorkspaceLevel {
   }
 
   private assertWorkspaceRoleNotEscalated(roleId: string): void {
-    if (this.context.superAdmin || this.context.workspaceOwner || this.context.workspaceAdmin) return
+    if (this.context.superadmin || this.context.workspaceOwner || this.context.workspaceAdmin) return
 
     const targetRole = roles[RoleType.WORKSPACE].find(r => r._id.toString() === roleId)
     if (!targetRole) {
@@ -208,7 +208,7 @@ export class Integration extends EntityBaseWorkspaceLevel {
   }
 
   private assertProjectRoleNotEscalated(roleId: string): void {
-    if (this.context.superAdmin || this.context.workspaceOwner || this.context.workspaceAdmin) return
+    if (this.context.superadmin || this.context.workspaceOwner || this.context.workspaceAdmin) return
 
     const targetRole = roles[RoleType.PROJECT].find(r => r._id.toString() === roleId)
     if (!targetRole) {

@@ -7,14 +7,14 @@ import express, {
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import { CronJob } from 'cron'
-import { loggerExpressMiddleware } from '@multiplayer/logger'
+import logger, { loggerExpressMiddleware } from '@multiplayer/logger'
 import {
   sessionMiddleware,
   Config as AuthConfig,
 } from '@multiplayer/auth'
 import mongo from '@multiplayer/mongo'
 import redis from '@multiplayer/redis'
-import * as Clickhouse from '@multiplayer/clickhouse'
+import { Store } from './store'
 import {
   expressErrorHandlerMiddleware,
   corsMiddleware,
@@ -73,7 +73,7 @@ redis.connect().then(async () => {
     }
   })
 })
-Clickhouse.connect()
+Store.connect().catch(err => logger.error(err, '[STORE] Failed to connect'))
 kafkaConsumer.connect().then(async () => {
   await kafkaConsumer.subscribe(
     KAFKA_OTEL_D0C_TRACES_TOPIC,

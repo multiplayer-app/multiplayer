@@ -30,6 +30,7 @@
     "@multiplayer/amqp": "0.0.1",
     "@multiplayer/apm": "0.0.1",
     "@multiplayer/auth": "0.0.1",
+    "@duckdb/node-api": "1.4.5-r.1",
     "@multiplayer/clickhouse": "0.0.1",
     "@multiplayer/entity": "0.0.1",
     "@multiplayer/fetch": "0.0.1",

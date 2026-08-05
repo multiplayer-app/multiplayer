@@ -1,7 +1,6 @@
 export { default as mergeObjects } from './merge-objects'
 export { default as sortObjectKeys } from './sort-object-keys'
 export { default as setTimestampToSchema } from './set-timestamp-schema'
-export * as RadarDetectionQueryBuilder from './radar-detection-query-builder'
 export * from './uncompress-buffer'
 export * from './transform-stream'
 export { default as replaceIdInString } from './id-replacer'

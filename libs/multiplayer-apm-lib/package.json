@@ -27,7 +27,6 @@
     "@opentelemetry/sdk-trace-node": "2.6.1",
     "@opentelemetry/semantic-conventions": "1.40.0",
     "protobufjs": "8.0.1",
-    "newrelic": "13.19.1",
     "to-json-schema": "0.2.5",
     "openapi-json-schema": "2.0.0"
   },

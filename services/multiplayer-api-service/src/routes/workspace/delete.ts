@@ -8,8 +8,7 @@ import logger from '@multiplayer/logger'
 import { NotFoundError } from 'restify-errors'
 import { AccessControlContext } from '@multiplayer/auth'
 import { ErrorMessage } from '@multiplayer/types'
-import AMQP from '@multiplayer/amqp'
-import { AMQP_CLEANUP_QUEUE } from '../../config'
+import { CleanupUtil } from '../../util'
 import { stripe } from '../../lib'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
@@ -41,18 +40,10 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     })
     // await Promise.all()
 
-    await AMQP.publish(
-      AMQP_CLEANUP_QUEUE,
-      {
-        variables: {
-          type: 'WORKSPACE',
-          workspace: workspaceId,
-        },
-      },
-      {
-        durable: true,
-      },
-    )
+    // Fired off, not awaited: cleanup runs in the background, same as when this
+    // went through the `cleanup` AMQP queue. cleanupWorkspace catches and logs
+    // its own errors, so nothing here needs to handle rejection.
+    CleanupUtil.cleanupWorkspace(workspaceId)
 
     await stripe.cancelSubscription(
       workspace?.billing.stripe.subscriptionId as string,

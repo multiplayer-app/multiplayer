@@ -40,7 +40,7 @@ const makeReq = (overrides: {
   workspaceRoleId?: string
   workspaceOwner?: boolean
   workspaceAdmin?: boolean
-  superAdmin?: boolean
+  superadmin?: boolean
   projectRoleIds?: string[]
   body?: Record<string, string>
 }) => ({
@@ -55,7 +55,7 @@ const makeReq = (overrides: {
     workspaceRoleId: overrides.workspaceRoleId,
     workspaceOwner: overrides.workspaceOwner ?? false,
     workspaceAdmin: overrides.workspaceAdmin ?? false,
-    superAdmin: overrides.superAdmin ?? false,
+    superadmin: overrides.superadmin ?? false,
     projects: overrides.projectRoleIds
       ? [{ projectId: makeId('e'), projectRoleIds: overrides.projectRoleIds }]
       : [],
@@ -171,7 +171,7 @@ describe('Integration ability() — workspace role escalation', () => {
     await expect(new Integration(req as any).ability(RoleAccessAction.CREATE)).resolves.toBe(true)
   })
 
-  it('allows superAdmin to assign any workspace role', async () => {
+  it('allows superadmin to assign any workspace role', async () => {
     roles[RoleType.WORKSPACE].push(makeRole(targetRoleId, [
       {
         entity: RoleWorkspacePermissionEntity.INTEGRATION,
@@ -180,7 +180,7 @@ describe('Integration ability() — workspace role escalation', () => {
     ]) as any)
 
     const req = makeReq({
-      superAdmin: true,
+      superadmin: true,
       body: { workspaceRole: targetRoleId },
     })
 
@@ -216,7 +216,7 @@ describe('Integration ability() — project role escalation', () => {
     roles[RoleType.PROJECT].push(makeRole(callerProjectRoleId, callerProjectPermissions) as any)
   })
 
-  const makeProjectReq = (targetRoleId: string, overrides: { workspaceAdmin?: boolean; workspaceOwner?: boolean; superAdmin?: boolean } = {}) =>
+  const makeProjectReq = (targetRoleId: string, overrides: { workspaceAdmin?: boolean; workspaceOwner?: boolean; superadmin?: boolean } = {}) =>
     makeReq({
       workspaceRoleId: makeId('w'),
       projectRoleIds: [callerProjectRoleId],

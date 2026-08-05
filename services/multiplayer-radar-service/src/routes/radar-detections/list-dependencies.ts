@@ -5,10 +5,10 @@ import {
   RadarDetectionSource,
 } from '@multiplayer/types'
 import { MongoPayload } from '@multiplayer/util'
-import { ClickHouseTypes } from '@multiplayer/clickhouse'
 import { RadarDetectionService } from '../../services'
 import { RadarDetectionQueryFilter } from '../../types'
 import { transformClickhouseStream } from '../../helpers'
+import { ClickHouseSortOrder, type ISortOptions } from '../../store'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -16,7 +16,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     const projectId = req.params.projectId as string
     const skip = 'skip' in req.query ? Number(req.query.skip) : 0
     const limit = 'limit' in req.query ? Number(req.query.limit) : 30
-    const sortDirections = req.query.sortDirection as ClickHouseTypes.ClickHouseSortOrder[] | undefined
+    const sortDirections = req.query.sortDirection as ClickHouseSortOrder[] | undefined
     const sortKeys = req.query.sortKey as string[] | undefined
     const {
       beforeTimestamp,
@@ -36,7 +36,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     const text = req.query.text as string | undefined
 
 
-    let sortOptions: ClickHouseTypes.ISortOptions[] = []
+    let sortOptions: ISortOptions[] = []
 
     if (sortDirections && sortKeys) {
       sortOptions = sortDirections?.map((sortDirection, index) => ({
@@ -115,8 +115,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
         const [,key, value] = tag.match(/^(?<KEY>[^:]*):(?<VALUE>.+)$/) || []
 
         return {
-          ...key ? { '1': key } : {},
-          '2': value,
+          ...key ? { key } : {},
+          value,
         }
       })
 

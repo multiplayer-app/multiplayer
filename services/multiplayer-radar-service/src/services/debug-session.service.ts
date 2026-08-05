@@ -1,4 +1,3 @@
-import * as Clickhouse from '@multiplayer/clickhouse'
 import { ObjectId } from '@multiplayer/mongo'
 import * as AMQP from '@multiplayer/amqp'
 import logger from '@multiplayer/logger'
@@ -54,10 +53,6 @@ import {
   CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME,
   CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME,
   CLICKHOUSE_DEBUG_SESSION_DB,
-  CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_DB,
-  CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_LOGS_TABLE_NAME,
-  CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_RRWEB_TABLE_NAME,
-  CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_TRACES_TABLE_NAME,
   S3_DEBUG_SESSIONS_BUCKET,
   AMQP_DEBUG_SESSION_MOVE_S3_QUEUE,
   INTEGRATION_JWT_SECRET,
@@ -71,6 +66,7 @@ import {
 } from '../helpers'
 import * as websocket from '../websocket'
 import { OtlpLib } from '../libs'
+import { Store, ClickHouseSortOrder } from '../store'
 import * as EndUserService from './end-user.service'
 import {
   DebugSessionShortIdCache,
@@ -133,7 +129,7 @@ export const listDebugSessionTraces = async (
 ): Promise<Readable | OtelSpanCh[]> => {
   const method = stream ? 'selectStream' : 'select'
 
-  const debugSessionOtelTraces = await Clickhouse[method](
+  const debugSessionOtelTraces = await Store[method](
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME} parentSpan`,
     {
       [`SpanAttributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
@@ -153,7 +149,7 @@ export const getTotalDebugSessionTracesCount = async (
     debugSessionId: string,
   },
 ): Promise<number> => {
-  return Clickhouse.countTotal(
+  return Store.countTotal(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME} parentSpan`,
     {
       [`SpanAttributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
@@ -177,7 +173,7 @@ export const listDebugSessionLogs = async (
 ): Promise<Readable | OtelLogCh[]> => {
   const method = stream ? 'selectStream' : 'select'
 
-  const debugSessionOtelLogs = await Clickhouse[method](
+  const debugSessionOtelLogs = await Store[method](
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME} parentLog`,
     {
       [`LogAttributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
@@ -197,7 +193,7 @@ export const getTotalDebugSessionLogsCount = async (
     debugSessionId: string,
   },
 ): Promise<number> => {
-  return Clickhouse.countTotal(
+  return Store.countTotal(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME} parentLog`,
     {
       [`LogAttributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
@@ -218,7 +214,7 @@ export const createDebugSessionSpans = async (spans: OtelSpanCh[]): Promise<void
     return
   }
 
-  await Clickhouse.insert(
+  await Store.insert(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME}`,
     OtlpLib.flattenSpansForClickHouse(spans),
   )
@@ -231,7 +227,7 @@ export const createDebugSessionLogs = async (logs: OtelLogCh[]): Promise<void> =
     return
   }
 
-  await Clickhouse.insert(
+  await Store.insert(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME}`,
     logs,
   )
@@ -242,7 +238,7 @@ export const createDebugSessionLogs = async (logs: OtelLogCh[]): Promise<void> =
 export const deleteLogsByDebugSessionId = async (
   debugSessionId: string,
 ): Promise<void> => {
-  await Clickhouse.remove(
+  await Store.remove(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME}`,
     {
       debugSessionId: debugSessionId.toString(),
@@ -253,7 +249,7 @@ export const deleteLogsByDebugSessionId = async (
 export const deleteTracesByDebugSessionId = async (
   debugSessionId: string,
 ): Promise<void> => {
-  await Clickhouse.remove(
+  await Store.remove(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME}`,
     {
       debugSessionId: debugSessionId.toString(),
@@ -308,7 +304,7 @@ export const createDebugSessionRrwebEvents = async (
 
   const tableName = `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME}`
 
-  await Clickhouse.insert(
+  await Store.insert(
     tableName,
     _events,
   )
@@ -332,7 +328,7 @@ export const listDebugSessionRrwebEvents = async (
     limit: number,
   },
 ): Promise<Readable> => {
-  const rrwebEventsStream = await Clickhouse.selectStream(
+  const rrwebEventsStream = await Store.selectStream(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME}`,
     filter,
     cursor,
@@ -346,7 +342,7 @@ export const getTotalDebugSessionRrwebEventsCount = async (
     debugSessionId: string,
   },
 ): Promise<number> => {
-  return Clickhouse.countTotal(
+  return Store.countTotal(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME} parentSpan`,
     filter,
   )
@@ -355,7 +351,7 @@ export const getTotalDebugSessionRrwebEventsCount = async (
 export const deleteDebugSessionRrwebEventsById = async (
   debugSessionId: string,
 ) => {
-  await Clickhouse.remove(
+  await Store.remove(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME}`,
     {
       debugSessionId,
@@ -389,7 +385,7 @@ export const moveDebugSessionDataFromChToS3 = async (
       fileId: s3LogsFileId.toString(),
     })
 
-    const totalLogs = await Clickhouse.countTotal(
+    const totalLogs = await Store.countTotal(
       logsTable,
       debugSessionDataFilter,
     )
@@ -401,7 +397,7 @@ export const moveDebugSessionDataFromChToS3 = async (
       debugSessionShortId: debugSession.shortId,
     }, 'Moving logs to s3')
 
-    await Clickhouse.moveDataToS3(
+    await Store.moveDataToS3(
       `${s3Host}/${s3LogsFileKey}`,
       logsTable,
       debugSessionDataFilter,
@@ -431,7 +427,7 @@ export const moveDebugSessionDataFromChToS3 = async (
       fileId: s3SpansFileId.toString(),
     })
 
-    const totalSpans = await Clickhouse.countTotal(
+    const totalSpans = await Store.countTotal(
       spansTable,
       debugSessionDataFilter,
     )
@@ -443,7 +439,7 @@ export const moveDebugSessionDataFromChToS3 = async (
       debugSessionShortId: debugSession.shortId,
     }, 'Moving spans to s3')
 
-    await Clickhouse.moveDataToS3(
+    await Store.moveDataToS3(
       `${s3Host}/${s3SpansFileKey}`,
       spansTable,
       debugSessionDataFilter,
@@ -473,7 +469,7 @@ export const moveDebugSessionDataFromChToS3 = async (
       fileId: s3RrwebEvensFileId.toString(),
     })
 
-    const totalRrwebEvents = await Clickhouse.countTotal(
+    const totalRrwebEvents = await Store.countTotal(
       rrwebEventsTable,
       debugSessionDataFilter,
     )
@@ -485,7 +481,7 @@ export const moveDebugSessionDataFromChToS3 = async (
       debugSessionShortId: debugSession.shortId,
     }, 'Moving RRweb events to s3')
 
-    await Clickhouse.moveDataToS3(
+    await Store.moveDataToS3(
       `${s3Host}/${s3RrwebEventsFileKey}`,
       rrwebEventsTable,
       debugSessionDataFilter,
@@ -554,26 +550,9 @@ export const stopDebugSessionById = async (
     )
   }
 
-  const debugSessionRrwebEventsTable = [
-    SessionType.MANUAL,
-    SessionType.SESSION_CACHE,
-  ].includes(debugSession.sessionType)
-    ? `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME}`
-    : `${CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_DB}.${CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_RRWEB_TABLE_NAME}`
-
-  const debugSessionTracesTable = [
-    SessionType.MANUAL,
-    SessionType.SESSION_CACHE,
-  ].includes(debugSession.sessionType)
-    ? `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME}`
-    : `${CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_DB}.${CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_TRACES_TABLE_NAME}`
-
-  const debugSessionLogsTable = [
-    SessionType.MANUAL,
-    SessionType.SESSION_CACHE,
-  ].includes(debugSession.sessionType)
-    ? `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME}`
-    : `${CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_DB}.${CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_LOGS_TABLE_NAME}`
+  const debugSessionRrwebEventsTable = `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME}`
+  const debugSessionTracesTable = `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME}`
+  const debugSessionLogsTable = `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME}`
 
   const chDataFilter = debugSession.continuousDebugSession
     ? { debugSessionId: debugSession.continuousDebugSession }
@@ -611,7 +590,7 @@ export const stopDebugSessionById = async (
       [lastOtlpLog],
       [lastRrwebEvent],
     ] = await Promise.all([
-      Clickhouse.select(
+      Store.select(
         debugSessionTracesTable,
         chDataFilter,
         {
@@ -623,10 +602,10 @@ export const stopDebugSessionById = async (
         undefined,
         {
           sortKey: 'Timestamp',
-          sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.ASC,
+          sortDirection: ClickHouseSortOrder.ASC,
         },
       ),
-      Clickhouse.select(
+      Store.select(
         debugSessionLogsTable,
         chDataFilter,
         {
@@ -638,10 +617,10 @@ export const stopDebugSessionById = async (
         undefined,
         {
           sortKey: 'Timestamp',
-          sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.ASC,
+          sortDirection: ClickHouseSortOrder.ASC,
         },
       ),
-      Clickhouse.select(
+      Store.select(
         debugSessionRrwebEventsTable,
         chDataFilter,
         {
@@ -653,10 +632,10 @@ export const stopDebugSessionById = async (
         undefined,
         {
           sortKey: 'timestamp',
-          sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.ASC,
+          sortDirection: ClickHouseSortOrder.ASC,
         },
       ),
-      Clickhouse.select(
+      Store.select(
         debugSessionTracesTable,
         chDataFilter,
         {
@@ -668,10 +647,10 @@ export const stopDebugSessionById = async (
         undefined,
         {
           sortKey: 'Timestamp',
-          sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.DESC,
+          sortDirection: ClickHouseSortOrder.DESC,
         },
       ),
-      Clickhouse.select(
+      Store.select(
         debugSessionLogsTable,
         chDataFilter,
         {
@@ -683,10 +662,10 @@ export const stopDebugSessionById = async (
         undefined,
         {
           sortKey: 'Timestamp',
-          sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.DESC,
+          sortDirection: ClickHouseSortOrder.DESC,
         },
       ),
-      Clickhouse.select(
+      Store.select(
         debugSessionRrwebEventsTable,
         chDataFilter,
         {
@@ -698,7 +677,7 @@ export const stopDebugSessionById = async (
         undefined,
         {
           sortKey: 'timestamp',
-          sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.DESC,
+          sortDirection: ClickHouseSortOrder.DESC,
         },
       ),
     ])
@@ -756,15 +735,15 @@ export const stopDebugSessionById = async (
     totalSpans,
     totalRrwebEvents,
   ] = await Promise.all([
-    Clickhouse.countTotal(
+    Store.countTotal(
       debugSessionLogsTable,
       chDataFilter,
     ),
-    Clickhouse.countTotal(
+    Store.countTotal(
       debugSessionTracesTable,
       chDataFilter,
     ),
-    Clickhouse.countTotal(
+    Store.countTotal(
       debugSessionRrwebEventsTable,
       chDataFilter,
     ),
@@ -832,7 +811,7 @@ export const bulkDeleteLogsByDebugSessionId = async (
   projectId: string | ObjectId,
   debugSessionIds?: string[] | ObjectId[],
 ): Promise<void> => {
-  await Clickhouse.remove(
+  await Store.remove(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME}`,
     {
       [`LogAttributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: workspaceId,
@@ -851,7 +830,7 @@ export const bulkDeleteTracesByDebugSessionId = async (
   projectId: string | ObjectId,
   debugSessionIds?: string[] | ObjectId[],
 ): Promise<void> => {
-  await Clickhouse.remove(
+  await Store.remove(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME}`,
     {
       [`SpanAttributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: workspaceId,
@@ -870,7 +849,7 @@ export const bulkDeleteRrwebEventsDebugSessionById = async (
   projectId: string | ObjectId,
   debugSessionIds?: string[] | ObjectId[],
 ) => {
-  await Clickhouse.remove(
+  await Store.remove(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME}`,
     {
       workspaceId,
