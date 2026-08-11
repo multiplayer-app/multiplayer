@@ -8,9 +8,9 @@ import {
   ATTR_MULTIPLAYER_USER_HASH,
 } from '@multiplayer-app/session-recorder-node'
 import { MetricsGaugeModel } from '@multiplayer/models'
-import { MetricName, IssueGroupBy, type OtlpMetricsGauge } from '@multiplayer/types'
+import { MetricName, IssueGroupBy, MetricsGranularity, type OtlpMetricsGauge } from '@multiplayer/types'
 import * as MetricsService from '../src/services/metrics.service'
-import { MetricsGranularity } from '../src/types'
+import { buildMetricsFilter } from '../src/util/metrics-filter.util'
 
 const WORKSPACE_ID = 'w-metrics-1'
 const PROJECT_ID = 'p-metrics-1'
@@ -60,6 +60,36 @@ describe('createMetrics / getCount', () => {
     )
 
     expect(count).toBe(2)
+  })
+})
+
+describe('workspaceId/projectId index usage', () => {
+  it('getCount/getMetrics-shaped queries use the workspaceId_1_projectId_1 index, not a collection scan', async () => {
+    const filter = buildMetricsFilter({
+      MetricName: MetricName.ISSUE_RATE,
+      workspaceId: WORKSPACE_ID,
+      projectId: PROJECT_ID,
+      TimeUnix: { $gt: { $date: new Date(0) }, $lt: { $date: new Date() } },
+    })
+
+    const plan = await MetricsGaugeModel.find(filter).explain('executionStats')
+    const serializedPlan = JSON.stringify(plan.queryPlanner.winningPlan)
+
+    expect(serializedPlan).toContain('workspaceId_1_projectId_1')
+    expect(serializedPlan).not.toContain('COLLSCAN')
+  })
+
+  it('remove*-shaped queries (workspaceId/projectId plus an Attributes condition) never fall back to a collection scan', async () => {
+    const filter = {
+      workspaceId: WORKSPACE_ID,
+      projectId: PROJECT_ID,
+      Attributes: { $all: [{ $elemMatch: { key: ATTR_MULTIPLAYER_SESSION_ID } }] },
+    }
+
+    const plan = await MetricsGaugeModel.find(filter).explain('executionStats')
+    const serializedPlan = JSON.stringify(plan.queryPlanner.winningPlan)
+
+    expect(serializedPlan).not.toContain('COLLSCAN')
   })
 })
 

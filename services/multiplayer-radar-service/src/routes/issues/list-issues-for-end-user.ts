@@ -9,11 +9,9 @@ import { NotFoundError } from 'restify-errors'
 import {
   MetricName,
   IssueGroupBy,
+  MetricsGranularity,
 } from '@multiplayer/types'
 import { MetricsService } from '../../services'
-import {
-  MetricsGranularity,
-} from '../../types'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {

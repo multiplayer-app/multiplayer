@@ -12,6 +12,8 @@ const { Schema } = mongoose
 // `Exemplars` is never populated by any producer in this codebase - intentionally
 // dropped rather than persisted.
 export type IStoredMetricsGauge = Omit<OtlpMetricsGauge, 'Exemplars' | 'Attributes' | 'ResourceAttributes' | 'ScopeAttributes' | 'TimeUnix' | 'StartTimeUnix'> & {
+  workspaceId: string
+  projectId: string
   Attributes: { key: string, value: string }[]
   ResourceAttributes?: { key: string, value: string }[]
   ScopeAttributes?: { key: string, value: string }[]
@@ -22,7 +24,7 @@ export type IStoredMetricsGauge = Omit<OtlpMetricsGauge, 'Exemplars' | 'Attribut
 export interface IMetricsGaugeDocument extends IStoredMetricsGauge, Document {}
 
 export interface IMetricsGaugeModel extends Model<IMetricsGaugeDocument> {
-  insertGauges(gauges: OtlpMetricsGauge[]): Promise<void>
+  insertGauges(gauges: (OtlpMetricsGauge & { workspaceId: string, projectId: string })[]): Promise<void>
 }
 
 const AttributePairSchema = new Schema({
@@ -31,6 +33,15 @@ const AttributePairSchema = new Schema({
 }, { _id: false })
 
 const MetricsGaugeSchema = new Schema({
+  workspaceId: {
+    type: String,
+    required: true,
+  },
+  projectId: {
+    type: String,
+    required: true,
+  },
+
   ResourceAttributes: [AttributePairSchema],
   ResourceSchemaUrl: String,
   ScopeName: String,
@@ -66,13 +77,18 @@ const MetricsGaugeSchema = new Schema({
   Flags: Number,
 })
 
+MetricsGaugeSchema.index({ workspaceId: 1, projectId: 1 })
 MetricsGaugeSchema.index({ MetricName: 1, TimeUnix: 1 })
 MetricsGaugeSchema.index({ 'Attributes.key': 1, 'Attributes.value': 1 })
+// Mirrors the 90-day TTL the old ClickHouse otel.otel_metrics_gauge table had.
+MetricsGaugeSchema.index({ TimeUnix: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 })
 
 const toAttributePairs = (attributes?: Record<string, string>): { key: string, value: string }[] =>
   Object.entries(attributes || {}).map(([key, value]) => ({ key, value }))
 
-MetricsGaugeSchema.statics.insertGauges = async function (gauges: OtlpMetricsGauge[]): Promise<void> {
+MetricsGaugeSchema.statics.insertGauges = async function (
+  gauges: (OtlpMetricsGauge & { workspaceId: string, projectId: string })[],
+): Promise<void> {
   if (!gauges.length) {
     return
   }

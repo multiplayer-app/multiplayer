@@ -12,6 +12,7 @@ import {
   IIssue,
   MetricName,
   IssueGroupBy,
+  MetricsGranularity,
 } from '@multiplayer/types'
 import {
   SEMRESATTRS_SERVICE_VERSION,
@@ -23,10 +24,7 @@ import {
 } from '@opentelemetry/semantic-conventions'
 import type { PipelineStage } from 'mongoose'
 import { MetricsGaugeModel } from '@multiplayer/models'
-import {
-  ATTR_MULTIPLAYER_ISSUE_TITLE_HASH,
-  MetricsGranularity,
-} from '../types'
+import { ATTR_MULTIPLAYER_ISSUE_TITLE_HASH } from '../types'
 import { buildMetricsFilter, extractAttributeKey } from '../util/metrics-filter.util'
 
 const fieldMapping = {
@@ -53,7 +51,13 @@ interface MetricsFilter {
 }
 
 export const createMetrics = async (metrics: OtlpMetricsGauge[]): Promise<void> => {
-  await MetricsGaugeModel.insertGauges(metrics)
+  await MetricsGaugeModel.insertGauges(
+    metrics.map(metric => ({
+      ...metric,
+      workspaceId: metric.Attributes?.[ATTR_MULTIPLAYER_WORKSPACE_ID] as string,
+      projectId: metric.Attributes?.[ATTR_MULTIPLAYER_PROJECT_ID] as string,
+    })),
+  )
 }
 
 export const createIssueRateMetricData = (
@@ -249,8 +253,8 @@ const _getMetricsRaw = async (
 
   const conditions = {
     MetricName: filter.metricName,
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
     ...filter.release
       ? { [`Attributes['${SEMRESATTRS_SERVICE_VERSION}']`]: filter.release }
       : {},
@@ -349,8 +353,8 @@ export const removeMetricsByIssueHash = async (filter: {
   issueHash?: string | string[],
 }) => {
   const conditions: Record<string, unknown> = {
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
   }
 
   if (filter.issueHash) {
@@ -370,8 +374,8 @@ export const removeMetricsForSessionRecordings = async (filter: {
   sessionRecordingId?: string | string[],
 }) => {
   const conditions: Record<string, unknown> = {
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
   }
 
   if (filter.sessionRecordingId) {
@@ -393,8 +397,8 @@ export const removeMetricsForEndUsers = async (filter: {
   endUserHash?: string | string[],
 }) => {
   const conditions: Record<string, unknown> = {
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
   }
 
   if (filter.endUserHash) {
@@ -429,8 +433,8 @@ export const getCount = async (
 ): Promise<number> => {
   const conditions = {
     MetricName: filter.metricName,
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
     ...filter.release
       ? { [`Attributes['${SEMRESATTRS_SERVICE_VERSION}']`]: filter.release }
       : {},

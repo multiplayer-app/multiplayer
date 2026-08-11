@@ -16,10 +16,10 @@ import {
   IUser,
   MetricName,
   IAgent,
+  MetricsGranularity,
 } from "@multiplayer/types";
 import { radarInstance } from "shared/api";
 import { memoizeApiFunction } from "shared/helpers/api.helpers";
-import { MetricsGranularity } from "shared/models/enums";
 import {
   IListRes,
   IReqParamsBase,
