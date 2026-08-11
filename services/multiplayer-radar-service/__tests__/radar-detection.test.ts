@@ -220,6 +220,23 @@ describe('getNotAppliedDetections: RADAR-observed detections not yet documented'
 
     expect(rows.find((row) => row.id === 'det-radar-only')).toBeDefined()
   })
+
+  it('returnStream: true yields one plain detection object per iteration, not a chunk array', async () => {
+    const stream = await RadarDetectionService.getNotAppliedDetections(
+      { workspaceId: WORKSPACE_ID, projectId: PROJECT_ID } as any,
+      undefined,
+      true,
+    ) as AsyncIterable<any>
+
+    const seen: any[] = []
+    for await (const row of stream) {
+      expect(Array.isArray(row)).toBe(false)
+      expect(typeof row.json).toBe('undefined')
+      seen.push(row)
+    }
+
+    expect(seen.find((row) => row.id === 'det-radar-only')).toBeDefined()
+  })
 })
 
 describe('deleteDetections: flips the relevant flag(s), purges once fully orphaned', () => {
