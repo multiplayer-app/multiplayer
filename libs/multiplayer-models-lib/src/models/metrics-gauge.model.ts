@@ -21,7 +21,7 @@ export type IStoredMetricsGauge = Omit<OtlpMetricsGauge, 'Exemplars' | 'Attribut
   StartTimeUnix: Date
 }
 
-export interface IMetricsGaugeDocument extends IStoredMetricsGauge, Document {}
+export interface IMetricsGaugeDocument extends IStoredMetricsGauge, Document { }
 
 export interface IMetricsGaugeModel extends Model<IMetricsGaugeDocument> {
   insertGauges(gauges: (OtlpMetricsGauge & { workspaceId: string, projectId: string })[]): Promise<void>
@@ -106,6 +106,6 @@ MetricsGaugeSchema.statics.insertGauges = async function (
 }
 
 export const MetricsGaugeModel = mongoose.model<IMetricsGaugeDocument, IMetricsGaugeModel>(
-  'MetricsGauge',
+  'Metrics-Gauge',
   MetricsGaugeSchema,
 )
