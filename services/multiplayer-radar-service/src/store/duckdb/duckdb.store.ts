@@ -33,8 +33,8 @@ let connection: DuckDBConnection | undefined
 let connectPromise: Promise<void> | undefined
 
 const getConnection = async (): Promise<DuckDBConnection> => {
-  if (!connection && connectPromise) {
-    await connectPromise
+  if (!connection) {
+    await connect()
   }
 
   if (!connection) {

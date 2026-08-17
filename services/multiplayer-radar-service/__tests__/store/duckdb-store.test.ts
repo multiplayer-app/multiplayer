@@ -50,4 +50,18 @@ describe('getConnection: race with an in-flight connect()', () => {
     await connectPromise
     expect(await duckdbStore.connected()).toBe(true)
   })
+
+  it('self-heals: a query issued after a prior connect() attempt already settled (no in-flight promise) still succeeds instead of staying permanently disconnected', async () => {
+    await duckdbStore.disconnect()
+
+    // No connect() call at all here - simulates the real production failure mode: the
+    // one-time app-startup Store.connect() call already ran to completion (success or
+    // failure) and cleared its in-flight promise, so a later caller (e.g. the Kafka
+    // consumer, long after startup) has nothing to "wait out". It must trigger its own
+    // reconnect rather than immediately throwing "Not connected".
+    const count = await duckdbStore.countTotal('debug_session.rrweb_events', { debugSessionId: 'self-heal-check' })
+
+    expect(count).toEqual(expect.any(Number))
+    expect(await duckdbStore.connected()).toBe(true)
+  })
 })
