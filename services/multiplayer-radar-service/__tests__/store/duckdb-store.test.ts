@@ -34,3 +34,20 @@ describe('generic CRUD passthrough', () => {
     expect(count).toBe(1)
   })
 })
+
+describe('getConnection: race with an in-flight connect()', () => {
+  it('a query issued while connect() is still running waits for it instead of throwing "Not connected"', async () => {
+    await duckdbStore.disconnect()
+
+    const connectPromise = duckdbStore.connect()
+    // Fired in the same tick, before connect() has resolved - this is the exact race
+    // that used to throw "[DUCKDB] Not connected - call Store.connect() first" in
+    // production (the raw DuckDB driver has no built-in operation buffering the way
+    // Mongoose gives Mongo for free).
+    const countPromise = duckdbStore.countTotal('debug_session.rrweb_events', { debugSessionId: 'race-check' })
+
+    await expect(countPromise).resolves.toEqual(expect.any(Number))
+    await connectPromise
+    expect(await duckdbStore.connected()).toBe(true)
+  })
+})

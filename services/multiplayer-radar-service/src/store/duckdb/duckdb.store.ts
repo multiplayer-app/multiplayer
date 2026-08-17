@@ -24,8 +24,19 @@ const JSON_COLUMNS = new Set(['Events', 'Links'])
 
 let instance: DuckDBInstance | undefined
 let connection: DuckDBConnection | undefined
+// Store.connect() is fired-and-forgotten at app startup (app.ts) rather than awaited
+// before the HTTP server starts listening - Mongoose buffers operations issued before
+// its connection is ready, but the raw DuckDB driver doesn't, so a request landing
+// during that startup window (schema statements are still running, cold volume, etc)
+// used to fail immediately with "Not connected". Tracking the in-flight connect()
+// promise here lets getConnection() wait it out instead of failing that race.
+let connectPromise: Promise<void> | undefined
 
-const getConnection = (): DuckDBConnection => {
+const getConnection = async (): Promise<DuckDBConnection> => {
+  if (!connection && connectPromise) {
+    await connectPromise
+  }
+
   if (!connection) {
     throw new Error('[DUCKDB] Not connected - call Store.connect() first')
   }
@@ -38,19 +49,30 @@ const connect = async (): Promise<void> => {
     return
   }
 
-  // DuckDB won't create missing parent directories itself (fails with "IO Error:
-  // Cannot open file ... No such file or directory") - ensure it exists regardless of
-  // deployment (bare-metal default path, a fresh bind mount, a not-yet-materialized
-  // volume mount point, etc). No-op for the ":memory:" sentinel used in tests.
-  if (DUCKDB_FILE_PATH !== ':memory:') {
-    mkdirSync(dirname(DUCKDB_FILE_PATH), { recursive: true })
+  if (!connectPromise) {
+    connectPromise = (async () => {
+      // DuckDB won't create missing parent directories itself (fails with "IO Error:
+      // Cannot open file ... No such file or directory") - ensure it exists regardless
+      // of deployment (bare-metal default path, a fresh bind mount, a not-yet-
+      // materialized volume mount point, etc). No-op for the ":memory:" sentinel used
+      // in tests.
+      if (DUCKDB_FILE_PATH !== ':memory:') {
+        mkdirSync(dirname(DUCKDB_FILE_PATH), { recursive: true })
+      }
+
+      instance = await DuckDBInstance.create(DUCKDB_FILE_PATH)
+      connection = await instance.connect()
+
+      for (const statement of getSchemaStatements()) {
+        await connection.run(statement)
+      }
+    })()
   }
 
-  instance = await DuckDBInstance.create(DUCKDB_FILE_PATH)
-  connection = await instance.connect()
-
-  for (const statement of getSchemaStatements()) {
-    await connection.run(statement)
+  try {
+    await connectPromise
+  } finally {
+    connectPromise = undefined
   }
 }
 
@@ -100,7 +122,8 @@ const select = async (
   ${buildOrderBy(sortOptions)}
   ${buildLimitOffset(cursor)};`
 
-  const reader = await getConnection().runAndReadAll(query)
+  const conn = await getConnection()
+  const reader = await conn.runAndReadAll(query)
 
   return reader.getRowObjectsJson()
 }
@@ -126,7 +149,8 @@ const selectStream = async (
 const countTotal = async (table: string, filter: any, join?: string): Promise<number> => {
   const conditions = buildFilter(filter)
   const query = `SELECT count(*) as c FROM ${table} ${join || ''} WHERE ${conditions};`
-  const reader = await getConnection().runAndReadAll(query)
+  const conn = await getConnection()
+  const reader = await conn.runAndReadAll(query)
   const [row] = reader.getRowObjectsJson()
 
   return Number(row?.c || 0)
@@ -134,8 +158,9 @@ const countTotal = async (table: string, filter: any, join?: string): Promise<nu
 
 const remove = async (table: string, filter: any): Promise<void> => {
   const conditions = buildFilter(filter)
+  const conn = await getConnection()
 
-  await getConnection().run(`DELETE FROM ${table} WHERE ${conditions}`)
+  await conn.run(`DELETE FROM ${table} WHERE ${conditions}`)
 }
 
 /** Wraps a plain JS value for DuckDB parameter binding where a type hint is required
@@ -200,8 +225,9 @@ const insertOne = async (table: string, row: Record<string, any>): Promise<void>
   const { columnList, placeholderList, values, types } = buildInsertStatement(table, row)
 
   const sql = `INSERT INTO ${table} (${columnList}) VALUES (${placeholderList})`
+  const conn = await getConnection()
 
-  await getConnection().run(sql, values, types)
+  await conn.run(sql, values, types)
 }
 
 // asyncInsert is a ClickHouse-specific write-buffering hint (see
@@ -233,7 +259,7 @@ const moveDataToS3 = async (
   const [, bucket, ...keyParts] = url.pathname.split('/')
   const key = keyParts.join('/')
   const conditions = buildFilter(filter)
-  const conn = getConnection()
+  const conn = await getConnection()
 
   await conn.run('INSTALL httpfs')
   await conn.run('LOAD httpfs')
