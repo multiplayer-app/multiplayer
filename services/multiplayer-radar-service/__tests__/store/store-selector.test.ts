@@ -34,14 +34,29 @@ describe('Store selection via ANALYTICS_DB_ENGINE', () => {
     expect(Store).toBe(clickhouseStore)
   })
 
-  it('resolves to the DuckDB backend when set to "duckdb"', () => {
+  it('wraps the DuckDB backend in a leader-election facade when set to "duckdb"', async () => {
     process.env.ANALYTICS_DB_ENGINE = 'duckdb'
     jest.resetModules()
 
-    const { Store } = require('../../src/store')
+    const { Store, localStore } = require('../../src/store')
     const { duckdbStore } = require('../../src/store/duckdb/duckdb.store')
 
-    expect(Store).toBe(duckdbStore)
+    // localStore is always the raw engine-selected backend, unwrapped.
+    expect(localStore).toBe(duckdbStore)
+    // Store is a distinct facade object, not the backend itself...
+    expect(Store).not.toBe(duckdbStore)
+
+    // ...but with election never started (state 'idle'), every call still resolves
+    // straight through to the local backend - existing single-replica/test behavior
+    // is unchanged.
+    const selectSpy = jest.spyOn(duckdbStore, 'select').mockResolvedValue(['row'])
+
+    const result = await Store.select('table', { id: '1' })
+
+    expect(selectSpy).toHaveBeenCalledWith('table', { id: '1' })
+    expect(result).toEqual(['row'])
+
+    selectSpy.mockRestore()
   })
 
   it('fails loudly on an unrecognized engine name', () => {

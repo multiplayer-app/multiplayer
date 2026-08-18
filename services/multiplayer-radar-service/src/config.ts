@@ -7,6 +7,9 @@ export const AMQP_RADAR_DETECTION_APPLY_QUEUE = process.env.AMQP_RADAR_DETECTION
 export const AMQP_EVENT_QUEUE = process.env.AMQP_EVENT_QUEUE || 'event'
 export const AMQP_RADAR_EVENT_QUEUE = process.env.AMQP_RADAR_EVENT_QUEUE || 'radar-event'
 export const AMQP_DEBUG_SESSION_MOVE_S3_QUEUE = process.env.AMQP_DEBUG_SESSION_MOVE_S3_QUEUE || 'debug-session-move-s3'
+// Store request/reply RPC queue (see src/store/remote/remote.store.ts,
+// src/store/leader-listener.ts) - only used when ANALYTICS_DB_ENGINE=duckdb.
+export const AMQP_STORE_RPC_QUEUE = process.env.AMQP_STORE_RPC_QUEUE || 'radar-duckdb-store-rpc'
 
 // Analytics store backend for detections/params/flows/otel traces & logs/rrweb events.
 // 'clickhouse' (default) keeps the existing behavior unchanged. 'duckdb' is a
@@ -14,9 +17,30 @@ export const AMQP_DEBUG_SESSION_MOVE_S3_QUEUE = process.env.AMQP_DEBUG_SESSION_M
 export const ANALYTICS_DB_ENGINE = process.env.ANALYTICS_DB_ENGINE || 'clickhouse'
 
 // Only used when ANALYTICS_DB_ENGINE=duckdb. Must be on a persistent volume in any real
-// deployment - a container restart wipes this path otherwise, and (until the Phase 3
-// leader-election work lands) only a single radar-service replica may run against it.
+// deployment - a container restart wipes this path otherwise. Multi-replica deployments
+// are coordinated via Redis leader election (see src/store/leader-election.ts): one
+// leader owns all DuckDB I/O, followers forward over AMQP_STORE_RPC_QUEUE.
 export const DUCKDB_FILE_PATH = process.env.DUCKDB_FILE_PATH || './data/radar.duckdb'
+
+// Store leader election (only active when ANALYTICS_DB_ENGINE=duckdb). Routing to the
+// leader goes entirely through AMQP_STORE_RPC_QUEUE by name - the lease value only
+// identifies who holds it, not where to reach them, so no replica address is needed.
+export const REDIS_STORE_LEADER_KEY = process.env.REDIS_STORE_LEADER_KEY || 'radar:duckdb:leader'
+export const STORE_LEADER_TTL_SECONDS = process.env.STORE_LEADER_TTL_SECONDS
+  ? Number(process.env.STORE_LEADER_TTL_SECONDS)
+  : 15
+export const STORE_LEADER_RENEW_INTERVAL_MS = process.env.STORE_LEADER_RENEW_INTERVAL_MS
+  ? Number(process.env.STORE_LEADER_RENEW_INTERVAL_MS)
+  : 5000
+// Must comfortably exceed the worst-case failover detection window (TTL + one renew
+// tick, ~20s with the defaults above) so an in-flight forward has a real chance to
+// succeed once a new leader takes over, rather than timing out first.
+export const STORE_FORWARD_TIMEOUT_MS = process.env.STORE_FORWARD_TIMEOUT_MS
+  ? Number(process.env.STORE_FORWARD_TIMEOUT_MS)
+  : 30_000
+export const STORE_FORWARD_S3_MOVE_TIMEOUT_MS = process.env.STORE_FORWARD_S3_MOVE_TIMEOUT_MS
+  ? Number(process.env.STORE_FORWARD_S3_MOVE_TIMEOUT_MS)
+  : 300_000
 
 export const CLICKHOUSE_DEBUG_SESSION_DB = process.env.CLICKHOUSE_DEBUG_SESSION_DB || 'debug_session'
 export const CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME || 'rrweb_events'

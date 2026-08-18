@@ -33,14 +33,68 @@
 | `REDIS_DEBUG_SESSION_CACHE_PREFIX`                    |                                                 |   ✘      | `debug_session:`                              |
 | `DEBUG_SESSION_MAX_DURATION_SECONDS`                  |                                                 |   ✘      | 300                                           |
 | `S3_DEBUG_SESSIONS_BUCKET`                            |                                                 |   ✘      | `debug-sessions-bucket`                       |
-| `ANALYTICS_DB_ENGINE`                                 | `clickhouse` or `duckdb`. `duckdb` is a lightweight, fully self-hosted alternative that trades ClickHouse's server/scale-out model for a single embedded file (single replica only until leader-election support lands). |   ✘      | `clickhouse`                                  |
+| `ANALYTICS_DB_ENGINE`                                 | `clickhouse` or `duckdb`. `duckdb` is a lightweight, fully self-hosted alternative that trades ClickHouse's server/scale-out model for a single embedded file. Safe with multiple replicas via Redis leader election - see "DuckDB with multiple replicas" below. |   ✘      | `clickhouse`                                  |
 | `DUCKDB_FILE_PATH`                                    | Only used when `ANALYTICS_DB_ENGINE=duckdb`. Must be on a persistent volume in any real deployment. |   ✘      | `./data/radar.duckdb`                         |
+| `AMQP_STORE_RPC_QUEUE`                                | Only used when `ANALYTICS_DB_ENGINE=duckdb`. Queue non-leader replicas use to forward Store calls to the elected leader. |   ✘      | `radar-duckdb-store-rpc`                      |
+| `REDIS_STORE_LEADER_KEY`                              | Only used when `ANALYTICS_DB_ENGINE=duckdb`. Redis key holding the DuckDB store leader election lease. |   ✘      | `radar:duckdb:leader`                         |
+| `STORE_LEADER_TTL_SECONDS`                            | Only used when `ANALYTICS_DB_ENGINE=duckdb`. Lease TTL - a dead leader's lease expires and another replica takes over after this long. |   ✘      | 15                                            |
+| `STORE_LEADER_RENEW_INTERVAL_MS`                      | Only used when `ANALYTICS_DB_ENGINE=duckdb`. How often the leader renews its lease / followers poll for a leadership change. |   ✘      | 5000                                          |
+| `STORE_FORWARD_TIMEOUT_MS`                            | Only used when `ANALYTICS_DB_ENGINE=duckdb`. Timeout for a follower's forwarded Store RPC call. Should comfortably exceed the worst-case failover window (`STORE_LEADER_TTL_SECONDS` + one renew tick). |   ✘      | 30000                                         |
+| `STORE_FORWARD_S3_MOVE_TIMEOUT_MS`                    | Only used when `ANALYTICS_DB_ENGINE=duckdb`. Longer timeout override for the forwarded S3-archival call specifically. |   ✘      | 300000                                        |
 
 Also check library environment variables:
 
 https://github.com/protocolr/protocolr-mongo-lib#environment-variables
 
 https://github.com/protocolr/protocolr-auth-lib#environment-variables
+
+## DuckDB with multiple replicas
+
+`ANALYTICS_DB_ENGINE=duckdb` stores debug-session traces/logs/rrweb events as a single
+embedded file (`DUCKDB_FILE_PATH`) local to each pod - there's no shared/networked
+database the way ClickHouse is. With more than one replica and non-shared volumes,
+writes would otherwise fragment across replicas (Kafka partitions by trace id, not
+session; HTTP/WebSocket traffic lands on whichever pod the load balancer picks), so
+reads would only ever see whatever slice of a session's data happened to land on the
+pod serving that request.
+
+This is solved via Redis leader election (`src/store/leader-election.ts`): exactly one
+replica is elected leader and is the only one that ever touches its local DuckDB file.
+
+- **Reads/writes**: every replica's `Store` is a facade (`src/store/index.ts`) that
+  runs locally when this replica is leader, or forwards to the leader over AMQP
+  request/reply (`src/store/remote/remote.store.ts` / `src/store/leader-listener.ts`,
+  queue `AMQP_STORE_RPC_QUEUE`) when it's a follower. This covers every entry point
+  uniformly - HTTP routes, WebSocket rrweb writes, the AMQP S3-archival queue, and the
+  cron sweep - since they all go through the same `Store` singleton.
+- **Kafka ingest**: the 5 topics that feed the analytics store (debug/continuous-debug
+  session spans+logs, error spans) run on their own consumer group
+  (`<service-name>-store`) that only the leader consumes - started on leadership gain,
+  stopped on loss. This keeps the highest-volume path off AMQP entirely and makes it
+  failover-safe: while no replica is leader, messages simply wait in Kafka rather than
+  being forwarded-and-lost (the underlying kafka client library commits offsets even
+  when a handler throws, so a failed forward would otherwise be silently dropped).
+
+Requirements for this to work: all replicas must share the same Redis instance and be
+able to reach the same RabbitMQ broker (both already required elsewhere in this
+service). No pod-to-pod networking is needed - routing is entirely by Redis key /
+AMQP queue name, never by replica address.
+
+**Accepted limitations**, given this data is short-lived and archived to S3 at session
+stop anyway:
+- Rows written to the pre-failover leader's local file are unreachable until that pod
+  (or its replacement) leads again - the loss window is bounded to sessions active
+  across a failover, detected within `STORE_LEADER_TTL_SECONDS` plus one renew tick.
+- The Kafka consumer-group split means the very first deploy of this feature starts the
+  new `<service-name>-store` group at the latest offset, not from where the old shared
+  group left off - a one-time gap equivalent to brief deploy downtime.
+- Moving a debug session's data to S3 (`moveDataToS3`) spans a count and a copy; if
+  leadership changes between them, the count could be stale relative to what actually
+  got archived. The AMQP queue redelivers once on failure, which narrows but doesn't
+  eliminate this window.
+- With `ANALYTICS_DB_ENGINE=clickhouse` (a real shared server), none of this applies -
+  leader election never starts and the store consumer runs unconditionally on every
+  replica, exactly as before this feature existed.
 
 ## Clickhouse
 
