@@ -115,7 +115,7 @@ jobs:
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
-          MINIO_DEFAULT_BUCKETS: private-bucket
+          MINIO_DEFAULT_BUCKETS: private-bucket,debug-sessions-bucket
         # options: >-
         #   --health-cmd "curl -f http://localhost:9000/minio/health/live"
         #   --health-interval 10s
