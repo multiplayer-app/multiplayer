@@ -54,5 +54,6 @@ export interface IAnalyticsStore {
     s3AccessKeyId?: string,
     secretAccessKey?: string,
     replace?: object,
+    sessionToken?: string,
   ): Promise<void>
 }

@@ -121,10 +121,11 @@ const moveDataToS3 = async (
   s3AccessKeyId?: string,
   secretAccessKey?: string,
   replace?: object,
+  sessionToken?: string,
 ): Promise<void> => {
   await request<void>(
     'moveDataToS3',
-    [absoluteS3FileUrl, table, filter, s3AccessKeyId, secretAccessKey, replace],
+    [absoluteS3FileUrl, table, filter, s3AccessKeyId, secretAccessKey, replace, sessionToken],
     STORE_FORWARD_S3_MOVE_TIMEOUT_MS,
   )
 }

@@ -6,8 +6,6 @@ import {
   s3 as S3Lib,
   S3_HOST,
   S3_EXPORT_HOST,
-  AWS_ACCESS_KEY_ID,
-  AWS_SECRET_ACCESS_KEY,
 } from '@multiplayer/s3'
 import {
   DebugSessionModel,
@@ -417,8 +415,6 @@ export const moveDebugSessionDataFromChToS3 = async (
       s3Host,
       S3_DEBUG_SESSIONS_BUCKET,
       s3LogsFileKey,
-      AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY,
     )
 
     await DebugSessionModel.addS3File(
@@ -462,8 +458,6 @@ export const moveDebugSessionDataFromChToS3 = async (
       s3Host,
       S3_DEBUG_SESSIONS_BUCKET,
       s3SpansFileKey,
-      AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY,
     )
 
     await DebugSessionModel.addS3File(
@@ -507,8 +501,6 @@ export const moveDebugSessionDataFromChToS3 = async (
       s3Host,
       S3_DEBUG_SESSIONS_BUCKET,
       s3RrwebEventsFileKey,
-      AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY,
     )
     await DebugSessionModel.addS3File(
       debugSessionId,

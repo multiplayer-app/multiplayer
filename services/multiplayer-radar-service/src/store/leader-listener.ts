@@ -24,8 +24,8 @@ const handlers: Record<StoreRpcOp, (args: unknown[]) => Promise<unknown>> = {
     localStore.insert(table, data, asyncInsert),
   remove: ([table, filter]: any) =>
     localStore.remove(table, filter),
-  moveDataToS3: ([absoluteS3FileUrl, table, filter, s3AccessKeyId, secretAccessKey, replace]: any) =>
-    localStore.moveDataToS3(absoluteS3FileUrl, table, filter, s3AccessKeyId, secretAccessKey, replace),
+  moveDataToS3: ([absoluteS3FileUrl, table, filter, s3AccessKeyId, secretAccessKey, replace, sessionToken]: any) =>
+    localStore.moveDataToS3(absoluteS3FileUrl, table, filter, s3AccessKeyId, secretAccessKey, replace, sessionToken),
 }
 
 const handleRequest = async ({ op, args }: StoreRpcRequest): Promise<unknown> => {

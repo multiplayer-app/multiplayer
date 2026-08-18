@@ -62,18 +62,23 @@ export const moveTableToS3 = async (
   s3Host: string,
   bucket: string,
   key: string,
-  awsAccessKeyId?: string,
-  awsSecretAccessKey?: string,
   replace?: object,
 ): Promise<void> => {
   if (totalCount > 0) {
+    // Resolved here (rather than passed in by callers) so every caller gets the same
+    // credentials the S3 client itself would use - including a session token when auth
+    // is via IAM role, which DuckDB's own httpfs client can't discover on its own (see
+    // duckdb.store.ts's moveDataToS3).
+    const { accessKeyId, secretAccessKey, sessionToken } = await S3Lib.resolveS3Credentials()
+
     await Store.moveDataToS3(
       `${s3Host}/${key}`,
       table,
       filter,
-      awsAccessKeyId,
-      awsSecretAccessKey,
+      accessKeyId,
+      secretAccessKey,
       replace,
+      sessionToken,
     )
 
     return

@@ -14,8 +14,6 @@ import {
 import {
   S3_HOST,
   S3_EXPORT_HOST,
-  AWS_ACCESS_KEY_ID,
-  AWS_SECRET_ACCESS_KEY,
 } from '@multiplayer/s3'
 import { RandomToken } from '@multiplayer/util'
 import { InvalidArgumentError } from 'restify-errors'
@@ -367,8 +365,6 @@ export const moveContinuousDebugSessionDataFromChToS3 = async (
       s3Host,
       S3_DEBUG_SESSIONS_BUCKET,
       s3LogsFileKey,
-      AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY,
       replace,
     )
 
@@ -413,8 +409,6 @@ export const moveContinuousDebugSessionDataFromChToS3 = async (
       s3Host,
       S3_DEBUG_SESSIONS_BUCKET,
       s3SpansFileKey,
-      AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY,
       replace,
     )
 
@@ -505,8 +499,6 @@ export const moveContinuousDebugSessionDataFromChToS3 = async (
         s3Host,
         S3_DEBUG_SESSIONS_BUCKET,
         s3RrwebEventsFileKey,
-        AWS_ACCESS_KEY_ID,
-        AWS_SECRET_ACCESS_KEY,
         replace,
       )
       await DebugSessionModel.addS3File(

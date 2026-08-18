@@ -280,6 +280,9 @@ const moveDataToS3 = async (
   // pre-existing bug (iterates the wrong variable) that makes it silently a no-op in
   // production today - not something this DuckDB path needs to newly support.
   _replace?: object,
+  // Only set when the caller resolved temporary (STS/IRSA) credentials rather than a
+  // static access key/secret pair - see moveTableToS3's resolveS3Credentials call.
+  sessionToken?: string,
 ): Promise<void> => {
   const url = new URL(absoluteS3FileUrl)
   const [, bucket, ...keyParts] = url.pathname.split('/')
@@ -298,8 +301,25 @@ const moveDataToS3 = async (
     await conn.run('SET s3_url_style=\'path\'')
 
     if (s3AccessKeyId && secretAccessKey) {
+      // DuckDB's httpfs client has no credential-discovery fallback of its own - leaving
+      // these unset makes it send unsigned requests, which a private bucket rejects with
+      // 403 Forbidden (verified against a real production failure, where production has
+      // no static AWS_ACCESS_KEY_ID/SECRET and relies on an IAM role instead). DuckDB
+      // does ship a `credential_chain` secret provider that's meant to cover exactly
+      // this case, but it's documented as unreliable on EKS pod-attached IAM roles
+      // (duckdb-aws#93: silently picks up the node's role instead of the pod's) and, as
+      // of DuckDB 1.4, can hard-fail secret creation outright in environments with a
+      // stray/expired local AWS config (duckdb-aws#108) - not worth the risk here.
+      // Instead the caller resolves real credentials once via the same AWS SDK provider
+      // chain @multiplayer/s3's own S3Client already uses successfully in production
+      // (handles IRSA/instance-profile/session-token exchange correctly) and passes the
+      // literal access key/secret/session token through, same as any static-credential
+      // caller.
       await conn.run(`SET s3_access_key_id='${s3AccessKeyId}'`)
       await conn.run(`SET s3_secret_access_key='${secretAccessKey}'`)
+      if (sessionToken) {
+        await conn.run(`SET s3_session_token='${sessionToken}'`)
+      }
     }
 
     // ARRAY true is required - DuckDB's default FORMAT JSON writes newline-delimited
