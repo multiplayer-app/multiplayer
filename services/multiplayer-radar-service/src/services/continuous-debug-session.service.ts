@@ -12,6 +12,7 @@ import {
   DebugSessionAgentEvents,
 } from '@multiplayer/types'
 import {
+  S3_HOST,
   S3_EXPORT_HOST,
   AWS_ACCESS_KEY_ID,
   AWS_SECRET_ACCESS_KEY,
@@ -315,7 +316,12 @@ export const moveContinuousDebugSessionDataFromChToS3 = async (
   }
 
   try {
-    const s3Host = `${S3_EXPORT_HOST}/${S3_DEBUG_SESSIONS_BUCKET}`
+    // ClickHouse performs the S3 export itself from inside its own container, so it
+    // needs S3_EXPORT_HOST (reachable from ClickHouse's network context). DuckDB is
+    // embedded in this process, so it needs S3_HOST - the endpoint already proven
+    // reachable from wherever this process itself runs (multiplayer-s3-lib's own S3
+    // client is configured with it).
+    const s3Host = `${ANALYTICS_DB_ENGINE === 'clickhouse' ? S3_EXPORT_HOST : S3_HOST}/${S3_DEBUG_SESSIONS_BUCKET}`
     const debugSessionDataFilter: FilterQuery = {
       debugSessionId: debugSession.continuousDebugSession,
       Timestamp: {
@@ -354,10 +360,13 @@ export const moveContinuousDebugSessionDataFromChToS3 = async (
       debugSessionShortId: debugSession.shortId,
     }, '[CONTINUOUS_DEBUGGER] Moving logs to s3')
 
-    await Store.moveDataToS3(
-      `${s3Host}/${s3LogsFileKey}`,
+    await DebugSessionHelper.moveTableToS3(
       logsTable,
       debugSessionDataFilter,
+      totalLogs,
+      s3Host,
+      S3_DEBUG_SESSIONS_BUCKET,
+      s3LogsFileKey,
       AWS_ACCESS_KEY_ID,
       AWS_SECRET_ACCESS_KEY,
       replace,
@@ -397,10 +406,13 @@ export const moveContinuousDebugSessionDataFromChToS3 = async (
       debugSessionShortId: debugSession.shortId,
     }, '[CONTINUOUS_DEBUGGER] Moving spans to s3')
 
-    await Store.moveDataToS3(
-      `${s3Host}/${s3SpansFileKey}`,
+    await DebugSessionHelper.moveTableToS3(
       spansTable,
       debugSessionDataFilter,
+      totalSpans,
+      s3Host,
+      S3_DEBUG_SESSIONS_BUCKET,
+      s3SpansFileKey,
       AWS_ACCESS_KEY_ID,
       AWS_SECRET_ACCESS_KEY,
       replace,
@@ -486,10 +498,13 @@ export const moveContinuousDebugSessionDataFromChToS3 = async (
         debugSessionShortId: debugSession.shortId,
       }, '[CONTINUOUS_DEBUGGER] Moving RRweb events to s3')
 
-      await Store.moveDataToS3(
-        `${s3Host}/${s3RrwebEventsFileKey}`,
+      await DebugSessionHelper.moveTableToS3(
         rrwebEventsTable,
         debugSessionDataRrwebFilter,
+        totalRrwebEvents,
+        s3Host,
+        S3_DEBUG_SESSIONS_BUCKET,
+        s3RrwebEventsFileKey,
         AWS_ACCESS_KEY_ID,
         AWS_SECRET_ACCESS_KEY,
         replace,
@@ -506,14 +521,23 @@ export const moveContinuousDebugSessionDataFromChToS3 = async (
       )
     }
 
-    await DebugSessionModel.updateDebugSessionById(
-      debugSession.workspace,
-      debugSession.project,
-      debugSession._id,
-      {
-        finishedS3Transfer: true,
-      },
-    )
+    // Only mark the transfer finished once the session has actually stopped - this
+    // function also runs as a mid-flight checkpoint (see checkpointActiveDebugSessions)
+    // against sessions still being written to, where finishedS3Transfer would
+    // incorrectly suppress the real, final move once the session does stop. In
+    // practice a continuous-session chunk always has stoppedAt set by the time it
+    // exists (saveContinuousDebugSession sets it at creation), but the check is kept
+    // here too since both move functions are dispatched to from the same sweep.
+    if (debugSession.stoppedAt) {
+      await DebugSessionModel.updateDebugSessionById(
+        debugSession.workspace,
+        debugSession.project,
+        debugSession._id,
+        {
+          finishedS3Transfer: true,
+        },
+      )
+    }
 
     logger.info(
       {

@@ -42,6 +42,19 @@ export const STORE_FORWARD_S3_MOVE_TIMEOUT_MS = process.env.STORE_FORWARD_S3_MOV
   ? Number(process.env.STORE_FORWARD_S3_MOVE_TIMEOUT_MS)
   : 300_000
 
+// Only used when ANALYTICS_DB_ENGINE=duckdb. On graceful shutdown, the leader
+// checkpoints every not-yet-transferred session's data to S3 (see
+// checkpointActiveDebugSessionsToS3 in debug-session.worker.ts) before the process
+// exits, since DuckDB's local file is otherwise the only copy of in-progress session
+// data. Bounded so shutdown can't hang indefinitely on a large backlog - keep
+// comfortably under whatever terminationGracePeriodSeconds the deployment uses.
+export const SHUTDOWN_S3_CHECKPOINT_TIMEOUT_MS = process.env.SHUTDOWN_S3_CHECKPOINT_TIMEOUT_MS
+  ? Number(process.env.SHUTDOWN_S3_CHECKPOINT_TIMEOUT_MS)
+  : 25_000
+export const SHUTDOWN_S3_CHECKPOINT_CONCURRENCY = process.env.SHUTDOWN_S3_CHECKPOINT_CONCURRENCY
+  ? Number(process.env.SHUTDOWN_S3_CHECKPOINT_CONCURRENCY)
+  : 3
+
 export const CLICKHOUSE_DEBUG_SESSION_DB = process.env.CLICKHOUSE_DEBUG_SESSION_DB || 'debug_session'
 export const CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME || 'rrweb_events'
 export const CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME || 'otel_traces'

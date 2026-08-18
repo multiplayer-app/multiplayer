@@ -302,7 +302,11 @@ const moveDataToS3 = async (
       await conn.run(`SET s3_secret_access_key='${secretAccessKey}'`)
     }
 
-    await conn.run(`COPY (SELECT * FROM ${table} ${conditions ? `WHERE ${conditions}` : ''}) TO 's3://${bucket}/${key}' (FORMAT JSON)`)
+    // ARRAY true is required - DuckDB's default FORMAT JSON writes newline-delimited
+    // objects with no enclosing brackets, not a JSON array (verified against the real
+    // engine), which doesn't match a plain moveTableToS3's own empty-result upload
+    // (a literal '[]') or what a JSON.parse()-ing consumer expects.
+    await conn.run(`COPY (SELECT * FROM ${table} ${conditions ? `WHERE ${conditions}` : ''}) TO 's3://${bucket}/${key}' (FORMAT JSON, ARRAY true)`)
   })
 }
 

@@ -1,8 +1,13 @@
 import { Kafka, logLevel, SASLOptions } from 'kafkajs'
 import { GoogleAuth } from 'google-auth-library'
 import { KAFKA_CLIENT_ID, KAFKA_URI, KAFKA_AUTH_MECHANISM } from './config'
-import { KafkaJsLogCreator } from '@multiplayer/logger'
+import logger, { KafkaJsLogCreator } from '@multiplayer/logger'
 
+logger.info({
+  kafkaClientId: KAFKA_CLIENT_ID,
+  // kafkaBrokers: KAFKA_URI,
+  kafkaAuthMechanism: KAFKA_AUTH_MECHANISM,
+}, '[KAFKAJS] Kafka configuration')
 
 const toBunyanLogLevel = level => {
   switch (level) {

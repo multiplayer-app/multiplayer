@@ -9,6 +9,7 @@ import { kafkaConsumer, kafkaStoreConsumer, kafkaProducer } from './libs'
 import { Store } from './store'
 import * as StoreLeaderElection from './store/leader-election'
 import * as StoreLeaderListener from './store/leader-listener'
+import { checkpointActiveDebugSessionsToS3 } from './worker/debug-session.worker'
 
 const httpServer = http.createServer(app)
 
@@ -32,10 +33,13 @@ const exitHandler = async (error: any) => {
   }
   // Stop taking on new store work before tearing down the store connection itself:
   // release the RPC listener and the store-topic consumer (no-ops if this replica
-  // wasn't leader), then release the election lease so a rolling deploy fails over
-  // immediately instead of waiting out the lease TTL (see leader-election.ts).
+  // wasn't leader), checkpoint any not-yet-transferred session data to S3 while still
+  // holding leadership and the store connection is alive, then release the election
+  // lease so a rolling deploy fails over immediately instead of waiting out the lease
+  // TTL (see leader-election.ts).
   await StoreLeaderListener.stop()
   await kafkaStoreConsumer.disconnect()
+  await checkpointActiveDebugSessionsToS3()
   await StoreLeaderElection.stop()
   await Store.disconnect()
   await kafkaConsumer.disconnect()
