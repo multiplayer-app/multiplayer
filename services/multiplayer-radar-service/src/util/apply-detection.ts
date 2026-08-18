@@ -31,12 +31,12 @@ export const applyEnvironmentDetection = async (
   cookie?: string,
 ): Promise<void> => {
 
-  if (detection.environmentNames?.length !== 1) {
+  if (!detection.environmentName) {
     logger.error(`[APPLY-DETECTION] Failed to get environmentName for detection ${detection.id}`)
     return
   }
 
-  const environmentName = detection.environmentNames?.[0]
+  const environmentName = detection.environmentName
 
   if (environmentName !== slugifyString(environmentName)) {
     logger.error(`[APPLY-DETECTION] Invalid slugification of environmentName: ${environmentName}`)
