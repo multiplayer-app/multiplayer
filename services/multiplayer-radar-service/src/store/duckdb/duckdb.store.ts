@@ -23,29 +23,49 @@ const MAP_VARCHAR_COLUMNS = new Set(['ResourceAttributes', 'ScopeAttributes', 'S
 const JSON_COLUMNS = new Set(['Events', 'Links'])
 
 let instance: DuckDBInstance | undefined
-let connection: DuckDBConnection | undefined
 // Store.connect() is fired-and-forgotten at app startup (app.ts) rather than awaited
 // before the HTTP server starts listening - Mongoose buffers operations issued before
 // its connection is ready, but the raw DuckDB driver doesn't, so a request landing
 // during that startup window (schema statements are still running, cold volume, etc)
 // used to fail immediately with "Not connected". Tracking the in-flight connect()
-// promise here lets getConnection() wait it out instead of failing that race.
+// promise here lets getInstance() wait it out instead of failing that race.
 let connectPromise: Promise<void> | undefined
 
-const getConnection = async (): Promise<DuckDBConnection> => {
-  if (!connection) {
+const getInstance = async (): Promise<DuckDBInstance> => {
+  if (!instance) {
     await connect()
   }
 
-  if (!connection) {
+  if (!instance) {
     throw new Error('[DUCKDB] Not connected - call Store.connect() first')
   }
 
-  return connection
+  return instance
+}
+
+// DuckDB connections hold mutable per-connection execution state (active prepared
+// statement, session SET values, transaction) and aren't safe for concurrent use -
+// running overlapping queries on one shared connection is undefined behavior that
+// surfaces as generic native errors like "Failed to execute prepared statement" once
+// real I/O latency (disk/S3/Kafka) widens the gaps between a query's internal await
+// points enough for two calls to interleave. A previous version of this module shared
+// a single module-level connection across every concurrent Store call and hit exactly
+// that. Separate connections to the same DuckDBInstance *are* safe to use concurrently
+// (DuckDB's own concurrency model), so every top-level call below gets its own
+// short-lived connection instead.
+const withConnection = async <T>(fn: (conn: DuckDBConnection) => Promise<T>): Promise<T> => {
+  const inst = await getInstance()
+  const conn = await inst.connect()
+
+  try {
+    return await fn(conn)
+  } finally {
+    conn.closeSync()
+  }
 }
 
 const connect = async (): Promise<void> => {
-  if (connection) {
+  if (instance) {
     return
   }
 
@@ -61,10 +81,14 @@ const connect = async (): Promise<void> => {
       }
 
       instance = await DuckDBInstance.create(DUCKDB_FILE_PATH)
-      connection = await instance.connect()
+      const setupConn = await instance.connect()
 
-      for (const statement of getSchemaStatements()) {
-        await connection.run(statement)
+      try {
+        for (const statement of getSchemaStatements()) {
+          await setupConn.run(statement)
+        }
+      } finally {
+        setupConn.closeSync()
       }
     })()
   }
@@ -77,12 +101,11 @@ const connect = async (): Promise<void> => {
 }
 
 const disconnect = async (): Promise<void> => {
-  connection?.closeSync()
-  connection = undefined
+  instance?.closeSync()
   instance = undefined
 }
 
-const connected = async (): Promise<boolean> => !!connection
+const connected = async (): Promise<boolean> => !!instance
 
 const buildOrderBy = (sortOptions?: any): string => {
   if (!sortOptions) {
@@ -122,10 +145,11 @@ const select = async (
   ${buildOrderBy(sortOptions)}
   ${buildLimitOffset(cursor)};`
 
-  const conn = await getConnection()
-  const reader = await conn.runAndReadAll(query)
+  return withConnection(async conn => {
+    const reader = await conn.runAndReadAll(query)
 
-  return reader.getRowObjectsJson()
+    return reader.getRowObjectsJson()
+  })
 }
 
 const selectStream = async (
@@ -149,18 +173,19 @@ const selectStream = async (
 const countTotal = async (table: string, filter: any, join?: string): Promise<number> => {
   const conditions = buildFilter(filter)
   const query = `SELECT count(*) as c FROM ${table} ${join || ''} WHERE ${conditions};`
-  const conn = await getConnection()
-  const reader = await conn.runAndReadAll(query)
-  const [row] = reader.getRowObjectsJson()
 
-  return Number(row?.c || 0)
+  return withConnection(async conn => {
+    const reader = await conn.runAndReadAll(query)
+    const [row] = reader.getRowObjectsJson()
+
+    return Number(row?.c || 0)
+  })
 }
 
 const remove = async (table: string, filter: any): Promise<void> => {
   const conditions = buildFilter(filter)
-  const conn = await getConnection()
 
-  await conn.run(`DELETE FROM ${table} WHERE ${conditions}`)
+  await withConnection(conn => conn.run(`DELETE FROM ${table} WHERE ${conditions}`))
 }
 
 /** Wraps a plain JS value for DuckDB parameter binding where a type hint is required
@@ -221,11 +246,10 @@ const buildInsertStatement = (table: string, row: Record<string, any>) => {
 
 // Every remaining table (otel_traces/otel_logs/rrweb_events) is pure append, matching
 // ClickHouse's behavior for those tables today - no upsert/conflict handling needed.
-const insertOne = async (table: string, row: Record<string, any>): Promise<void> => {
+const insertOne = async (conn: DuckDBConnection, table: string, row: Record<string, any>): Promise<void> => {
   const { columnList, placeholderList, values, types } = buildInsertStatement(table, row)
 
   const sql = `INSERT INTO ${table} (${columnList}) VALUES (${placeholderList})`
-  const conn = await getConnection()
 
   await conn.run(sql, values, types)
 }
@@ -239,9 +263,11 @@ const insertOne = async (table: string, row: Record<string, any>): Promise<void>
 const insert = async (table: string, data: any, _asyncInsert?: boolean): Promise<void> => {
   const rows: Record<string, any>[] = Array.isArray(data) ? data : [data]
 
-  for (const row of rows) {
-    await insertOne(table, row)
-  }
+  await withConnection(async conn => {
+    for (const row of rows) {
+      await insertOne(conn, table, row)
+    }
+  })
 }
 
 const moveDataToS3 = async (
@@ -259,20 +285,25 @@ const moveDataToS3 = async (
   const [, bucket, ...keyParts] = url.pathname.split('/')
   const key = keyParts.join('/')
   const conditions = buildFilter(filter)
-  const conn = await getConnection()
 
-  await conn.run('INSTALL httpfs')
-  await conn.run('LOAD httpfs')
-  await conn.run(`SET s3_endpoint='${url.host}'`)
-  await conn.run(`SET s3_use_ssl=${url.protocol === 'https:'}`)
-  await conn.run('SET s3_url_style=\'path\'')
+  // SET s3_* is connection-scoped session state, and moveDataToS3 calls can run
+  // concurrently (AMQP_DEBUG_SESSION_MOVE_S3_QUEUE prefetches several at once) with
+  // different credentials/endpoints - each call must own its own connection so
+  // concurrent moves can't clobber each other's S3 settings mid-flight.
+  await withConnection(async conn => {
+    await conn.run('INSTALL httpfs')
+    await conn.run('LOAD httpfs')
+    await conn.run(`SET s3_endpoint='${url.host}'`)
+    await conn.run(`SET s3_use_ssl=${url.protocol === 'https:'}`)
+    await conn.run('SET s3_url_style=\'path\'')
 
-  if (s3AccessKeyId && secretAccessKey) {
-    await conn.run(`SET s3_access_key_id='${s3AccessKeyId}'`)
-    await conn.run(`SET s3_secret_access_key='${secretAccessKey}'`)
-  }
+    if (s3AccessKeyId && secretAccessKey) {
+      await conn.run(`SET s3_access_key_id='${s3AccessKeyId}'`)
+      await conn.run(`SET s3_secret_access_key='${secretAccessKey}'`)
+    }
 
-  await conn.run(`COPY (SELECT * FROM ${table} ${conditions ? `WHERE ${conditions}` : ''}) TO 's3://${bucket}/${key}' (FORMAT JSON)`)
+    await conn.run(`COPY (SELECT * FROM ${table} ${conditions ? `WHERE ${conditions}` : ''}) TO 's3://${bucket}/${key}' (FORMAT JSON)`)
+  })
 }
 
 export const duckdbStore: IAnalyticsStore = {
