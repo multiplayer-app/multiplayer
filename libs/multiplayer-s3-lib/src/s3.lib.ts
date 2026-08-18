@@ -22,6 +22,11 @@ import {
 import logger from '@multiplayer/logger'
 
 const S3Client = new S3({
+  // Explicit, rather than relying on the SDK's own process.env.AWS_REGION lookup -
+  // that chain still throws "Region is missing" in any environment that doesn't set
+  // the var (verified in CI), even though config.ts's own AWS_REGION already
+  // defaults it.
+  region: AWS_REGION,
   ...S3_HOST ? {
     endpoint: S3_HOST,
     forcePathStyle: true,

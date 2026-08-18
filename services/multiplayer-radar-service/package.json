@@ -20,7 +20,7 @@
     "multiplayer:release": "bash ../../scripts/multiplayer-release.sh",
     "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
     "test:local": "env-cmd -f .env.test-local jest --forceExit",
-    "test": "env-cmd -f .env.test jest --forceExit --runInBand"
+    "test": "env-cmd --no-override -f .env.test jest --forceExit --runInBand"
   },
   "author": "Multiplayer",
   "dependencies": {

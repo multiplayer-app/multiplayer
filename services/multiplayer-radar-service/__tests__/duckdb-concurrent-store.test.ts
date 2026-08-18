@@ -1,5 +1,7 @@
 import type { OtelSpanCh } from '@multiplayer/types'
+import { S3_HOST as CONFIGURED_S3_HOST, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } from '@multiplayer/s3'
 import { duckdbStore } from '../src/store/duckdb/duckdb.store'
+import { S3_DEBUG_SESSIONS_BUCKET } from '../src/config'
 
 // duckdb.store used to funnel every Store call (insert/select/countTotal/moveDataToS3)
 // through one shared module-level DuckDBConnection. DuckDB connections hold mutable
@@ -13,7 +15,10 @@ import { duckdbStore } from '../src/store/duckdb/duckdb.store'
 // several concurrent moveDataToS3 calls (mirroring the S3-move queue's prefetch: 3).
 
 const TABLE = 'debug_session.otel_traces'
-const S3_HOST = 'http://localhost:19100/debug-sessions-bucket'
+// Sourced from config rather than hardcoded - a hardcoded local-only MinIO port here
+// previously worked on the author's machine but broke in CI, which runs its own MinIO
+// on a different port.
+const S3_HOST = `${CONFIGURED_S3_HOST}/${S3_DEBUG_SESSIONS_BUCKET}`
 
 beforeAll(async () => {
   await duckdbStore.connect()
@@ -70,8 +75,8 @@ test('concurrent inserts/selects/countTotal/moveDataToS3 against the shared inst
         `${S3_HOST}/concurrent-move-test/${iteration}-${i}-${Date.now()}.json`,
         TABLE,
         { debugSessionId: sessionId },
-        'minioadmin',
-        'minioadmin',
+        AWS_ACCESS_KEY_ID,
+        AWS_SECRET_ACCESS_KEY,
       ).catch(err => errors.push({ type: 'move', err })))
 
     await Promise.all([...ongoingInserts, ...stopSelects, ...counts, ...moves])
