@@ -55,6 +55,7 @@ import {
   CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME,
   CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME,
   CONTINUOUS_DEBUG_SESSION_DEBOUNCE_SECONDS,
+  ANALYTICS_DB_ENGINE,
 } from '../config'
 import * as websocket from '../websocket'
 import { OtlpLib } from '../libs'
@@ -281,7 +282,10 @@ export const createContinuousDebugSessionSpans = async (spans: OtelSpanCh[]): Pr
 
   await Store.insert(
     tableName,
-    OtlpLib.flattenSpansForClickHouse(spans),
+    // See the identical comment in debug-session.service.ts's createDebugSessionSpans -
+    // only ClickHouse needs the Nested-column flattening; DuckDB stores Events/Links
+    // as plain JSON and expects the unflattened OtelSpanCh shape.
+    ANALYTICS_DB_ENGINE === 'clickhouse' ? OtlpLib.flattenSpansForClickHouse(spans) : spans,
   )
 
   logger.debug(`[CONTINUOUS_DEBUGGER] Inserted spans ${spans.length} to clickhouse db: ${tableName}`)

@@ -59,6 +59,7 @@ import {
   DEBUG_SESSION_MAX_DURATION_SECONDS,
   FRONTEND_DOMAIN,
   FRONTEND_PROTOCOL,
+  ANALYTICS_DB_ENGINE,
 } from '../config'
 import {
   DebugSessionHelper,
@@ -216,10 +217,15 @@ export const createDebugSessionSpans = async (spans: OtelSpanCh[]): Promise<void
 
   await Store.insert(
     `${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME}`,
-    OtlpLib.flattenSpansForClickHouse(spans),
+    // Events/Links are stored as a single JSON column in DuckDB but as ClickHouse
+    // Nested columns (flattened into separate Events.Timestamp/Events.Name/etc. keys)
+    // in ClickHouse - Store is meant to be engine-agnostic, so only pre-flatten for
+    // the engine that actually needs it; DuckDB's own insert already JSON-stringifies
+    // the plain OtelSpanCh shape (see store/duckdb/duckdb.store.ts's JSON_COLUMNS).
+    ANALYTICS_DB_ENGINE === 'clickhouse' ? OtlpLib.flattenSpansForClickHouse(spans) : spans,
   )
 
-  logger.debug(`Inserted ${spans.length} to clickhouse db: ${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME}`)
+  logger.debug(`Inserted ${spans.length} to db: ${CLICKHOUSE_DEBUG_SESSION_DB}.${CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME}`)
 }
 
 export const createDebugSessionLogs = async (logs: OtelLogCh[]): Promise<void> => {
