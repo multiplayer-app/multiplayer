@@ -24,6 +24,8 @@ import {
   getNestedProperty,
   setNestedProperty,
 } from "shared/utils";
+import { buildProjectBasePath } from "shared/navigation/defaultProjectPath";
+import { usePublicRoute } from "shared/hooks/usePublicRoute";
 
 import { useAuth } from "./AuthContext";
 import { useVersion } from "./VersionContext";
@@ -93,6 +95,7 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
   const { currentBranchId } = useVersion();
   const { workspaceId, projectId, branchId, sourceType, type, path } =
     useParams();
+  const { isPublic } = usePublicRoute();
   const cacheKey = useMemo(
     () => `${userId}${projectId}${currentBranchId}__${version}`,
     [userId, projectId, currentBranchId]
@@ -156,12 +159,17 @@ export const TabsProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (mode === NavigationMode.NEW_TAB) {
-        const basePath = `/project/${workspaceId}/${projectId}/${branchId}`;
+        const basePath = buildProjectBasePath(
+          workspaceId,
+          projectId,
+          branchId,
+          isPublic
+        );
         const fullUrl = `${window.location.origin}${basePath}/${tabPath}`;
         window.open(fullUrl, "_blank");
       }
     },
-    [navigate, layoutState.showTabs, workspaceId, projectId, branchId]
+    [navigate, layoutState.showTabs, workspaceId, projectId, branchId, isPublic]
   );
 
   const onTabOpen = useCallback(

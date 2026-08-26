@@ -56,10 +56,12 @@ const MultiSelectFilter = ({
     let arr = !query
       ? options
       : options.filter((opt) =>
-          opt.label.toLowerCase().includes(query.toLowerCase())
+          (opt.label ?? "").toLowerCase().includes(query.toLowerCase())
         );
     if (sortAlphabetically) {
-      arr = arr.sort((a, b) => a.label.localeCompare(b.label));
+      arr = [...arr].sort((a, b) =>
+        (a.label ?? "").localeCompare(b.label ?? "")
+      );
     }
 
     return arr;

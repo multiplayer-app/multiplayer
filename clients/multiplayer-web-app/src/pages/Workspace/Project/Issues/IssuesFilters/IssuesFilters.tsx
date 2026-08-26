@@ -49,8 +49,8 @@ const IssuesFilters = ({
         );
         setEnvironments(
           environments.data.map((env) => ({
-            label: env.environmentNames[0],
-            value: env.environmentNames[0],
+            label: env.environmentName || env.environmentNames[0],
+            value: env.environmentName || env.environmentNames[0],
           }))
         );
       } catch (_) {}
