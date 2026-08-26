@@ -22,6 +22,11 @@ import {
 import logger from '@multiplayer/logger'
 
 const S3Client = new S3({
+  // Explicit, rather than relying on the SDK's own process.env.AWS_REGION lookup -
+  // that chain still throws "Region is missing" in any environment that doesn't set
+  // the var (verified in CI), even though config.ts's own AWS_REGION already
+  // defaults it.
+  region: AWS_REGION,
   ...S3_HOST ? {
     endpoint: S3_HOST,
     forcePathStyle: true,
@@ -37,6 +42,26 @@ const S3Client = new S3({
 const signer = new S3RequestPresigner({
   ...S3Client.config,
 })
+
+// Resolves through the exact same AWS SDK default credential provider chain the S3
+// client itself uses (static keys when configured, otherwise IRSA/instance-profile/env
+// discovery) - for callers (DuckDB's httpfs client, see radar's duckdb.store.ts) that
+// need the literal access key/secret/session token because they can't use this SDK
+// client directly. Includes sessionToken, unlike the static AWS_ACCESS_KEY_ID/
+// AWS_SECRET_ACCESS_KEY config values - temporary/STS credentials are invalid without it.
+export const resolveS3Credentials = async (): Promise<{
+  accessKeyId: string
+  secretAccessKey: string
+  sessionToken?: string
+}> => {
+  const credentials = await S3Client.config.credentials()
+
+  return {
+    accessKeyId: credentials.accessKeyId,
+    secretAccessKey: credentials.secretAccessKey,
+    sessionToken: credentials.sessionToken,
+  }
+}
 
 export const uploadFile = (Key: string, Bucket: string, Body: any, Expires?: Date) => {
   return S3Client.putObject({

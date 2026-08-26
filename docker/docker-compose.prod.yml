@@ -16,11 +16,8 @@ x-environment-variables: &environment-variables
   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317/v1/traces
   OTEL_ENABLED: true
   PROMETHEUS_EXPORTER_ENABLED: true
-  VERSION_SERVICE_URI: http://version:3006/v0/version
-  INTERNAL_VERSION_SERVICE_URI: http://version:3006/internal/v0/version
-  INTERNAL_GIT_SERVICE_URI: http://git:3007/internal/v0/git
   API_SERVICE_URI: http://api:3001/v0/api
-  NEW_RELIC_ENABLED: false
+  INTERNAL_API_SERVICE_URI: http://api:3001/internal/v0/api
   AWS_ACCESS_KEY_ID: minioadmin
   AWS_SECRET_ACCESS_KEY: minioadmin
   AWS_REGION: us-east-1
@@ -88,15 +85,13 @@ services:
       REACT_APP_SESSION_DEBUGGER_API_BASE_URL:
       REACT_APP_API_BASE_URL:
       REACT_APP_API_PREFIX: /v0/api
-      REACT_APP_GIT_PREFIX: /v0/git
-      REACT_APP_AUTH_PREFIX: /v0/auth
+      REACT_APP_GIT_PREFIX: /v0/api/git
+      REACT_APP_AUTH_PREFIX: /v0/api/auth
       REACT_APP_RADAR_PREFIX: /v0/radar
-      REACT_APP_ASSETS_PREFIX: /v0/assets
-      REACT_APP_VERSION_PREFIX: /v0/version
+      REACT_APP_ASSETS_PREFIX: /v0/api/assets
+      REACT_APP_VERSION_PREFIX: /v0/api/version
       REACT_APP_COLLABORATION_PREFIX: /v0/collaboration
       REACT_APP_POSTHOG_KEY:
-      REACT_APP_NEWRELIC_APPLICATION_ID:
-      REACT_APP_NEWRELIC_ACCOUNT_ID:
       REACT_APP_PLATFORM_ENV: local
       REACT_APP_SESSION_DEBUGGER_KEY:
       REACT_APP_SANDBOX_URL:
@@ -123,38 +118,6 @@ services:
     depends_on: *service-dependencies
     networks: *networks
 
-  assets:
-    image: multiplayerapp/multiplayer-assets:${MULTIPLAYER_RELEASE:-latest}
-    platform: linux/amd64
-    restart: on-failure
-    environment:
-      <<: *environment-variables
-      PORT: 3009
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/assets
-    env_file:
-      - .env
-    ports:
-      - 3009:3009
-    depends_on: *service-dependencies
-    networks: *networks
-
-  auth:
-    image: multiplayerapp/multiplayer-auth:${MULTIPLAYER_RELEASE:-latest}
-    platform: linux/amd64
-    restart: on-failure
-    environment:
-      <<: *environment-variables
-      PORT: 3002
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/auth
-    env_file:
-      - .env
-    ports:
-      - 3002:3002
-    depends_on: *service-dependencies
-    networks: *networks
-
   collaboration:
     image: multiplayerapp/multiplayer-collaboration:${MULTIPLAYER_RELEASE:-latest}
     platform: linux/amd64
@@ -171,37 +134,6 @@ services:
     depends_on: *service-dependencies
     networks: *networks
 
-  git:
-    image: multiplayerapp/multiplayer-git:${MULTIPLAYER_RELEASE:-latest}
-    platform: linux/amd64
-    restart: on-failure
-    environment:
-      <<: *environment-variables
-      PORT: 3007
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/git
-    env_file:
-      - .env
-    ports:
-      - 3007:3007
-    depends_on: *service-dependencies
-    networks: *networks
-
-  notification:
-    image: multiplayerapp/multiplayer-notification:${MULTIPLAYER_RELEASE:-latest}
-    platform: linux/amd64
-    restart: on-failure
-    environment:
-      <<: *environment-variables
-      PORT: 3005
-      SWAGGER_ENABLED: true
-    env_file:
-      - .env
-    ports:
-      - 3005:3005
-    depends_on: *service-dependencies
-    networks: *networks
-
   radar:
     image: multiplayerapp/multiplayer-radar:${MULTIPLAYER_RELEASE:-latest}
     platform: linux/amd64
@@ -215,22 +147,6 @@ services:
       - .env
     ports:
       - 5318:5318
-    depends_on: *service-dependencies
-    networks: *networks
-
-  version:
-    image: multiplayerapp/multiplayer-version:${MULTIPLAYER_RELEASE:-latest}
-    platform: linux/amd64
-    restart: on-failure
-    environment:
-      <<: *environment-variables
-      PORT: 3006
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/version
-    env_file:
-      - .env
-    ports:
-      - 3006:3006
     depends_on: *service-dependencies
     networks: *networks
 

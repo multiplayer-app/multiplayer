@@ -1,8 +1,0 @@
-node_modules/
-node_modules
-.idea/
-.vscode/
-.meta/
-.env
-.DS_Store
-.npmrc

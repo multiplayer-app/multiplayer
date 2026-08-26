@@ -49,21 +49,20 @@
   # OTEL_EXPORTER_OTLP_TRACES_ENDPOINT_2: https://ingest.us.signoz.cloud:443/v1/traces
   # OTEL_EXPORTER_OTLP_HEADERS_2: signoz-access-token=t6Ngzi8AXQpUlRVzESrD01-h6bKOQsAhZUYD
 
+
   OTEL_ENABLED: "true"
   # OTEL_LOG_LEVEL: DEBUG
   PROMETHEUS_EXPORTER_ENABLED: "true"
 
   INTEGRATION_JWT_SECRET: some_secret
 
-  VERSION_SERVICE_URI: http://localhost:3006/v0/version
-  INTERNAL_VERSION_SERVICE_URI: http://localhost:3006/internal/v0/version
-  INTERNAL_GIT_SERVICE_URI: http://localhost:3007/internal/v0/git
   API_SERVICE_URI: http://localhost:3001/v0/api
+  INTERNAL_API_SERVICE_URI: http://localhost:3001/internal/v0/api
 
-  NEW_RELIC_HOME: "../../node_modules/@multiplayer/apm/"
-  NEW_RELIC_ENABLED: "false"
   MULTIPLAYER_BASE_API_URL: "http://localhost"
   MULTIPLAYER_CLIENT_DOMAIN: "http://localhost"
+
+  ANALYTICS_DB_ENGINE: duckdb
 
 .common: &common
   script: npm
@@ -75,7 +74,7 @@
   # restart_delay: 3000
   # combine_logs: true
   node_args: "--enable-source-maps"
-  ignore_watch: [node_modules, dist, newrelic_agent.log, static]
+  ignore_watch: [node_modules, dist, static]
   # watch_options:
   #   followSymlinks: true
   env:
@@ -94,10 +93,10 @@ apps:
       PORT: 3000
       REACT_APP_API_BASE_URL: http://localhost
       REACT_APP_API_PREFIX: /v0/api
-      REACT_APP_GIT_PREFIX: /v0/git
-      REACT_APP_AUTH_PREFIX: /v0/auth
+      REACT_APP_GIT_PREFIX: /v0/api/git
+      REACT_APP_AUTH_PREFIX: /v0/api/auth
       REACT_APP_COLLABORATION_PREFIX: /v0/collaboration
-      REACT_APP_VERSION_PREFIX: /v0/version
+      REACT_APP_VERSION_PREFIX: /v0/api/version
       REACT_APP_RADAR_PREFIX: /v0/radar
       REACT_APP_NOTEBOOK_PREFIX: /v0/api # will be changed to notebook when new service is supported
 
@@ -112,17 +111,7 @@ apps:
       OTEL_EXPORTER_OTLP_METRICS_PORT: 4001
       SWAGGER_ENABLED: true
       API_PREFIX: /v0/api
-
-  - name: auth
-    <<: *common
-    namespace: back
-    cwd: ./services/multiplayer-auth-service
-    env:
-      <<: *envs
-      PORT: 3002
-      OTEL_EXPORTER_OTLP_METRICS_PORT: 4002
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/auth
+      COMMIT_TIMEOUT_INTERVAL_MS: '10000'
 
   - name: collaboration
     <<: *common
@@ -144,29 +133,6 @@ apps:
   #     SWAGGER_ENABLED: true
   #     API_PREFIX: /v0/directory
 
-  - name: notification
-    <<: *common
-    namespace: back
-    cwd: ./services/multiplayer-notification-service
-    env:
-      <<: *envs
-      PORT: 3005
-      OTEL_EXPORTER_OTLP_METRICS_PORT: 4005
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/notification
-
-  - name: version
-    <<: *common
-    namespace: back
-    cwd: ./services/multiplayer-version-service
-    env:
-      <<: *envs
-      PORT: 3006
-      OTEL_EXPORTER_OTLP_METRICS_PORT: 4006
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/version
-      COMMIT_TIMEOUT_INTERVAL_MS: '10000'
-
 #  - name: notebook
 #    <<: *common
 #    namespace: back
@@ -177,17 +143,6 @@ apps:
 #      OTEL_EXPORTER_OTLP_METRICS_PORT: 4008
 #      SWAGGER_ENABLED: true
 #      API_PREFIX: /v0/notebook
-
-  - name: git
-    <<: *common
-    namespace: back
-    cwd: ./services/multiplayer-git-service
-    env:
-      <<: *envs
-      PORT: 3007
-      OTEL_EXPORTER_OTLP_METRICS_PORT: 4007
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/git
 
   - name: radar
     <<: *common
@@ -204,18 +159,6 @@ apps:
       OTEL_EXPORTER_OTLP_METRICS_PORT: 4008
       OTLP_METRICS_ENABLED: true
       # LOG_LEVEL: info
-
-  - name: assets
-    <<: *common
-    namespace: back
-    cwd: ./services/multiplayer-assets-service
-    env:
-      <<: *envs
-      PORT: 3009
-      OTEL_EXPORTER_OTLP_METRICS_PORT: 4009
-      SWAGGER_ENABLED: true
-      API_PREFIX: /v0/assets
-
 
   - name: rebuild-services-watch
     script: npx lerna watch --sort --scope={$(npx lerna list --all --parseable --toposort --long | grep libs | sed -E "s/[^:]+:([^:]+).+/\1/" | paste -d , -s -)} -- npx lerna run --scope=\$LERNA_PACKAGE_NAME build \&\& pm2 restart back

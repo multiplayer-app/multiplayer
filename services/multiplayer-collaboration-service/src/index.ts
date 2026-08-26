@@ -8,6 +8,7 @@ import { PORT } from './config'
 import mongo from '@multiplayer/mongo'
 import { AMQPListener } from './amqp'
 import { YjsEntitiesSocketIO } from './yjs/yjs-entities-socket-io'
+import { setYjsEntitiesSocketIO } from './yjs/entity-state.holder'
 import { prometheusClient } from './prometheus'
 import { kafkaProducer } from './kafka'
 
@@ -73,6 +74,7 @@ prometheusClient.collectDefaultMetrics({ service: 'collaboration' })
 connectKafka()
 connectMongo()
 connectServer().then(({ yjsIOs, projectIO }) => {
+  setYjsEntitiesSocketIO(yjsIOs[0] as YjsEntitiesSocketIO)
   amqpListener = new AMQPListener(yjsIOs[0] as YjsEntitiesSocketIO, projectIO)
   return connectAmqp(amqpListener)
 })

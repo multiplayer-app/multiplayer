@@ -7,7 +7,7 @@ export const endUserAttributesSchema = Joi.object().keys({
   name: Joi.string(),
   groupId: Joi.string(),
   groupName: Joi.string(),
-  environment: Joi.string(),
+  environment: Joi.string().allow(''),
 
   userEmail: Joi.string(),
   userId: Joi.string(),

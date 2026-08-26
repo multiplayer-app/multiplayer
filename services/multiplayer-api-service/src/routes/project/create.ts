@@ -16,7 +16,7 @@ import {
   IssueCategoryEnum,
   RoleType,
 } from '@multiplayer/types'
-import { multiplayerInternalVersionService } from '../../services'
+import { EntityLib } from '../../lib'
 import {
   DEFAULT_AGENT_FIXABILITY_SCORE_THRESHOLD,
 } from '../../config'
@@ -80,18 +80,17 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       type: CommitType.AUTO,
       message: 'Initial commit (Project created).',
     }
-    await CommitModel.createCommit(commitPayload)
+    const lastCommit = await CommitModel.createCommit(commitPayload)
 
-    await multiplayerInternalVersionService.createEntity({
+    await EntityLib.createEntityWithCommit({
       workspaceId: workspaceId.toString(),
       projectId: project._id.toString(),
-      branchId: defaultBranch._id.toString(),
-      payload: {
-        key: 'system-map',
-        type: EntityType.PLATFORM,
-        archived: false,
-        default: true,
-      },
+      projectBranchId: defaultBranch._id.toString(),
+      key: 'system-map',
+      type: EntityType.PLATFORM,
+      default: true,
+      projectBranch: defaultBranch,
+      lastCommit,
     })
 
     await AccessControlContext.invalidateContext({ workspaceId })

@@ -143,7 +143,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       const passthrough = new PassThrough({ objectMode: true })
       passthrough
         .on('data', (data) => {
-          data.forEach((item) => traceProcessor(item.json()))
+          traceProcessor(data as ITraceData)
         })
         .on('end', onTraceEndProcessor)
 

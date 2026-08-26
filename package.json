@@ -13,7 +13,6 @@
     "prepare": "npx husky install",
     "create-invite-token": "tsc -p scripts/seed/create-invitation-token && node scripts/seed/create-invitation-token/dist/create-invitation-token.js",
     "seed-roles": "npm --prefix scripts/seed/seed-roles start",
-    "seed-counter": "npm --prefix scripts/seed/counter start",
     "migrate:up": "cd ./migrations && npm install && npx migrate-mongo up",
     "migrate:down": "cd ./migrations && npm install && npx migrate-mongo down",
     "migrate:create": "cd ./migrations && npm install && npx migrate-mongo create"
@@ -31,14 +30,14 @@
     "lerna": "7.1.3"
   },
   "devDependencies": {
-    "turbo": "^2.8.20",
     "@commitlint/cli": "17.4.4",
     "@commitlint/config-conventional": "17.4.4",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
     "eslint": "10.1.0",
     "husky": "9.1.5",
-    "lint-staged": "13.1.2"
+    "lint-staged": "13.1.2",
+    "turbo": "^2.8.20"
   },
   "resolutions": {
     "zod": "3.25.55"

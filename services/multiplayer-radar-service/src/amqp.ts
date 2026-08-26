@@ -1,10 +1,8 @@
 import AMQP from '@multiplayer/amqp'
 import {
-  CollaborationRPCMessageType,
   EntityType,
 } from '@multiplayer/types'
 import {
-  AMQP_COLLABORATION_RPC_QUEUE,
   AMQP_RADAR_DETECTION_APPLY_QUEUE,
   AMQP_EVENT_QUEUE,
   AMQP_RADAR_EVENT_QUEUE,
@@ -15,6 +13,7 @@ import {
   DebugSessionWorker,
   eventListener,
 } from './worker'
+import { InternalCollaborationService } from './services'
 
 export const init = async () => {
   await AMQP.connect()
@@ -67,19 +66,14 @@ export const shareEntityUpdate = async (params: {
   entityType: EntityType,
   workspaceUserId?: string,
 }): Promise<void> => {
-  await AMQP.request(
-    AMQP_COLLABORATION_RPC_QUEUE,
-    {
-      type: CollaborationRPCMessageType.UPDATE_ENTITY_STATE,
-      variables: {
-        workspaceId: params.workspaceId,
-        projectId: params.projectId,
-        branchId: params.branchId,
-        entityId: params.entityId,
-        state: Object.values(params.update),
-        workspaceUserId: params.workspaceUserId,
-        entityType: params.entityType,
-      },
-    },
-  )
+  const collaborationService = new InternalCollaborationService()
+  await collaborationService.updateEntityState({
+    workspaceId: params.workspaceId,
+    projectId: params.projectId,
+    branchId: params.branchId,
+    entityId: params.entityId,
+    state: Object.values(params.update),
+    workspaceUserId: params.workspaceUserId as string,
+    entityType: params.entityType,
+  })
 }

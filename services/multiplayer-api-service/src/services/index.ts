@@ -1,3 +1,5 @@
 export * as BillingService from './billing.service'
-export * from './git-service'
-export * from './version-service'
+export * as SourcemapService from './sourcemap.service'
+export * as EmailService from './email.service'
+export * as WorkspaceService from './workspace.service'
+export { InternalCollaborationService } from './collaboration.internal.service'

@@ -10,6 +10,7 @@
   "dependencies": {
     "@multiplayer/logger": "0.0.1",
     "@multiplayer/util": "0.0.1",
+    "google-auth-library": "9.1.0",
     "kafkajs": "2.2.4"
   },
   "devDependencies": {

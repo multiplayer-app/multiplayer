@@ -58,7 +58,7 @@ export const buildGuestContext = async (
     guest: true,
     workspaceOwner: false,
     workspaceAdmin: false,
-    superAdmin: false,
+    superadmin: false,
     workspaceRoleId: '',
     workspaceId: workspaceId,
     projects: [{
@@ -102,11 +102,11 @@ export const buildUserContext = async (
   const workspaceAdmin = !!workspace.user?.workspaceAdmin
 
   const projectsMapping = new Map<
-  string,
-  {
-    projectId: string,
-    projectRoleIds: Set<string>
-  }>()
+    string,
+    {
+      projectId: string,
+      projectRoleIds: Set<string>
+    }>()
   const teams: {
     teamId: string
     projects: string[]
@@ -215,7 +215,7 @@ export const buildUserContext = async (
     userId: userId.toString(),
     workspaceOwner,
     workspaceAdmin,
-    superAdmin: userSession.superAdmin,
+    superadmin: userSession.superadmin,
     workspaceUserId,
     workspaceRoleId,
     workspaceId: workspaceId.toString(),
@@ -256,7 +256,7 @@ export const buildApiKeyContext = async (
       integrationId: integration._id.toString(),
       workspaceOwner: false,
       workspaceAdmin: false,
-      superAdmin: false,
+      superadmin: false,
       workspaceRoleId: integration.workspaceRole?.toString(),
       workspaceId: workspaceId.toString(),
       projects: [{
@@ -288,7 +288,7 @@ export const buildApiKeyContext = async (
     return {
       workspaceOwner: false,
       workspaceAdmin: false,
-      superAdmin: false,
+      superadmin: false,
       // workspaceRoleId: integration.workspaceRole?.toString(),
       workspaceId: workspaceId.toString(),
       projects: [{
@@ -324,7 +324,7 @@ export const buildTokenContext = async (
     return {
       workspaceOwner: false,
       workspaceAdmin: false,
-      superAdmin: false,
+      superadmin: false,
       workspaceId: userContext.workspaceId,
       projects: userContext.projects.map(({ projectId, projectRoleIds }) => ({
         projectId,
@@ -344,7 +344,7 @@ export const buildTokenContext = async (
   return {
     workspaceOwner: false,
     workspaceAdmin: false,
-    superAdmin: false,
+    superadmin: false,
     workspaceId: token.meta.workspace.toString(),
     projects: [{
       projectId: token.meta.project.toString(),
@@ -397,7 +397,7 @@ export const setAccessContextToReq = async (req: Request) => {
     throw new ForbiddenError('Invalid auth context')
   }
 
-  if (req.user?.superAdmin) {
+  if (req.user?.superadmin) {
     const workspaceOwnerRole = getWorkspaceOwnerRole()
 
     if (!workspaceOwnerRole) {
@@ -414,7 +414,7 @@ export const setAccessContextToReq = async (req: Request) => {
       workspaceOwner: false,
       workspaceAdmin: false,
       workspaceUserId,
-      superAdmin: true,
+      superadmin: true,
       workspaceId,
       workspaceRoleId: workspaceOwnerRole._id.toString(),
       teams: [],

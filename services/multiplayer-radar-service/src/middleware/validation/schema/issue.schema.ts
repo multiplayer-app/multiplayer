@@ -4,10 +4,8 @@ import {
   EndUserType,
   IssueCategoryEnum,
   IssueGroupBy,
-} from '@multiplayer/types'
-import {
   MetricsGranularity,
-} from '../../../types'
+} from '@multiplayer/types'
 
 export const listIssuesSchema = Joi.object({
   params: Joi.object({

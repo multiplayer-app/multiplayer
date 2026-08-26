@@ -101,28 +101,26 @@ export const addNotAppliedDetectionsToAutoMergeQueue = async (expiredKey: string
       return
     }
 
-    for await (const rows of detectionsStream) {
-      await Promise.all(rows.map(async row => {
-        try {
-          const radarDetection = row.json() as IRadarDetection
-          await AMQP.publish(
-            AMQP_RADAR_DETECTION_APPLY_QUEUE,
-            {
-              variables: {
-                workspaceId: radarDetection.workspaceId,
-                projectId: radarDetection.projectId,
-                projectBranchId,
-                integrationId: integration._id.toString(),
-                type: RadarDetectionEntityType.DETECTION,
-                // platformEntityId: integration?.metadata?.otel?.platformEntity,
-                detection: radarDetection,
-              } as ApplyDetectionMessage,
-            },
-          )
-        } catch (detectionHandleError) {
-          logger.error(detectionHandleError, 'Failed to publish detection for auto apply')
-        }
-      }))
+    for await (const row of detectionsStream) {
+      try {
+        const radarDetection = row as IRadarDetection
+        await AMQP.publish(
+          AMQP_RADAR_DETECTION_APPLY_QUEUE,
+          {
+            variables: {
+              workspaceId: radarDetection.workspaceId,
+              projectId: radarDetection.projectId,
+              projectBranchId,
+              integrationId: integration._id.toString(),
+              type: RadarDetectionEntityType.DETECTION,
+              // platformEntityId: integration?.metadata?.otel?.platformEntity,
+              detection: radarDetection,
+            } as ApplyDetectionMessage,
+          },
+        )
+      } catch (detectionHandleError) {
+        logger.error(detectionHandleError, 'Failed to publish detection for auto apply')
+      }
     }
   } catch (err) {
     logger.error(err, '[LISTENER] Failed to put detections into auto merge queue')
@@ -154,28 +152,26 @@ export const addNotAppliedHttpParamsToAutoMergeQueue = async (integrationId: str
       return
     }
 
-    for await (const rows of httpParamsStream) {
-      await Promise.all(rows.map(async row => {
-        try {
-          const httpParamDetection = row.json() as IRadarDetection
+    for await (const row of httpParamsStream) {
+      try {
+        const httpParamDetection = row as IRadarDetection
 
-          await AMQP.publish(
-            AMQP_RADAR_DETECTION_APPLY_QUEUE,
-            {
-              variables: {
-                workspaceId: httpParamDetection.workspaceId,
-                projectId: httpParamDetection.projectId,
-                projectBranchId,
-                type: RadarDetectionEntityType.HTTP_PARAM_DETECTION,
-                // platformEntityId: integration?.metadata?.otel?.platformEntity,
-                detection: httpParamDetection,
-              } as ApplyDetectionMessage,
-            },
-          )
-        } catch (detectionHandleError) {
-          logger.error(detectionHandleError, 'Detection handle error')
-        }
-      }))
+        await AMQP.publish(
+          AMQP_RADAR_DETECTION_APPLY_QUEUE,
+          {
+            variables: {
+              workspaceId: httpParamDetection.workspaceId,
+              projectId: httpParamDetection.projectId,
+              projectBranchId,
+              type: RadarDetectionEntityType.HTTP_PARAM_DETECTION,
+              // platformEntityId: integration?.metadata?.otel?.platformEntity,
+              detection: httpParamDetection,
+            } as ApplyDetectionMessage,
+          },
+        )
+      } catch (detectionHandleError) {
+        logger.error(detectionHandleError, 'Detection handle error')
+      }
     }
   } catch (err) {
     logger.error(err, '[LISTENER] Failed to put http params into auto merge queue')

@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsc -w & nodemon --watch dist ./dist/index.js",
-    "build": "npm run clean && npm run compile",
+    "build": "npm run clean && npm run compile && cp -R ./src/lib/notification/email-templates/templates ./dist/lib/notification/email-templates/templates",
     "clean": "rm -rf ./dist",
     "compile": "tsc --build --force",
     "build:docker": "cd ../../ && bash ./scripts/docker-build.sh",
@@ -20,6 +20,7 @@
     "multiplayer:release": "bash ../../scripts/multiplayer-release.sh",
     "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
     "test": "env-cmd -f .env.test jest --forceExit",
+    "test:local": "env-cmd -f .env.test-local jest --forceExit",
     "script:vectorize-entities": "node dist/scripts/vectorize-entities.js"
   },
   "author": "Multiplayer",
@@ -56,9 +57,37 @@
     "rate-limiter-flexible": "5.0.4",
     "@opensearch-project/opensearch": "^2.8.0",
     "elastic-builder": "^2.29.0",
-    "lodash.chunk": "4.2.0"
+    "lodash.chunk": "4.2.0",
+    "@slack/web-api": "7.13.0",
+    "@sendgrid/mail": "8.1.4",
+    "handlebars": "4.7.7",
+    "mailchimp": "1.2.1",
+    "node-mandrill": "1.0.1",
+    "postmark": "3.0.15",
+    "sparkpost": "2.1.4",
+    "@rrweb/packer": "2.0.0-alpha.18",
+    "@rrweb/types": "2.0.0-alpha.18",
+    "puppeteer-core": "24.19.0",
+    "@multiplayer/kafka": "0.0.1",
+    "jsdom": "^26.0.0",
+    "@linear/sdk": "11.0.0",
+    "@octokit/app": "14.0.0",
+    "@octokit/auth-app": "6.0.0",
+    "@octokit/request": "9.2.2",
+    "@octokit/rest": "20.0.1",
+    "@slack/oauth": "3.0.4",
+    "oauth": "0.10.0",
+    "passport": "0.7.0",
+    "passport-atlassian-oauth2": "2.1.0",
+    "passport-github2": "0.1.12",
+    "passport-gitlab2": "5.0.0",
+    "passport-bitbucket-oauth2": "0.1.2",
+    "passport-google-oauth20": "2.0.0",
+    "passport-local": "1.0.0",
+    "unique-names-generator": "4.7.1"
   },
   "devDependencies": {
+    "@faker-js/faker": "8.0.2",
     "@babel/core": "7.29.0",
     "@babel/preset-env": "7.29.2",
     "@babel/preset-typescript": "7.28.5",
@@ -69,7 +98,10 @@
     "@types/jest": "30.0.0",
     "@types/multer": "1.4.11",
     "@types/node": "25.5.0",
+    "@types/passport": "1.0.12",
+    "@types/passport-github2": "1.2.5",
     "@types/restify-errors": "4.3.5",
+    "@types/sparkpost": "2.1.8",
     "babel-jest": "30.3.0",
     "env-cmd": "10.1.0",
     "eslint": "10.1.0",
@@ -78,5 +110,22 @@
     "nodemon": "3.1.14",
     "supertest": "6.3.3",
     "typescript": "6.0.2"
+  },
+  "overrides": {
+    "passport-atlassian-oauth2": {
+      "passport-oauth2": "1.8.0"
+    },
+    "passport-github2": {
+      "passport-oauth2": "1.8.0"
+    },
+    "passport-gitlab2": {
+      "passport-oauth2": "1.8.0"
+    },
+    "passport-bitbucket-oauth2": {
+      "passport-oauth2": "1.8.0"
+    },
+    "passport-google-oauth20": {
+      "passport-oauth2": "1.8.0"
+    }
   }
 }

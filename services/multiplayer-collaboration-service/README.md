@@ -7,7 +7,7 @@
 | `API_PREFIX`                       | App http uri prefix. Ex.: `/v1`                  |   ✘      | `/api/v0`                                     |
 | `AMQP_COLLABORATION_EVENT_QUEUE`   | Amqp queue binded to event queue                |   ✘      | `collaboration-event`                         |
 | `AMQP_EVENT_QUEUE`                 | Amqp exchange events queue                      |   ✘      | `event`                                       |
-| `AMQP_COLLABORATION_RPC_QUEUE`     | Amqp rpc queue                                  |   ✘      | `collaboration-rpc`                           |
+| `INTERNAL_API_SERVICE_URI`         | Internal base URI for multiplayer-api-service    |   ✘      | `http://localhost:3001/internal/v0/api`       |
 | `PORT`                             | App listen http port. Ex.: `3000`               |   ✘      | 3000                                          |
 | `HTTP_HOST`                        | App listen http host. Ex.: `127.0.0.1`          |   ✘      | 0.0.0.0                                       |
 | `SWAGGER_ENABLED`                  | Enable Swagger                                  |   ✘      | `false`                                       |

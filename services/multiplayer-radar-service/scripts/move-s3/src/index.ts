@@ -1,7 +1,11 @@
 import 'dotenv/config'
 import mongo from '@multiplayer/mongo'
 import { DebugSessionModel } from '@multiplayer/models'
-import * as Clickhouse from '@multiplayer/clickhouse'
+// Imported from the compiled service output (like the workspace packages below,
+// e.g. @multiplayer/mongo), not '../../../src/store' — this script's tsconfig has
+// rootDir: './src/' and can't reach outside it into the parent service's sources.
+// Requires the radar-service to be built (`npm run build`) before this script runs.
+import { Store } from '../../../dist/store'
 import { ObjectId } from '@multiplayer/mongo'
 import logger from '@multiplayer/logger'
 import {
@@ -76,7 +80,7 @@ const main = async () => {
   let exitWithError = false
   try {
     await mongo.connect()
-    await Clickhouse.connect()
+    await Store.connect()
 
     const total = await DebugSessionModel.countDocuments({
       finishedS3Transfer: { $ne: true },
@@ -103,7 +107,7 @@ const main = async () => {
           fileId: s3LogsFileId.toString(),
         })
 
-        await Clickhouse.moveDataToS3(
+        await Store.moveDataToS3(
           `${s3Host}/${s3LogsFileKey}`,
           logsTable,
           {
@@ -136,7 +140,7 @@ const main = async () => {
           fileId: s3SpansFileId.toString(),
         })
 
-        await Clickhouse.moveDataToS3(
+        await Store.moveDataToS3(
           `${s3Host}/${s3SpansFileKey}`,
           spansTable,
           {
@@ -173,42 +177,21 @@ const main = async () => {
 
 
 
-        const rrwebEventsConditions = Clickhouse.ClickhouseQueryBuilder.buildFilter({
-          debugSessionId: debugSession._id.toString(),
-        })
-
-        const query = `
-        INSERT INTO FUNCTION
-          s3(
-            '${s3Host}/${s3RrwebEventsFileKey}',
-            ${AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY ? `'${AWS_ACCESS_KEY_ID}', '${AWS_SECRET_ACCESS_KEY}',` : ''}
-            'JSONEachRow'
-          )
-        SELECT
-          id,
-          workspaceId,
-          projectId,
-          debugSessionId,
-          type,
-          data,
-          toDateTime64(timestamp / 1e9, 9)
-        FROM ${rrwebEventsTable}
-        WHERE ${rrwebEventsConditions}
-        SETTINGS output_format_json_array_of_rows = 1;
-        `
-        await Clickhouse.client.command({
-          query,
-        })
-
-        // await Clickhouse.client.moveDataToS3(
-        //   `${s3Host}/${s3RrwebEventsFileKey}`,
-        //   rrwebEventsTable,
-        //   {
-        //     debugSessionId: debugSession._id.toString(),
-        //   },
-        //   AWS_ACCESS_KEY_ID,
-        //   AWS_SECRET_ACCESS_KEY,
-        // )
+        // Previously a hand-rolled `INSERT INTO FUNCTION s3(...)` query (bypassing the
+        // lib entirely) with a ClickHouse-specific `toDateTime64(timestamp / 1e9, 9)`
+        // nanosecond-epoch-to-DateTime64 conversion on the way out. Moved onto the
+        // shared Store.moveDataToS3 path so this script works under either backend;
+        // the DateTime64 formatting nicety isn't reproduced (DuckDB's rrweb_events
+        // schema stores `timestamp` as TIMESTAMP already, not a raw epoch number).
+        await Store.moveDataToS3(
+          `${s3Host}/${s3RrwebEventsFileKey}`,
+          rrwebEventsTable,
+          {
+            debugSessionId: debugSession._id.toString(),
+          },
+          AWS_ACCESS_KEY_ID,
+          AWS_SECRET_ACCESS_KEY,
+        )
         await DebugSessionModel.addS3File(
           debugSession._id.toString(),
           {

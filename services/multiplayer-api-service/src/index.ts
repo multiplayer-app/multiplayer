@@ -8,13 +8,22 @@ import mongo from '@multiplayer/mongo'
 import AMQP from '@multiplayer/amqp'
 import { redisClient } from './redis'
 import { Opensearch } from './lib'
+import { kafkaConsumer, kafkaProducer } from './kafka'
 
 const httpServer = http.createServer(app)
 const onReady = () => {
   logger.info(`🚀 Server ready at http://localhost:${PORT}`)
 }
 
+const connectKafka = () => {
+  Promise.all([kafkaConsumer.connect(), kafkaProducer.connect()]).catch(() => {
+    logger.error('Error happened on Kafka connection. Retrying....')
+    setTimeout(connectKafka, 3000)
+  })
+}
+
 redisClient.connect()
+  .then(connectKafka)
   .catch((err) => logger.error(err))
 Opensearch.init().catch((err) => logger.error(err))
 
@@ -25,6 +34,8 @@ const exitHandler = async (error: Error) => {
   await mongo.disconnect()
   await AMQP.disconnect()
   await redisClient.disconnect()
+  await kafkaConsumer.disconnect()
+  await kafkaProducer.disconnect()
   process.removeListener('exit', exitHandler)
   process.exit()
 }

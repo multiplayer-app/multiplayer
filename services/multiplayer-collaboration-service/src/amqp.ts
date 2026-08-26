@@ -3,23 +3,18 @@ import logger from '@multiplayer/logger'
 import {
   BranchDeletedMessage,
   CollaborationAMQPMessageType,
-  CollaborationRPCMessageType,
   CommentCreatedMessage,
   EntityCommitMessage,
   EntityCreatedMessage,
   EntityDeletedMessage,
   EntityUpdatedMessage,
-  GetEntityStateRequest,
-  GetEntityStateResponse,
   ThreadCreatedMessage,
-  UpdateEntityStateRequest,
 } from '@multiplayer/types'
 import { YjsEntitiesSocketIO } from './yjs/yjs-entities-socket-io'
 import { ProjectNamespaceHandler } from './handlers/project.handlers'
 import {
   AMQP_COLLABORATION_EVENT_QUEUE,
   AMQP_EVENT_QUEUE,
-  AMQP_COLLABORATION_RPC_QUEUE,
 } from './config'
 
 export class AMQPListener {
@@ -71,21 +66,6 @@ export class AMQPListener {
     }
   }
 
-  async processRpcRequest(type: CollaborationRPCMessageType, data: any): Promise<unknown> {
-    if (type === CollaborationRPCMessageType.GET_ENTITY_STATE) {
-      const state = await this.yjsIOs.getEntityState(data as GetEntityStateRequest)
-      const response: GetEntityStateResponse = { state: Object.values(state) }
-      return response
-    }
-    if (type === CollaborationRPCMessageType.UPDATE_ENTITY_STATE) {
-      const message = data as UpdateEntityStateRequest
-      await this.yjsIOs.updateEntityStateAndCommit(message)
-      return undefined
-    }
-
-    return null
-  }
-
   disconnect() {
     return AMQP.disconnect()
   }
@@ -121,20 +101,6 @@ export class AMQPListener {
         durable: true,
         prefetch: 10,
       },
-    )
-
-    await AMQP.listen(
-      AMQP_COLLABORATION_RPC_QUEUE,
-      async (message: {
-        type: string
-        variables: unknown
-      }) => {
-        return this.processRpcRequest(
-          CollaborationRPCMessageType[message.type],
-          message.variables,
-        )
-      },
-      { durable: false },
     )
   }
 }

@@ -68,7 +68,7 @@ const authorize = ({
           return next(new UnauthorizedError(ErrorMessage.AUTH_FAILED))
         }
 
-        if (onlySuperadmin && !user.superAdmin) {
+        if (onlySuperadmin && !user.superadmin) {
           return next(new ForbiddenError(ErrorMessage.ACTION_NOT_ALLOWED))
         }
 
@@ -132,7 +132,7 @@ const authorize = ({
           }
         }
 
-        if (onlySuperadmin && !req.user.superAdmin) {
+        if (onlySuperadmin && !req.user.superadmin) {
           return next(new ForbiddenError(ErrorMessage.ACTION_NOT_ALLOWED))
         }
 

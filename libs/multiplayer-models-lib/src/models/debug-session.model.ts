@@ -171,6 +171,8 @@ export interface IDebugSessionModel extends Model<IDebugSessionDocument> {
 
   getStuckNotStoppedDebugSessionsCursor(): any
 
+  getNotTransferredDebugSessionsCursor(): any
+
   addIssueById(
     workspaceId: string | ObjectId,
     projectId: string | ObjectId,
@@ -956,6 +958,15 @@ DebugSessionSchema.statics.getStuckNotStoppedDebugSessionsCursor = function (): 
         stoppedAt: { $exists: false },
       },
     ],
+  }).cursor()
+}
+
+// Used on graceful shutdown to checkpoint every session with data that only exists
+// locally (DuckDB mode) before the process exits - no age filter, since a shutdown
+// needs to catch sessions regardless of how recently they started.
+DebugSessionSchema.statics.getNotTransferredDebugSessionsCursor = function (): any {
+  return this.find({
+    finishedS3Transfer: { $ne: true },
   }).cursor()
 }
 

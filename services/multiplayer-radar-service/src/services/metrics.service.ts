@@ -1,4 +1,3 @@
-import * as Clickhouse from '@multiplayer/clickhouse'
 import {
   ATTR_MULTIPLAYER_WORKSPACE_ID,
   ATTR_MULTIPLAYER_PROJECT_ID,
@@ -8,12 +7,12 @@ import {
   ATTR_MULTIPLAYER_USER_HASH,
   ATTR_MULTIPLAYER_ISSUE_CUSTOM_HASH,
 } from '@multiplayer-app/session-recorder-node'
-import logger from '@multiplayer/logger'
 import {
   type OtlpMetricsGauge,
   IIssue,
   MetricName,
   IssueGroupBy,
+  MetricsGranularity,
 } from '@multiplayer/types'
 import {
   SEMRESATTRS_SERVICE_VERSION,
@@ -23,14 +22,10 @@ import {
   SEMATTRS_HTTP_URL,
   SEMATTRS_HTTP_TARGET,
 } from '@opentelemetry/semantic-conventions'
-import {
-  ATTR_MULTIPLAYER_ISSUE_TITLE_HASH,
-  MetricsGranularity,
-} from '../types'
-import {
-  CLICKHOUSE_OTEL_DB,
-  CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME,
-} from '../config'
+import type { PipelineStage } from 'mongoose'
+import { MetricsGaugeModel } from '@multiplayer/models'
+import { ATTR_MULTIPLAYER_ISSUE_TITLE_HASH } from '../types'
+import { buildMetricsFilter, extractAttributeKey } from '../util/metrics-filter.util'
 
 const fieldMapping = {
   [IssueGroupBy.HASH]: `Attributes['${ATTR_MULTIPLAYER_ISSUE_HASH}']`,
@@ -56,19 +51,13 @@ interface MetricsFilter {
 }
 
 export const createMetrics = async (metrics: OtlpMetricsGauge[]): Promise<void> => {
-  if (!metrics?.length) {
-    return
-  }
-
-  const tableName = `${CLICKHOUSE_OTEL_DB}.${CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME}`
-
-  await Clickhouse.insert(
-    tableName,
-    metrics,
-    true,
+  await MetricsGaugeModel.insertGauges(
+    metrics.map(metric => ({
+      ...metric,
+      workspaceId: metric.Attributes?.[ATTR_MULTIPLAYER_WORKSPACE_ID] as string,
+      projectId: metric.Attributes?.[ATTR_MULTIPLAYER_PROJECT_ID] as string,
+    })),
   )
-
-  logger.debug(`Inserted issue rate metrics ${metrics.length} to clickhouse db: ${tableName}`)
 }
 
 export const createIssueRateMetricData = (
@@ -166,6 +155,83 @@ export const createSessionRecordingRateMetricData = (
   }
 }
 
+// Builds a time-bucketed aggregation pipeline: $match -> optional dimension
+// extraction(s) out of the Attributes array (for groupBy/countDistinctBy) -> $group
+// by {t, dim} summing Value, or - when countDistinctBy is set - a two-stage group
+// (dedupe by {t, dim, cd}, then count how many distinct cd values landed per {t, dim})
+// since Mongo has no single-stage countDistinct-per-bucket operator.
+const buildTimeBucketPipeline = (
+  matchFilter: Record<string, unknown>,
+  granularity: MetricsGranularity,
+  groupByField?: string,
+  groupByAlias?: string,
+  countDistinctField?: string,
+): Record<string, unknown>[] => {
+  const pipeline: Record<string, unknown>[] = [{ $match: matchFilter }]
+
+  const addDimensionField = (fieldExpression: string, outputField: string) => {
+    const key = extractAttributeKey(fieldExpression)
+
+    pipeline.push({
+      $addFields: {
+        [outputField]: {
+          $let: {
+            vars: {
+              matchedAttribute: {
+                $arrayElemAt: [
+                  { $filter: { input: '$Attributes', cond: { $eq: ['$$this.key', key] } } },
+                  0,
+                ],
+              },
+            },
+            in: '$$matchedAttribute.value',
+          },
+        },
+      },
+    })
+  }
+
+  if (groupByField) {
+    addDimensionField(groupByField, '__dim')
+  }
+  if (countDistinctField) {
+    addDimensionField(countDistinctField, '__countDistinctDim')
+  }
+
+  const bucketId: Record<string, unknown> = {
+    t: { $dateTrunc: { date: '$TimeUnix', unit: granularity, binSize: 1 } },
+    ...(groupByField ? { dim: '$__dim' } : {}),
+  }
+
+  if (countDistinctField) {
+    pipeline.push(
+      { $group: { _id: { ...bucketId, cd: '$__countDistinctDim' } } },
+      {
+        $group: {
+          _id: { t: '$_id.t', ...(groupByField ? { dim: '$_id.dim' } : {}) },
+          v: { $sum: 1 },
+        },
+      },
+    )
+  } else {
+    pipeline.push({ $group: { _id: bucketId, v: { $sum: '$Value' } } })
+  }
+
+  pipeline.push(
+    {
+      $project: {
+        _id: 0,
+        t: '$_id.t',
+        v: 1,
+        ...(groupByAlias ? { [groupByAlias]: '$_id.dim' } : {}),
+      },
+    },
+    { $sort: { ...(groupByAlias ? { [groupByAlias]: 1 } : {}), t: 1 } },
+  )
+
+  return pipeline
+}
+
 const _getMetricsRaw = async (
   filter: MetricsFilter,
   fromTimestamp: Date,
@@ -173,7 +239,7 @@ const _getMetricsRaw = async (
   granularity: MetricsGranularity,
   groupBy?: IssueGroupBy,
   countDistinctBy?: IssueGroupBy,
-): Promise<{ t: string, v: number }[]> => {
+): Promise<{ t: Date, v: number }[]> => {
   if (groupBy && !fieldMapping[groupBy]) {
     throw new Error(`Invalid groupBy: ${groupBy}`)
   }
@@ -185,12 +251,10 @@ const _getMetricsRaw = async (
     throw new Error(`Invalid countDistinctBy: ${countDistinctBy}`)
   }
 
-  const tableName = `${CLICKHOUSE_OTEL_DB}.${CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME}`
-
   const conditions = {
     MetricName: filter.metricName,
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
     ...filter.release
       ? { [`Attributes['${SEMRESATTRS_SERVICE_VERSION}']`]: filter.release }
       : {},
@@ -218,28 +282,17 @@ const _getMetricsRaw = async (
     },
   }
 
-  const rows = await Clickhouse.select(
-    tableName,
-    conditions,
-    undefined,
-    `${groupBy ? `${fieldMapping[groupBy]} AS ${groupBy},` : ''}
-    toStartOfInterval(TimeUnix, INTERVAL 1 ${granularity}) AS t,
-    ${countDistinctBy ? `countDistinct(${fieldMapping[countDistinctBy]})` : 'sum(Value)'} AS v`,
-    undefined,
-    `GROUP BY ${groupBy ? `${groupBy},` : ''} t`,
-    [
-      ...(groupBy ? [{
-        sortKey: groupBy,
-        sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.ASC,
-      }] : []),
-      {
-        sortKey: 't',
-        sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.ASC,
-      },
-    ],
+  const pipeline = buildTimeBucketPipeline(
+    buildMetricsFilter(conditions),
+    granularity,
+    groupBy ? fieldMapping[groupBy] : undefined,
+    groupBy,
+    countDistinctBy ? fieldMapping[countDistinctBy] : undefined,
   )
 
-  return rows
+  const rows = await MetricsGaugeModel.aggregate(pipeline as unknown as PipelineStage[])
+
+  return rows as { t: Date, v: number }[]
 }
 
 export const getMetricsByHash = async (
@@ -259,10 +312,10 @@ export const getMetricsByHash = async (
 
   const byHash: Record<string, { time: string, value: number }[]> = {}
   for (const row of rows) {
-    const _key = row[groupBy] as string
+    const _key = row[groupBy] as unknown as string
     const list = byHash[_key] || []
     list.push({
-      time: new Date(row.t.replace(' ', 'T') + 'Z').toISOString(),
+      time: row.t.toISOString(),
       value: Number(row.v || 0),
     })
     byHash[_key] = list
@@ -289,7 +342,7 @@ export const getMetrics = async (
   )
 
   return rows.map(row => ({
-    time: new Date(row.t.replace(' ', 'T') + 'Z').toISOString(),
+    time: row.t.toISOString(),
     value: Number(row.v || 0),
   }))
 }
@@ -299,11 +352,9 @@ export const removeMetricsByIssueHash = async (filter: {
   projectId: string,
   issueHash?: string | string[],
 }) => {
-  const tableName = `${CLICKHOUSE_OTEL_DB}.${CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME}`
-
-  const conditions = {
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+  const conditions: Record<string, unknown> = {
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
   }
 
   if (filter.issueHash) {
@@ -314,10 +365,7 @@ export const removeMetricsByIssueHash = async (filter: {
       : filter.issueHash
   }
 
-  await Clickhouse.remove(
-    tableName,
-    conditions,
-  )
+  await MetricsGaugeModel.deleteMany(buildMetricsFilter(conditions))
 }
 
 export const removeMetricsForSessionRecordings = async (filter: {
@@ -325,11 +373,9 @@ export const removeMetricsForSessionRecordings = async (filter: {
   projectId: string,
   sessionRecordingId?: string | string[],
 }) => {
-  const tableName = `${CLICKHOUSE_OTEL_DB}.${CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME}`
-
-  const conditions = {
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+  const conditions: Record<string, unknown> = {
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
   }
 
   if (filter.sessionRecordingId) {
@@ -342,10 +388,7 @@ export const removeMetricsForSessionRecordings = async (filter: {
     conditions[`Attributes['${ATTR_MULTIPLAYER_SESSION_ID}']`] = { $exists: true }
   }
 
-  await Clickhouse.remove(
-    tableName,
-    conditions,
-  )
+  await MetricsGaugeModel.deleteMany(buildMetricsFilter(conditions))
 }
 
 export const removeMetricsForEndUsers = async (filter: {
@@ -353,11 +396,9 @@ export const removeMetricsForEndUsers = async (filter: {
   projectId: string,
   endUserHash?: string | string[],
 }) => {
-  const tableName = `${CLICKHOUSE_OTEL_DB}.${CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME}`
-
-  const conditions = {
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+  const conditions: Record<string, unknown> = {
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
   }
 
   if (filter.endUserHash) {
@@ -370,10 +411,7 @@ export const removeMetricsForEndUsers = async (filter: {
     conditions[`Attributes['${ATTR_MULTIPLAYER_USER_HASH}']`] = { $exists: true }
   }
 
-  await Clickhouse.remove(
-    tableName,
-    conditions,
-  )
+  await MetricsGaugeModel.deleteMany(buildMetricsFilter(conditions))
 }
 
 export const getCount = async (
@@ -393,12 +431,10 @@ export const getCount = async (
   fromTimestamp: Date,
   toTimestamp: Date,
 ): Promise<number> => {
-  const tableName = `${CLICKHOUSE_OTEL_DB}.${CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME}`
-
   const conditions = {
     MetricName: filter.metricName,
-    [`Attributes['${ATTR_MULTIPLAYER_WORKSPACE_ID}']`]: filter.workspaceId,
-    [`Attributes['${ATTR_MULTIPLAYER_PROJECT_ID}']`]: filter.projectId,
+    workspaceId: filter.workspaceId,
+    projectId: filter.projectId,
     ...filter.release
       ? { [`Attributes['${SEMRESATTRS_SERVICE_VERSION}']`]: filter.release }
       : {},
@@ -423,14 +459,7 @@ export const getCount = async (
     },
   }
 
-  const [row] = await Clickhouse.select(
-    tableName,
-    conditions,
-    undefined,
-    'count() AS v',
-  )
-
-  return Number(row.v || 0)
+  return MetricsGaugeModel.countDocuments(buildMetricsFilter(conditions))
 }
 
 export const createMetricsFromIssues = async (

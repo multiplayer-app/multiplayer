@@ -257,7 +257,7 @@ export class DebugSessionAgentNamespaceHandler {
         name: Joi.string(),
         groupId: Joi.string(),
         groupName: Joi.string(),
-        environment: Joi.string(),
+        environment: Joi.string().allow(''),
         environmentSlug: Joi.string(),
         userEmail: Joi.string(),
         userId: Joi.string(),

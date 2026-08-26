@@ -2,7 +2,7 @@ import express from 'express'
 import { corsMiddleware, expressErrorHandlerMiddleware } from '@multiplayer/util'
 import bodyParser from 'body-parser'
 import { loggerExpressMiddleware } from '@multiplayer/logger'
-import { mcp } from './routes'
+import { mcp, oauthPublic } from './routes'
 import { oauthProtectedResourceHandler } from './routes/well-known'
 const { Router } = express
 const router = Router()
@@ -18,5 +18,7 @@ router.use(loggerExpressMiddleware())
 
 router.get('/oauth-protected-resource', oauthProtectedResourceHandler)
 router.use('/mcp', mcp)
+router.use('/oauth-clients', oauthPublic)
 router.use(expressErrorHandlerMiddleware)
+
 export default router

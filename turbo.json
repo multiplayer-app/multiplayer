@@ -12,7 +12,21 @@
     },
     "test": {
       "dependsOn": [],
-      "outputs": []
+      "outputs": [],
+      "passThroughEnv": [
+        "PLATFORM_ENV",
+        "MONGODB_ENCRYPTION_MASTER_KEY_PROVIDER",
+        "MONGODB_URI",
+        "KAFKA_URI",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_REGION",
+        "S3_HOST",
+        "S3_PRIVATE_BUCKET",
+        "SLACK_CLIENT_ID",
+        "SLACK_CLIENT_SECRET",
+        "SLACK_SIGNING_SECRET"
+      ]
     },
     "dev": {
       "cache": false,
