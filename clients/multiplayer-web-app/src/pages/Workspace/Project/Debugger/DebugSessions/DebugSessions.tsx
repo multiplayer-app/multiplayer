@@ -1,6 +1,7 @@
 // React and routing
 import { Flex, Icon, IconButton, Text, Tooltip } from "@chakra-ui/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   RoleType,
   IDebugSession,
@@ -56,6 +57,7 @@ const SystemTypeIconMap = {
 };
 
 interface DebugSessionsProps {}
+const PREVIEW_SESSION_PARAM = "previewSession";
 const defaultColumnConfig = {
   name: true,
   tags: true,
@@ -81,9 +83,42 @@ const DebugSessions = memo((props: DebugSessionsProps) => {
   } = useDebugSessions();
   const { isSandbox } = useProjectSandbox();
   const [isAllSelected, setIsAllSelected] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [previewSession, setPreviewSession] = useState<IDebugSession | null>(
-    null
+    () => {
+      const sessionId = searchParams.get(PREVIEW_SESSION_PARAM);
+      return sessionId ? ({ _id: sessionId } as IDebugSession) : null;
+    }
   );
+
+  const setSearchParamsRef = useRef(setSearchParams);
+  setSearchParamsRef.current = setSearchParams;
+
+  // Keep the previewed session id in the URL so the link is shareable
+  useEffect(() => {
+    setSearchParamsRef.current(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (previewSession?._id) {
+          next.set(PREVIEW_SESSION_PARAM, previewSession._id);
+        } else {
+          next.delete(PREVIEW_SESSION_PARAM);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  }, [previewSession?._id]);
+
+  // When opened from a shared link we only have the id; pick up the full
+  // session row once the list is loaded so "Open in page view" gets its name
+  useEffect(() => {
+    if (!previewSession || previewSession.name) return;
+    const fullSession = sessions.data.find(
+      (session) => session._id === previewSession._id
+    );
+    if (fullSession) setPreviewSession(fullSession);
+  }, [sessions.data, previewSession]);
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
   // Column visibility state
   const [columnConfig, setColumnConfig] = useLocalStorage(
