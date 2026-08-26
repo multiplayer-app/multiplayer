@@ -5,6 +5,8 @@ import { useEventListener } from "@chakra-ui/react";
 import { useParams } from "react-router-dom";
 import { ToolbarButton } from "shared/components/Toolbar";
 import useMessage from "shared/hooks/useMessage";
+import { usePublicRoute } from "shared/hooks/usePublicRoute";
+import { buildProjectBasePath } from "shared/navigation/defaultProjectPath";
 import { ProjectSourceType } from "shared/models/enums";
 
 const DebugSessionPreviewDrawer = ({
@@ -19,10 +21,17 @@ const DebugSessionPreviewDrawer = ({
   containerRef: React.RefObject<HTMLDivElement>;
 }) => {
   const message = useMessage();
+  const { isPublic } = usePublicRoute();
   const { workspaceId, projectId, branchId } = useParams();
 
   const onCopyUrl = () => {
-    const url = `${window.location.origin}/project/${workspaceId}/${projectId}/${branchId}/${ProjectSourceType.DEBUGGER}/session/${sessionId}`;
+    const basePath = buildProjectBasePath(
+      workspaceId,
+      projectId,
+      branchId,
+      isPublic
+    );
+    const url = `${window.location.origin}${basePath}/${ProjectSourceType.DEBUGGER}/session/${sessionId}`;
     try {
       navigator.clipboard.writeText(url);
       message.success("Copied!");
