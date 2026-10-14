@@ -5,11 +5,9 @@ import {
   ErrorMessage,
   MetricName,
   IssueGroupBy,
+  MetricsGranularity,
 } from '@multiplayer/types'
 import { MetricsService } from '../../services'
-import {
-  MetricsGranularity,
-} from '../../types'
 
 const fieldMapping = {
   [IssueGroupBy.HASH]: 'issueHash',

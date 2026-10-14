@@ -20,6 +20,8 @@ import {
 import api from './api'
 import crossDomainApis from './cross-domain-api'
 import apiInternal from './api-internal'
+import passport from './passport'
+import { GitHubApp } from './lib'
 import * as swagger from './swagger'
 import { billingLimitNotificationMiddleware } from './middleware'
 import {
@@ -42,7 +44,6 @@ app.set('query parser', 'extended')
 
 app.use('/.well-known', corsMiddleware({ corsDomain: '*' }), wellKnown)
 app.use(`${API_PREFIX}/public`, crossDomainApis)
-
 
 app.use(corsMiddleware({
   corsDomain: CORS_DOMAIN,
@@ -69,6 +70,10 @@ swagger.init(app)
 
 sessionMiddleware(app)
 
+app.use(passport.initialize())
+app.use(passport.session())
+
+app.use(`${API_PREFIX}/git`, GitHubApp.githubAppMiddleware)
 app.use(API_PREFIX, api)
 app.use(`/internal${API_PREFIX}`, apiInternal)
 

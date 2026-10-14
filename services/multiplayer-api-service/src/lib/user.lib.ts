@@ -9,7 +9,7 @@ import {
   WorkspaceModel,
   IRoleDocument,
 } from '@multiplayer/models'
-import AMQP from '@multiplayer/amqp'
+import logger from '@multiplayer/logger'
 import { AccessControlContext } from '@multiplayer/auth'
 import { Username } from '@multiplayer/util-shared'
 import {
@@ -19,8 +19,8 @@ import {
   WorkspaceUserStatus,
 } from '@multiplayer/types'
 import { Types } from 'mongoose'
-import { AMQP_NOTIFICATION_QUEUE } from '../config'
 import * as RoleLib from './role.lib'
+import { sendNotification } from './notification'
 
 export const inviteUser = async (
   currentWorkspaceUserId: Types.ObjectId | string,
@@ -195,22 +195,17 @@ export const sendJoinWorkspaceInvitation = async (
   const inviterWorkspaceUser = await WorkspaceUserModel.findWorkspaceUserById(inviterWorkspaceUserId)
   const inviterUser = await UserModel.findUserById(inviterWorkspaceUser?.user as string)
 
-  await AMQP.publish(
-    AMQP_NOTIFICATION_QUEUE,
-    {
-      variables: {
-        template: 'USER_WORKSPACE_INVITATION',
-        email: user.primaryEmail,
-        data: {
-          email: user.primaryEmail,
-          token: token.token,
-          user,
-          workspace,
-          workspaceUser,
-          inviteeUser: inviterUser,
-          inviteeWorkspaceUser: inviterWorkspaceUser,
-        },
-      },
+  sendNotification({
+    template: 'USER_WORKSPACE_INVITATION',
+    email: user.primaryEmail,
+    data: {
+      email: user.primaryEmail,
+      token: token.token,
+      user,
+      workspace,
+      workspaceUser,
+      inviteeUser: inviterUser,
+      inviteeWorkspaceUser: inviterWorkspaceUser,
     },
-  )
+  }).catch(err => logger.error(err, 'Failed to send USER_WORKSPACE_INVITATION notification'))
 }

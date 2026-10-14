@@ -1,1 +1,5 @@
 export * as OAuthStateCache from './oauth-state.cache'
+export * as OtelIntegrationStatusCache from './otel-integration-status.cache'
+export * as BlockedUserCache from './blocked-user.cache'
+export { OauthTokenStore } from './oauth-token-store'
+export * as UserLoginAttempts from './user-login-attempts.cache'

@@ -1,4 +1,6 @@
 export * from './version.internal.service'
+export * from './notification.internal.service'
+export * from './collaboration.internal.service'
 export * from './version.service'
 export * from './internal-git.service'
 export * as DebugSessionService from './debug-session.service'

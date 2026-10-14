@@ -7,6 +7,7 @@ import { loggerExpressMiddleware } from '@multiplayer/logger'
 import { PrometheusMetricsHandler } from '@multiplayer/prometheus'
 import { corsMiddleware } from '@multiplayer/util'
 import api from './api'
+import apiInternal from './api-internal'
 import {
   API_PREFIX,
   CORS_DOMAIN,
@@ -27,7 +28,9 @@ app.use(corsMiddleware({
   ],
 }))
 app.use(loggerExpressMiddleware())
+app.use(express.json())
 swagger.init(app)
 app.use(API_PREFIX, api)
+app.use(`/internal${API_PREFIX}`, apiInternal)
 app.get('/metrics', PrometheusMetricsHandler(prometheusClient))
 sessionMiddleware(app)

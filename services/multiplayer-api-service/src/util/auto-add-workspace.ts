@@ -4,41 +4,85 @@ import {
   WorkspaceUserModel,
   RoleModel,
 } from '@multiplayer/models'
-import { RoleType } from '@multiplayer/types'
-import { isFreeEmail, Username } from '@multiplayer/util-shared'
+import { uniqueNamesGenerator, adjectives, animals } from 'unique-names-generator'
+import { RoleType, WorkspaceUserStatus } from '@multiplayer/types'
+import { isFreeEmail, Username, slugifyString } from '@multiplayer/util-shared'
+import { AccessControlContext } from '@multiplayer/auth'
 import logger from '@multiplayer/logger'
+import { WorkspaceService } from '../services'
 
-export default async (user: IUserDocument) => {
+const generateRandomWorkspaceName = (): string =>
+  uniqueNamesGenerator({
+    dictionaries: [adjectives, animals],
+    separator: ' ',
+    style: 'capital',
+  })
+
+const createWorkspaceForUser = async (
+  user: IUserDocument,
+  name: string,
+): Promise<void> => {
+  await WorkspaceService.createWorkspaceForUser(user, {
+    name,
+    handle: slugifyString(name),
+  })
+
+  logger.info(
+    { user: user._id, name },
+    'Auto created workspace for new user',
+  )
+}
+
+export default async (user: IUserDocument): Promise<void> => {
   if (isFreeEmail(user.primaryEmail)) {
+    const workspaceName = generateRandomWorkspaceName()
+    await createWorkspaceForUser(user, workspaceName)
     return
   }
 
   const domain = user.primaryEmail.split('@')[1]
+  const workspaces = await WorkspaceModel.findWorkspacesByDomain(domain, { domainAutoJoin: true })
 
-  const workspaces = await WorkspaceModel.findWorkspacesByDomain(domain)
+  if (!workspaces.length) {
+    const companySlug = domain.match(/^([^.]+)/)?.[1] ?? domain
+    const companyName = companySlug.charAt(0).toUpperCase() + companySlug.slice(1)
+    const name = `${companyName}'s Workspace`
+    await createWorkspaceForUser(user, name)
+    return
+  }
+
   const defaultWorkspaceRole = await RoleModel.findDefaultRole(RoleType.WORKSPACE)
 
   await Promise.all(workspaces.map(async (workspace) => {
+    const roleId = workspace.settings?.domainAutoJoin?.workspaceRoleId ?? defaultWorkspaceRole._id
+
     const workspaceUser = await WorkspaceUserModel.createWorkspaceUser({
       workspace: workspace._id,
       user: user._id,
       username: Username.getUsernameFromEmail(user.primaryEmail),
       firstName: user.firstName,
       lastName: user.lastName,
+      status: WorkspaceUserStatus.ACTIVE,
     })
 
     await WorkspaceModel.addUsers(
       workspace._id,
       [workspaceUser._id],
-      defaultWorkspaceRole._id,
+      roleId,
     )
   }))
 
-  logger.info(
-    {
-      workspaces: workspaces.map(({ _id }) => _id),
-      user: user._id,
-    },
-    'Auto added user to workspaces',
-  )
+  await AccessControlContext.invalidateContext({
+    userId: user._id.toString(),
+  })
+
+  if (workspaces.length) {
+    logger.info(
+      {
+        workspaces: workspaces.map(({ _id }) => _id.toString()),
+        user: user._id,
+      },
+      'Auto added user to workspaces',
+    )
+  }
 }

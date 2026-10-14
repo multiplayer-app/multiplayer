@@ -1,0 +1,375 @@
+name: multiplayer-platform
+
+x-default-network: &networks
+  - default
+
+x-environment-variables: &environment-variables
+  STRIPE_DISABLED: true
+  MONGODB_ENCRYPTION_MASTER_KEY_PROVIDER: local
+  MONGODB_URI: mongodb://mongo:27017/multiplayer
+  AMQP_URI: amqp://rabbit:5672
+  REDIS_URI: redis://redis:6379
+
+  KAFKA_URI: kafka:29092
+  OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: http://otel-collector:4317/v1/logs
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4317/v1/traces
+  OTEL_ENABLED: true
+  PROMETHEUS_EXPORTER_ENABLED: true
+  API_SERVICE_URI: http://api:3001/v0/api
+  INTERNAL_API_SERVICE_URI: http://api:3001/internal/v0/api
+  AWS_ACCESS_KEY_ID: minioadmin
+  AWS_SECRET_ACCESS_KEY: minioadmin
+  AWS_REGION: us-east-1
+  OPENSEARCH_URI: http://opensearch:9200
+  S3_HOST: http://localhost:9000
+  S3_EXPORT_HOST: http://minio:9000
+
+x-service-dependencies: &service-dependencies
+  mongo:
+    condition: service_healthy
+  rabbit:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  minio:
+    condition: service_healthy
+  kafka:
+    condition: service_healthy
+  otel-collector:
+    condition: service_healthy
+  seed-roles:
+    condition: service_completed_successfully
+
+services:
+  migrate:
+    container_name: multiplayer-migrate
+    build:
+      context: ../migrations
+    environment:
+      <<: *environment-variables
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks: *networks
+
+  seed-roles:
+    container_name: multiplayer-seed-roles
+    build:
+      context: ..
+      dockerfile: scripts/seed/seed-roles/Dockerfile
+      args:
+        SERVICE_FOLDER: scripts/seed/seed-roles
+    environment:
+      <<: *environment-variables
+    env_file:
+      - .env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: *networks
+
+  web-app:
+    container_name: multiplayer-web-app
+    build:
+      context: ..
+      dockerfile: clients/multiplayer-web-app/Dockerfile
+    restart: on-failure
+    environment:
+      <<: *environment-variables
+      REACT_APP_IS_PRODUCTION: true
+      REACT_APP_SESSION_DEBUGGER_API_BASE_URL:
+      REACT_APP_API_BASE_URL:
+      REACT_APP_API_PREFIX: /v0/api
+      REACT_APP_GIT_PREFIX: /v0/api/git
+      REACT_APP_AUTH_PREFIX: /v0/api/auth
+      REACT_APP_RADAR_PREFIX: /v0/radar
+      REACT_APP_ASSETS_PREFIX: /v0/api/assets
+      REACT_APP_VERSION_PREFIX: /v0/api/version
+      REACT_APP_COLLABORATION_PREFIX: /v0/collaboration
+      REACT_APP_POSTHOG_KEY:
+      REACT_APP_PLATFORM_ENV: local
+      REACT_APP_SESSION_DEBUGGER_KEY:
+      REACT_APP_SANDBOX_URL:
+      REACT_APP_DEMO_PUBLIC:
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    networks: *networks
+
+  api:
+    image: multiplayerapp/multiplayer-api:${MULTIPLAYER_RELEASE:-latest}
+    platform: linux/amd64
+    restart: on-failure
+    environment:
+      <<: *environment-variables
+      PORT: 3001
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/api
+    env_file:
+      - .env
+    ports:
+      - 3001:3001
+    depends_on: *service-dependencies
+    networks: *networks
+
+  collaboration:
+    image: multiplayerapp/multiplayer-collaboration:${MULTIPLAYER_RELEASE:-latest}
+    platform: linux/amd64
+    restart: on-failure
+    environment:
+      <<: *environment-variables
+      PORT: 3003
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/collaboration
+    env_file:
+      - .env
+    ports:
+      - 3003:3003
+    depends_on: *service-dependencies
+    networks: *networks
+
+  radar:
+    image: multiplayerapp/multiplayer-radar:${MULTIPLAYER_RELEASE:-latest}
+    platform: linux/amd64
+    restart: on-failure
+    environment:
+      <<: *environment-variables
+      PORT: 5318
+      SWAGGER_ENABLED: true
+      API_PREFIX: /v0/radar
+      ANALYTICS_DB_ENGINE: duckdb
+      DUCKDB_FILE_PATH: /data/radar-duckdb/radar.duckdb
+    env_file:
+      - .env
+    ports:
+      - 5318:5318
+    volumes:
+      - multiplayer-radar-duckdb-data:/data/radar-duckdb
+    depends_on: *service-dependencies
+    networks: *networks
+
+  otel-collector:
+    image: multiplayerapp/multiplayer-opentelemetry-collector-contrib:${MULTIPLAYER_COLLECTOR_RELEASE:-latest}
+    platform: linux/amd64
+    restart: on-failure
+    command: ["--config=/etc/otel/config.yaml"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:13133/health/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - ../scripts/otel-collector-config.yaml:/etc/otel/config.yaml
+    ports:
+      - 1888:1888 # pprof extension
+      - 8888:8888 # Prometheus metrics exposed by the collector
+      - 8889:8889 # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317 # OTLP gRPC receiver
+      #  - 4318:4318   # OTLP http receiver
+      - 7318:4318 # OTLP http receiver
+      - 55679:55679 # zpages extension
+    networks:
+      default:
+        aliases:
+          - multiplayer-otel-collector
+
+  zookeeper:
+    image: bitnamilegacy/zookeeper:3.9.2
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'echo > /dev/tcp/localhost/2181' 2>/dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ports:
+      - 2181:2181
+    networks:
+      default:
+        aliases:
+          - multiplayer-zookeeper
+
+  kafka:
+    image: bitnamilegacy/kafka:3.4.1
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c 'echo > /dev/tcp/localhost/9092' 2>/dev/null || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    ports:
+      - 9092:9092
+      - 29092:29092
+    environment:
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_CFG_BROKER_ID: 0
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_LISTENERS: INTERNAL://:9092,EXTERNAL://:29092
+      KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://multiplayer-kafka:9092,EXTERNAL://multiplayer-kafka:29092
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      default:
+        aliases:
+          - multiplayer-kafka
+
+  opensearch:
+    image: opensearchproject/opensearch:latest
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=El3ph@nt___123
+    volumes:
+      - opensearch-data:/data/opensearch
+    ports:
+      - 9200:9200 # REST API
+      - 9600:9600 # Performance Analyzer
+    networks:
+      default:
+        aliases:
+          - multiplayer-opensearch
+
+  nginx:
+    image: nginx:latest
+    restart: on-failure
+    volumes:
+      - ../scripts/nginx.conf:/etc/nginx/conf.d/node.template
+    ports:
+      - "80:80"
+    command: 'bash -c "cat /etc/nginx/conf.d/node.template > /etc/nginx/conf.d/default.conf && nginx -g ''daemon off;''"'
+    networks: *networks
+
+  mongo:
+    image: mongo:8.0.0
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    ports:
+      - 27017-27020:27017-27020
+      - 30000:30000
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+      - MONGO_INITDB_DATABASE=multiplayer
+    volumes:
+      - multiplayer-mongo-data:/data/db
+    networks:
+      default:
+        aliases:
+          - multiplayer-mongo
+
+  rabbit:
+    image: rabbitmq:3.10-management
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    volumes:
+      - multiplayer-rabbit-data:/var/lib/rabbitmq/mnesia/
+    ports:
+      - 15672:15672
+      - 5672:5672
+    networks:
+      default:
+        aliases:
+          - multiplayer-rabbit
+
+  redis:
+    image: redis:alpine
+    command: redis-server
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "6379:6379"
+    networks:
+      default:
+        aliases:
+          - multiplayer-redis
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2023-02-27T18-10-45Z
+    restart: on-failure
+    command: server --address 0.0.0.0:9000 --console-address :9001 /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_REGION_NAME=us-east-1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    volumes:
+      - multiplayer-minio-data:/data
+    networks:
+      default:
+        aliases:
+          - multiplayer-minio
+
+  createbuckets:
+    image: minio/mc
+    restart: on-failure
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://multiplayer-minio:9000 minioadmin minioadmin;
+
+      /usr/bin/mc mb myminio/public-bucket;
+      /usr/bin/mc anonymous set public myminio/public-bucket;
+
+      /usr/bin/mc mb myminio/private-bucket;
+      /usr/bin/mc anonymous set public myminio/private-bucket;
+
+      /usr/bin/mc mb myminio/debug-sessions-bucket;
+      /usr/bin/mc anonymous set public myminio/debug-sessions-bucket;
+
+      exit 0;
+      "
+    networks: *networks
+
+volumes:
+  multiplayer-mongo-data:
+  multiplayer-mongocryptd-data:
+  multiplayer-rabbit-data:
+  multiplayer-minio-data:
+  multiplayer-redis-ui-data:
+  multiplayer-radar-duckdb-data:
+  opensearch-data:

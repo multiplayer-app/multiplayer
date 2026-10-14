@@ -7,7 +7,7 @@ import {
 import { NotFoundError } from 'restify-errors'
 import { ErrorMessage } from '@multiplayer/types'
 // import { MetricsService } from '../../services'
-// import { MetricsGranularity } from '../../types'
+// import { MetricsGranularity } from '@multiplayer/types'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {

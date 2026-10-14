@@ -14,6 +14,6 @@ module.exports = {
   ],
   testTimeout: 15000,
   moduleNameMapper: {
-    'axios': require.resolve('axios'),
+    '^axios$': require.resolve('axios'),
   },
 }

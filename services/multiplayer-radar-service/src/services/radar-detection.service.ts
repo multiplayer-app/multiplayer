@@ -1,5 +1,4 @@
 import { metrics } from '@multiplayer/apm'
-import * as Clickhouse from '@multiplayer/clickhouse'
 import logger from '@multiplayer/logger'
 import {
   slugifyString,
@@ -11,6 +10,10 @@ import {
 } from '@multiplayer-app/session-recorder-node'
 import { Readable } from 'stream'
 import {
+  RadarDetectionModel,
+  RadarDetectionParamModel,
+} from '@multiplayer/models'
+import {
   type IRadarDetection,
   RadarDetectionType,
   RadarDetectionSource,
@@ -21,11 +24,10 @@ import {
   FeatureFlag,
 } from '@multiplayer/types'
 import {
-  CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME,
-  CLICKHOUSE_RADAR_DB,
-  CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME,
-} from '../config'
-import { RadarDetectionQueryBuilder } from '../helpers'
+  ClickHouseSortOrder,
+  type ISortOptions,
+  type ICursorOptions,
+} from '../store'
 import {
   RadarDetectionQueryFilter,
   RadarDetectionDeleteFilter,
@@ -46,6 +48,7 @@ import {
 } from '../services'
 import {
   OtelSpanParser,
+  RadarDetectionFilterUtil,
 } from '../util'
 
 const totalDocumentationSpansCounter = metrics.createCounter('processed_documentation_spans_total')
@@ -57,33 +60,91 @@ const processingDocumentationSpansDuration = metrics.createHistogram(
   },
 )
 
-export const createDetections = async (radarDetections: IRadarDetection[]) => {
-  const table = `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME}`
-  await Clickhouse.insert(
-    table,
-    radarDetections.map((detection) => {
-      const slugifiedDetection = { ...detection }
-      if (slugifiedDetection.componentName)
-        slugifiedDetection.componentName = slugifyString(slugifiedDetection.componentName)
-      if (slugifiedDetection.environmentName)
-        slugifiedDetection.environmentName = slugifyString(slugifiedDetection.environmentName)
-      if (slugifiedDetection.environmentNames)
-        slugifiedDetection.environmentNames = slugifiedDetection.environmentNames.map((name) => slugifyString(name))
-      return slugifiedDetection
-    }),
-    true,
-  )
+const { buildMongoFilter, computeSign } = RadarDetectionFilterUtil
 
-  logger.debug(`Inserted ${radarDetections.length} radar detections to clickhouse (${table})`)
+const withComputedSign = <T extends { isRadarObserved: boolean, isDocumented: boolean }>(
+  document: T,
+): Omit<T, 'isRadarObserved' | 'isDocumented'> & { Sign: RadarDetectionSource } => {
+  const plain = (document as any).toObject ? (document as any).toObject() : document
+  const { isRadarObserved, isDocumented, ...rest } = plain
+
+  return { ...rest, Sign: computeSign({ isRadarObserved, isDocumented }) }
+}
+
+const buildMongoSort = (sort?: ISortOptions | ISortOptions[]): Record<string, 1 | -1> => {
+  const sortOptions = Array.isArray(sort) ? sort : sort ? [sort] : []
+
+  return sortOptions.reduce((acc, { sortKey, sortDirection }) => {
+    acc[sortKey] = sortDirection === ClickHouseSortOrder.DESC ? -1 : 1
+    return acc
+  }, {} as Record<string, 1 | -1>)
+}
+
+// Splits a delete filter's `Sign` (single value, or an array - bulk-delete.ts's
+// Sign===SYNCED path deletes with Sign: [DOCS, RADAR] in one call) into which side(s)
+// of the document to clear. A filter with no Sign at all (no real call site produces
+// this today) conservatively clears both.
+const splitDeleteFilterBySign = (
+  filter: { Sign?: RadarDetectionSource | RadarDetectionSource[] },
+): { clearRadar: boolean, clearDocs: boolean } => {
+  const sign = filter.Sign
+  const signs = sign === undefined ? undefined : Array.isArray(sign) ? sign : [sign]
+
+  return {
+    clearRadar: !signs || signs.includes(RadarDetectionSource.RADAR) || signs.includes(RadarDetectionSource.SYNCED),
+    clearDocs: !signs || signs.includes(RadarDetectionSource.DOCS) || signs.includes(RadarDetectionSource.SYNCED),
+  }
+}
+
+export const createDetections = async (radarDetections: IRadarDetection[]) => {
+  const docsDetections: IRadarDetection[] = []
+  const liveDetections: IRadarDetection[] = []
+
+  for (const detection of radarDetections) {
+    (detection.Sign === RadarDetectionSource.DOCS ? docsDetections : liveDetections).push(detection)
+  }
+
+  await Promise.all([
+    docsDetections.length
+      ? RadarDetectionModel.upsertDocumentation(
+        docsDetections.map(({ Sign, platformIds, environmentNames, ...detection }) => detection),
+      )
+      : undefined,
+    liveDetections.length
+      ? RadarDetectionModel.upsertRadarObservation(
+        liveDetections.map(({ Sign, ...detection }) => {
+          const slugifiedDetection = { ...detection }
+          if (slugifiedDetection.componentName)
+            slugifiedDetection.componentName = slugifyString(slugifiedDetection.componentName)
+          if (slugifiedDetection.environmentName)
+            slugifiedDetection.environmentName = slugifyString(slugifiedDetection.environmentName)
+          if (slugifiedDetection.environmentNames)
+            slugifiedDetection.environmentNames = slugifiedDetection.environmentNames.map((name) => slugifyString(name))
+          return slugifiedDetection
+        }),
+      )
+      : undefined,
+  ])
+
+  logger.debug(`Upserted ${liveDetections.length} radar-observed / ${docsDetections.length} documented detections to mongo`)
 }
 
 export const deleteDetections = async (filter: RadarDetectionDeleteFilter) => {
-  await Clickhouse.remove(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME}`,
-    filter,
-  )
+  const { clearRadar, clearDocs } = splitDeleteFilterBySign(filter)
+  // Sign here means "which source is asking to forget this detection", not "only
+  // detections currently in this state" - it's consumed by splitDeleteFilterBySign
+  // above, not the WHERE clause, or it would wrongly exclude documents whose current
+  // state isn't the exact single-source state being cleared (e.g. clearing RADAR off
+  // an already-SYNCED document).
+  const { Sign: _sign, ...matchFilter } = filter
+  const mongoFilter = buildMongoFilter(matchFilter)
 
-  logger.debug({ filter }, 'Deleted detections from clickhouse')
+  await Promise.all([
+    clearRadar ? RadarDetectionModel.clearRadarObservation(mongoFilter) : undefined,
+    clearDocs ? RadarDetectionModel.clearDocumentation(mongoFilter) : undefined,
+  ])
+
+  logger.debug({ filter }, 'Deleted detections')
 }
 
 export const listDetections = async (
@@ -99,18 +160,16 @@ export const listDetections = async (
       $gt?: { $date: Date }
     }
   },
-  cursor?: {
-    skip: number,
-    limit: number,
-  },
+  cursor?: ICursorOptions,
 ): Promise<IRadarDetection[]> => {
-  const detections = await Clickhouse.select(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME}`,
-    filter,
-    cursor,
-  )
+  let query = RadarDetectionModel.find(buildMongoFilter(filter))
 
-  return detections as IRadarDetection[]
+  if (cursor?.skip !== undefined) query = query.skip(cursor.skip)
+  if (cursor?.limit !== undefined) query = query.limit(cursor.limit)
+
+  const documents = await query
+
+  return documents.map(withComputedSign) as IRadarDetection[]
 }
 
 export const getTotalDetectionsCount = async (filter: {
@@ -124,56 +183,46 @@ export const getTotalDetectionsCount = async (filter: {
     $gt?: { $date: Date }
   }
 }): Promise<number> => {
-  return Clickhouse.countTotal(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME}`,
-    filter,
-  )
+  return RadarDetectionModel.countDocuments(buildMongoFilter(filter))
 }
 
 export const getNotAppliedDetections = async (
   filter: RadarDetectionQueryFilter,
-  cursor?: {
-    skip: number,
-    limit: number,
-  },
+  cursor?: ICursorOptions,
   returnStream?: boolean,
 ) => {
-  const query = RadarDetectionQueryBuilder.getRadarDetectionsQuery({
-    ...filter,
-    Sign: RadarDetectionSource.RADAR,
-  }, cursor)
+  let query = RadarDetectionModel.find(
+    buildMongoFilter({ ...filter, Sign: RadarDetectionSource.RADAR }),
+  )
 
-  const detections = await Clickhouse.rawSelect(query, returnStream)
+  if (cursor?.skip !== undefined) query = query.skip(cursor.skip)
+  if (cursor?.limit !== undefined) query = query.limit(cursor.limit)
 
-  return detections
+  const documents = await query
+  const rows = documents.map(withComputedSign)
+
+  return returnStream ? Readable.from(rows) : rows
 }
 
 export const listRadarDetectionsWithSign = async (
   filter: RadarDetectionQueryFilter,
-  cursor?: {
-    skip: number,
-    limit: number,
-  },
-  sort?: Clickhouse.ClickHouseTypes.ISortOptions | Clickhouse.ClickHouseTypes.ISortOptions[],
+  cursor?: ICursorOptions,
+  sort?: ISortOptions | ISortOptions[],
   stream = true,
 ): Promise<any> => {
-  const query = RadarDetectionQueryBuilder.getRadarDetectionsQuery(
-    filter,
-    cursor,
-    sort,
-  )
-  const detectionsStream = await Clickhouse.rawSelect(query, stream)
+  let query = RadarDetectionModel.find(buildMongoFilter(filter)).sort(buildMongoSort(sort))
 
-  return detectionsStream
+  if (cursor?.skip !== undefined) query = query.skip(cursor.skip)
+  if (cursor?.limit !== undefined) query = query.limit(cursor.limit)
+
+  const documents = await query
+  const rows = documents.map(withComputedSign)
+
+  return stream ? Readable.from(rows) : rows
 }
 
 export const getRadarDetectionsWithSignCount = async (filter: RadarDetectionQueryFilter) => {
-  const query = `SELECT count()
-    FROM (${RadarDetectionQueryBuilder.getRadarDetectionsQuery(filter)})`
-
-  const rows = await Clickhouse.rawSelect(query)
-
-  return Number((rows as any[])[0]['count()'] || 0)
+  return RadarDetectionModel.countDocuments(buildMongoFilter(filter))
 }
 
 export const getRadarDetectedEnvironmentNames = async (
@@ -182,22 +231,12 @@ export const getRadarDetectedEnvironmentNames = async (
     projectId: string,
   },
 ): Promise<{ environmentName: string }[]> => {
-  const _filter = Clickhouse.ClickhouseQueryBuilder.buildFilter({
-    ...filter,
-    type: RadarDetectionType.ENVIRONMENT,
-    Sign: -1,
-  })
+  const environmentNames: string[] = await RadarDetectionModel.distinct(
+    'environmentName',
+    buildMongoFilter({ ...filter, type: RadarDetectionType.ENVIRONMENT, Sign: RadarDetectionSource.RADAR }),
+  )
 
-  const query = `
-    SELECT
-      DISTINCT ON (environmentName) environmentName
-    FROM ${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME}
-    WHERE ${_filter}
-  `
-
-  const rows = await Clickhouse.rawSelect(query)
-
-  return rows
+  return environmentNames.filter(Boolean).map((environmentName) => ({ environmentName }))
 }
 
 export const getDetectedComponents = async (
@@ -206,100 +245,99 @@ export const getDetectedComponents = async (
     projectId: string,
   },
 ): Promise<{ componentName: string }[]> => {
-  const _filter = Clickhouse.ClickhouseQueryBuilder.buildFilter({
+  const mongoFilter = buildMongoFilter({
     ...filter,
     type: [RadarDetectionType.DEPENDENCY, RadarDetectionType.SERVICE],
-    component_name: { $not: '' },
   })
 
-  const query = `
-    SELECT DISTINCT component_name
-    FROM ${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME}
-    ARRAY JOIN [componentName, sourceComponentName, targetComponentName] AS component_name
-    WHERE ${_filter}
-  `
+  const [componentNames, sourceComponentNames, targetComponentNames] = await Promise.all([
+    RadarDetectionModel.distinct('componentName', mongoFilter),
+    RadarDetectionModel.distinct('sourceComponentName', mongoFilter),
+    RadarDetectionModel.distinct('targetComponentName', mongoFilter),
+  ])
 
-  const rows = await Clickhouse.rawSelect(query)
+  const uniqueComponentNames = new Set([
+    ...componentNames,
+    ...sourceComponentNames,
+    ...targetComponentNames,
+  ].filter(Boolean))
 
-  return rows.map(({ component_name }) => ({ componentName: component_name }))
+  return [...uniqueComponentNames].map((componentName) => ({ componentName }))
 }
 
 export const listRadarDetectedDependencies = async (
   filter: RadarDetectionQueryFilter,
-  cursor?: {
-    skip: number,
-    limit: number,
-  },
-  sort?: Clickhouse.ClickHouseTypes.ISortOptions | Clickhouse.ClickHouseTypes.ISortOptions[],
+  cursor?: ICursorOptions,
+  sort?: ISortOptions | ISortOptions[],
   stream = true,
-): Promise<Readable> => {
-  const query = RadarDetectionQueryBuilder.getRadarDependencyDetectionsQuery(
-    filter,
-    cursor,
-    sort,
-  )
-  const dependencyDetectionsStream = await Clickhouse.rawSelect(query, stream)
+): Promise<any> => {
+  const mongoFilter = {
+    ...buildMongoFilter({ ...filter, type: RadarDetectionType.DEPENDENCY }),
+    isRadarObserved: true,
+    componentAliasName: { $ne: true },
+  }
 
-  return dependencyDetectionsStream
+  let query = RadarDetectionModel.find(mongoFilter).sort(buildMongoSort(sort))
+
+  if (cursor?.skip !== undefined) query = query.skip(cursor.skip)
+  if (cursor?.limit !== undefined) query = query.limit(cursor.limit)
+
+  const documents = await query
+  const rows = documents.map(withComputedSign) as IRadarDetection[]
+
+  return stream ? Readable.from(rows) : rows
 }
 
 export const getRadarDetectedDependenciesCount = async (filter: RadarDetectionQueryFilter) => {
-  const query = `SELECT count()
-  FROM (${RadarDetectionQueryBuilder.getRadarDependencyDetectionsQuery(filter)})`
-
-  const rows = await Clickhouse.rawSelect(query)
-
-  return Number((rows as any[])[0]['count()'] || 0)
+  return RadarDetectionModel.countDocuments({
+    ...buildMongoFilter({ ...filter, type: RadarDetectionType.DEPENDENCY }),
+    isRadarObserved: true,
+    componentAliasName: { $ne: true },
+  })
 }
 
 export const getRadarDetectionsWithoutDuplicates = async (
   filter: RadarDetectionQueryFilter,
 ): Promise<IRadarDetection[]> => {
-  const _filter = Clickhouse.ClickhouseQueryBuilder.buildFilter(filter)
+  // ClickHouse needed DISTINCT ON (collapse_id) here because every physical write was
+  // a new row. There's exactly one document per detection id now, so this is just a
+  // plain filtered find.
+  const documents = await RadarDetectionModel.find(buildMongoFilter(filter))
 
-  const query = `
-    SELECT DISTINCT ON (collapse_id) *
-    FROM ${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME}
-    WHERE ${_filter}
-  `
-
-  const rows = await Clickhouse.rawSelect(query)
-
-  return rows
+  return documents.map(withComputedSign) as IRadarDetection[]
 }
 
 export const getDetectionById = async (
   id: string,
 ): Promise<IRadarDetection | undefined> => {
-  const [detection] = await Clickhouse.select(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME}`,
-    { id },
-    {
-      skip: 0,
-      limit: 1,
-    },
-    undefined,
-    undefined,
-    undefined,
-    {
-      sortKey: 'componentAliasName',
-      sortDirection: Clickhouse.ClickHouseTypes.ClickHouseSortOrder.DESC,
-    },
-  )
+  const document = await RadarDetectionModel.findDetectionById(id)
 
-  return detection as IRadarDetection
+  return document ? withComputedSign(document) as IRadarDetection : undefined
 }
 
 
 export const createRadarDetectionHttpParams = async (radarDetectionHttpParams: IRadarDetectionParam[]) => {
-  const table = `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME}`
-  await Clickhouse.insert(
-    table,
-    radarDetectionHttpParams,
-    true,
-  )
+  const docsParams: IRadarDetectionParam[] = []
+  const liveParams: IRadarDetectionParam[] = []
 
-  logger.debug(`Inserted ${radarDetectionHttpParams.length} radar detection params to clickhouse (${table})`)
+  for (const param of radarDetectionHttpParams) {
+    (param.Sign === RadarDetectionSource.DOCS ? docsParams : liveParams).push(param)
+  }
+
+  await Promise.all([
+    docsParams.length
+      ? RadarDetectionParamModel.upsertDocumentation(
+        docsParams.map(({ Sign, ...param }) => param),
+      )
+      : undefined,
+    liveParams.length
+      ? RadarDetectionParamModel.upsertRadarObservation(
+        liveParams.map(({ Sign, ...param }) => param),
+      )
+      : undefined,
+  ])
+
+  logger.debug(`Upserted ${liveParams.length} radar-observed / ${docsParams.length} documented detection params to mongo`)
 }
 
 export const listRadarDetectionParams = async (
@@ -315,18 +353,16 @@ export const listRadarDetectionParams = async (
       $gt?: { $date: Date }
     }
   },
-  cursor: {
-    skip: number,
-    limit: number,
-  },
+  cursor: ICursorOptions,
 ): Promise<IRadarDetectionParam[]> => {
-  const radarDetectionHttpParams = await Clickhouse.select(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME}`,
-    filter as any,
-    cursor,
-  )
+  let query = RadarDetectionParamModel.find(buildMongoFilter(filter))
 
-  return radarDetectionHttpParams as IRadarDetectionParam[]
+  if (cursor?.skip !== undefined) query = query.skip(cursor.skip)
+  if (cursor?.limit !== undefined) query = query.limit(cursor.limit)
+
+  const documents = await query
+
+  return documents.map(withComputedSign) as IRadarDetectionParam[]
 }
 
 export const getNotAppliedParamDetections = async (
@@ -342,54 +378,20 @@ export const getNotAppliedParamDetections = async (
       $gt?: { $date: Date }
     }
   },
-  cursor?: {
-    skip: number,
-    limit: number,
-  },
+  cursor?: ICursorOptions,
   returnStream?: boolean,
 ) => {
-  const _filter = Clickhouse.ClickhouseQueryBuilder.buildFilter(filter)
-  const fields = [
-    'id',
-    'last_value(endpointId) as endpointId',
-    'last_value(workspaceId) as workspaceId',
-    'last_value(projectId) as projectId',
-    'last_value(integrationId) as integrationId',
-    'last_value(environmentId) as environmentId',
-    'last_value(environmentName) as environmentName',
-    'last_value(entityId) as entityId',
-    'last_value(componentName) as componentName',
-    'last_value(endpointType) as endpointType',
-    'last_value(httpMethod) as httpMethod',
-    'last_value(httpEndpoint) as httpEndpoint',
-    'last_value(rpcSystem) as rpcSystem',
-    'last_value(rpcService) as rpcService',
-    'last_value(rpcMethod) as rpcMethod',
-    'last_value(paramDirection) as paramDirection',
-    'last_value(paramSource) as paramSource',
-    'last_value(paramPath) as paramPath',
-    'last_value(paramType) as paramType',
-    'last_value(paramFormat) as paramFormat',
-    'last_value(Timestamp) as Timestamp',
-  ]
+  let query = RadarDetectionParamModel.find(
+    buildMongoFilter({ ...filter, Sign: RadarDetectionSource.RADAR }),
+  )
 
-  const cursorString = typeof cursor?.limit === 'number' && typeof cursor?.skip === 'number'
-    ? `LIMIT ${cursor.limit} OFFSET ${cursor.skip}`
-    : ''
+  if (cursor?.skip !== undefined) query = query.skip(cursor.skip)
+  if (cursor?.limit !== undefined) query = query.limit(cursor.limit)
 
-  const query = `SELECT ${fields.join(', ')}
-    FROM (
-        SELECT DISTINCT ON (collapse_id) *
-        FROM ${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME}
-        ${_filter.length ? `WHERE ${_filter}` : ''}
-    )
-    GROUP BY id
-    HAVING sum(Sign) < 0
-    ${cursorString}`
+  const documents = await query
+  const rows = documents.map(withComputedSign)
 
-  const detections = await Clickhouse.rawSelect(query, returnStream)
-
-  return detections
+  return returnStream ? Readable.from(rows) : rows
 }
 
 export const getNotAppliedParamDetectionsCount = async (
@@ -405,94 +407,28 @@ export const getNotAppliedParamDetectionsCount = async (
     }
   },
 ) => {
-  const _filter = Clickhouse.ClickhouseQueryBuilder.buildFilter(filter)
-
-  const query = `SELECT count()
-    FROM (
-    SELECT id
-    FROM (
-        SELECT DISTINCT ON (collapse_id) *
-        FROM ${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME}
-        ${_filter.length ? `WHERE ${_filter}` : ''}
-    )
-    GROUP BY id
-    HAVING sum(Sign) < 0
-    )`
-
-  const rows = await Clickhouse.rawSelect(query)
-
-  return Number((rows as any[])[0]['count()'] || 0)
+  return RadarDetectionParamModel.countDocuments(
+    buildMongoFilter({ ...filter, Sign: RadarDetectionSource.RADAR }),
+  )
 }
 
 export const deleteParamDetections = async (filter: {
-  workspaceId,
-  projectId,
-  entityId?,
-  Sign?,
+  workspaceId: string,
+  projectId: string,
+  entityId?: string,
+  Sign?: RadarDetectionSource | RadarDetectionSource[],
   type?: RadarDetectionType | RadarDetectionType[]
 }) => {
-  await Clickhouse.remove(
-    `${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME}`,
-    filter,
-  )
+  const { clearRadar, clearDocs } = splitDeleteFilterBySign(filter)
+  const { Sign: _sign, ...matchFilter } = filter
+  const mongoFilter = buildMongoFilter(matchFilter)
 
-  logger.debug({ filter }, 'Deleted http param detections from clickhouse')
-}
+  await Promise.all([
+    clearRadar ? RadarDetectionParamModel.clearRadarObservation(mongoFilter) : undefined,
+    clearDocs ? RadarDetectionParamModel.clearDocumentation(mongoFilter) : undefined,
+  ])
 
-const getParamDetectionsWithSignQuery = (
-  filter: {
-    workspaceId: string,
-    projectId: string,
-    endpointId: string,
-    environmentName?: string
-    paramDirection?: RadarDetectionParamDirection
-    paramSource?: RadarDetectionParamSource
-    httpMethod?: HttpMethod,
-    httpStatus?: number,
-    Sign?: number,
-    Timestamp?: {
-      $lt?: { $date: Date },
-      $gt?: { $date: Date }
-    }
-  },
-) => {
-  const conditions = Clickhouse.ClickhouseQueryBuilder.buildFilter({
-    ...filter,
-    componentAliasName: false,
-  })
-  const query = `SELECT
-    id,
-    sum(Sign) as Sign,
-    last_value(paramSource) as paramSource,
-    last_value(paramPath) as paramPath,
-    last_value(paramType) as paramType,
-    last_value(paramFormat) as paramFormat,
-    last_value(paramDirection) as paramDirection,
-    last_value(Timestamp) as Timestamp
-  FROM (
-      SELECT
-        last_value(id) as id,
-        last_value(radarStatus.Sign) as Sign,
-        last_value(paramSource) as paramSource,
-        last_value(paramPath) as paramPath,
-        last_value(paramType) as paramType,
-        last_value(paramFormat) as paramFormat,
-        last_value(paramDirection) as paramDirection,
-        last_value(Timestamp) as Timestamp
-      FROM (
-          SELECT *
-          FROM (
-              SELECT DISTINCT ON (collapse_id) *
-              FROM ${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME}
-              WHERE ${conditions}
-          ) as radarData
-          INNER JOIN ${CLICKHOUSE_RADAR_DB}.${CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME} as radarStatus ON (radarStatus.id = radarData.id)
-      )
-      GROUP By radarStatus.collapse_id
-  )
-  GROUP By id`
-
-  return query
+  logger.debug({ filter }, 'Deleted http param detections')
 }
 
 export const listParamDetectionsWithSign = async (
@@ -512,10 +448,12 @@ export const listParamDetectionsWithSign = async (
     }
   },
 ) => {
-  const query = getParamDetectionsWithSignQuery(filter)
-  const detections = await Clickhouse.rawSelect(query)
+  const documents = await RadarDetectionParamModel.find({
+    ...buildMongoFilter(filter),
+    componentAliasName: false,
+  })
 
-  return detections
+  return documents.map(withComputedSign)
 }
 
 export const getParamDetectionsWithSignCount = async (
@@ -535,12 +473,10 @@ export const getParamDetectionsWithSignCount = async (
     }
   },
 ) => {
-  const query = `SELECT count()
-    FROM (${getParamDetectionsWithSignQuery(filter)})`
-
-  const rows = await Clickhouse.rawSelect(query)
-
-  return Number((rows as any[])[0]['count()'] || 0)
+  return RadarDetectionParamModel.countDocuments({
+    ...buildMongoFilter(filter),
+    componentAliasName: false,
+  })
 }
 
 export const documentTrace = async (
@@ -556,7 +492,6 @@ export const documentTrace = async (
     }
 
     const traceId = traceRequest.resourceSpans?.[0]?.scopeSpans?.[0]?.spans?.[0]?.traceId as string
-
 
     const integrationId = OtlpLib.getAttributeValue(
       traceRequest.resourceSpans?.[0]?.scopeSpans?.[0]?.spans?.[0]?.attributes,

@@ -2,10 +2,8 @@ import { Joi } from '@multiplayer/util'
 import {
   MetricName,
   IssueGroupBy,
-} from '@multiplayer/types'
-import {
   MetricsGranularity,
-} from '../../../types'
+} from '@multiplayer/types'
 
 export const getMetricsSchema = Joi.object({
   params: Joi.object({

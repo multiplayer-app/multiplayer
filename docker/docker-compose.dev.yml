@@ -103,7 +103,10 @@ services:
       retries: 3
     volumes:
       - multiplayer-platform-dev-minio-data:/data
-    networks: *networks
+    networks:
+      default:
+        aliases:
+          - multiplayer-minio
 
   createbuckets:
     image: minio/mc
@@ -217,7 +220,10 @@ services:
       # KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       # KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       # KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    networks: *networks
+    networks:
+      default:
+        aliases:
+          - multiplayer-kafka
 
   # kafka-ui:
   #   image: provectuslabs/kafka-ui:latest

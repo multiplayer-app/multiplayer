@@ -94,19 +94,20 @@ export class KafkaConsumer {
     }
   }
 
-  public async listen(options: Omit<ConsumerRunConfig, 'eachMessage' | 'eachBatch'> = {
+  public async listen(options: Omit<ConsumerRunConfig, 'eachMessage' | 'eachBatch'> & { fromBeginning?: boolean } = {
     partitionsConsumedConcurrently: 3, autoCommit: true,
   }) {
+    const { fromBeginning = true, ...runOptions } = options
     const topics = Object.keys(this.listeners)
 
     await this.consumer.subscribe({
       topics,
-      fromBeginning: true,
+      fromBeginning,
     })
 
     await this.consumer.run({
       autoCommit: true,
-      ...options,
+      ...runOptions,
       eachMessage: async ({ topic, message }) => this.listenFnWrapper(topic, message),
     })
   }

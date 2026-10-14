@@ -1,28 +1,23 @@
 import { Transform } from 'stream'
 
+// Expects one plain row object per chunk - both the ClickHouse and DuckDB store
+// adapters normalize to this same shape now (see @multiplayer/clickhouse's
+// normalizeStream and duckdb.store.ts's Readable.from(rows)), so this stays
+// backend-agnostic rather than assuming either engine's native wire format.
 export const transformClickhouseStream = (cursor?) => {
   let firstPush = true
 
   const transformStream = new Transform({
-    // objectMode: false,
-    // readableObjectMode: true,
     writableObjectMode: true,
     autoDestroy: true,
-    transform(chunks, encoding, callback) {
+    transform(row, encoding, callback) {
       if (firstPush) {
         this.push('{"data": [')
+      } else {
+        this.push(',')
       }
 
-      chunks
-        .map((row, index: number) => {
-          if (index > 0 || !firstPush) {
-            this.push(',')
-          }
-
-          this.push(row.text)
-
-
-        })
+      this.push(JSON.stringify(row))
 
       firstPush = false
 

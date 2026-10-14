@@ -2,8 +2,8 @@ import { Joi } from '@multiplayer/util'
 import {
   EndUserType,
   SessionRecordingNextRecordType,
+  MetricsGranularity,
 } from '@multiplayer/types'
-import { MetricsGranularity } from '../../../types'
 import { sessionRecordingOptionsSchema } from './shared/session-recording-options'
 
 export const listEndUsersSchema = Joi.object({

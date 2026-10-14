@@ -7,7 +7,7 @@ export interface IUserSession {
   lastName: string
   primaryEmail: string
   primaryEmailSource: UserPrimaryEmailSourceEnum
-  superAdmin: boolean
+  superadmin: boolean
   workspaces: IUserSessionWorkspace[]
 }
 

@@ -20,7 +20,7 @@ export const AMQP_EVENT_QUEUE = process.env.AMQP_EVENT_QUEUE || 'event'
 export const CLICKHOUSE_RADAR_DB = process.env.CLICKHOUSE_RADAR_DB || 'radar'
 export const CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME = process.env.CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME || 'detections'
 
-export const INTERNAL_VERSION_SERVICE_URI = process.env.INTERNAL_VERSION_SERVICE_URI || 'http://localhost:3006/internal/v0/version'
+export const INTERNAL_API_SERVICE_URI = process.env.INTERNAL_API_SERVICE_URI || 'http://localhost:3001/internal/v0/api'
 
 const main = async () => {
   let exitWithError = false
@@ -111,7 +111,7 @@ const main = async () => {
 
           if ((err?.message as string)?.includes('E11000 duplicate key error collection')) {
             try {
-              await fetch.delete(`${INTERNAL_VERSION_SERVICE_URI}/workspaces/${entity.workspace}/projects/${entity.project}/branches/${projectBranch._id}/entities/${entity.entityId}`)
+              await fetch.delete(`${INTERNAL_API_SERVICE_URI}/version/workspaces/${entity.workspace}/projects/${entity.project}/branches/${projectBranch._id}/entities/${entity.entityId}`)
             } catch (axiosErr) {
               logger.error({
                 axiosErr,

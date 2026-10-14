@@ -37,6 +37,7 @@ import {
   RemoteSessionRecordingConditionCompareOperator,
   SessionRecordingMode,
   IssueGroupBy,
+  MetricsGranularity,
 } from "@multiplayer/types";
 import {
   GitObjectType,
@@ -46,7 +47,6 @@ import {
   ComponentTypeEnum,
   SortingDirection,
   IssueRateChartPeriod,
-  MetricsGranularity,
 } from "./enums";
 import { YjsSocketIOProvider } from "integrations/YjsSocketIOProvider";
 import { IconType, ViewIdType } from "./types";

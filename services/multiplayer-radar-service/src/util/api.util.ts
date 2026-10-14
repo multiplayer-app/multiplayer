@@ -6,7 +6,6 @@ import {
   EntityModel,
   ProjectLinkModel,
 } from '@multiplayer/models'
-import AMQP from '@multiplayer/amqp'
 import logger from '@multiplayer/logger'
 import { ObjectId } from '@multiplayer/mongo'
 import { s3 } from '@multiplayer/s3'
@@ -17,16 +16,14 @@ import {
   ProjectLinkObjectType,
   IEntity,
   IGitRef,
-  CollaborationRPCMessageType,
-  GetEntityStateRequest,
 } from '@multiplayer/types'
 import * as yaml from 'yaml'
 import { EntityConverter, Y } from '@multiplayer/entity'
-import { AMQP_COLLABORATION_RPC_QUEUE } from '../config'
 import {
   InternalVersionService,
   VersionService,
   InternalGitService,
+  InternalCollaborationService,
 } from '../services'
 import { shareEntityUpdate } from '../amqp'
 
@@ -87,18 +84,13 @@ export const getExistingOpenApiDoc = async (
     let openApiDoc
 
     if (entityCommit.storageType === EntityCommitStorageType.S3) {
-      const openApiState = await AMQP.request(
-        AMQP_COLLABORATION_RPC_QUEUE,
-        {
-          type: CollaborationRPCMessageType.GET_ENTITY_STATE,
-          variables: {
-            workspaceId,
-            projectId,
-            branchId: currentBranchId,
-            entityId: apiFileEntityId,
-          } as GetEntityStateRequest,
-        },
-      ) as any
+      const collaborationService = new InternalCollaborationService()
+      const openApiState = await collaborationService.getEntityState({
+        workspaceId,
+        projectId,
+        branchId: currentBranchId.toString(),
+        entityId: apiFileEntityId.toString(),
+      })
 
       openApiDoc = new Y.Doc()
       Y.applyUpdate(openApiDoc, new Uint8Array(openApiState.state))

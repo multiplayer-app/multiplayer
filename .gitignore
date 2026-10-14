@@ -48,3 +48,13 @@ vite.config.ts.timestamp-*.mjs
 out
 .turbo
 docker/.env
+
+# local DuckDB data files (radar-service's ANALYTICS_DB_ENGINE=duckdb mode) - the
+# repo-root path backs docker-compose.prod-duckdb.yml's volume mount (absolute
+# DUCKDB_FILE_PATH); the service-local path backs the default relative
+# DUCKDB_FILE_PATH (./data/radar.duckdb) used when running the service directly
+# (pm2/npm run dev) with no override.
+data/radar-duckdb/*
+!data/radar-duckdb/.gitkeep
+services/multiplayer-radar-service/data/*
+!services/multiplayer-radar-service/data/.gitkeep

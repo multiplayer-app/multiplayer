@@ -10,6 +10,9 @@ import type { ListenOptions, Channel } from './types'
 
 const listeners: any[] = []
 let firstConnection = true
+// Tracks active consumers per queue so stopListening() can cancel them. Only
+// consumers established via listen() (not other AMQP.* callers) are tracked here.
+const activeConsumers: Record<string, { channel: Channel, consumerTag: string }[]> = {}
 
 /**
  * @description Wrapper for listener callback function. Handles errors and tracks them.
@@ -19,13 +22,13 @@ let firstConnection = true
  * @param {function(message)} callback - message handler function
  * @returns {function(message): void} - listener function
  */
-/* eslint-disable-next-line max-lines-per-function */
+
 const _listenFnWrapper = (
   queue: string,
   channel: Channel,
   callback: (message: any) => any,
 ) => {
-  /* eslint-disable-next-line complexity, max-statements, max-lines-per-function */
+
   const messageHandler = async (message) => {
     let incomingMessage = {}
     let failedToParseMessage = false
@@ -111,7 +114,7 @@ const _listenFnWrapper = (
  * @param {Function} callback
  * @param {ListenOptions} [options]
  * @param {Boolean} reattaching
- * @returns {Promise<void>}
+ * @returns {Promise<string>} - the consumerTag, usable with stopListening()
  */
 const listen = async (
   queue: string,
@@ -136,7 +139,52 @@ const listen = async (
 
   logger.info(`[AMQP] Listening ${queue} queue`)
 
-  await channel.consume(queue, _listenFnWrapper(queue, channel, callback))
+  const { consumerTag } = await channel.consume(queue, _listenFnWrapper(queue, channel, callback))
+
+  if (!activeConsumers[queue]) {
+    activeConsumers[queue] = []
+  }
+  activeConsumers[queue].push({ channel, consumerTag })
+
+  return consumerTag
+}
+
+/**
+ * @description Stops all active consumers for a queue previously subscribed via
+ * listen() and prevents them from being re-established on the next broker reconnect.
+ * Used to gate consumption on a runtime condition (e.g. leader election) rather than
+ * process lifetime - listen() itself has no notion of "temporarily stop".
+ * @param {String} queue
+ * @returns {Promise<void>}
+ */
+const stopListening = async (queue: string) => {
+  const consumers = activeConsumers[queue] || []
+  delete activeConsumers[queue]
+
+  for (let i = listeners.length - 1; i >= 0; i -= 1) {
+    if (listeners[i].queue === queue) {
+      listeners.splice(i, 1)
+    }
+  }
+
+  await Promise.all(consumers.map(async ({ channel, consumerTag }) => {
+    try {
+      await channel.cancel(consumerTag)
+      await channel.close()
+    } catch (err) {
+      logger.error(err, `[AMQP] Failed to stop consumer for queue ${queue}`)
+    } finally {
+      // Un-track it regardless of close outcome - connector.disconnect() also closes
+      // every channel it knows about, and closing an already-closed channel throws.
+      const index = connector.channels.indexOf(channel)
+
+      if (index !== -1) {
+        connector.channels.splice(index, 1)
+      }
+    }
+  }))
+
+  logger.info(`[AMQP] Stopped listening ${queue} queue`)
 }
 
 /**
@@ -159,4 +207,5 @@ const reattachListeners = () => {
 
 connector.on('connected', reattachListeners)
 
+export { stopListening }
 export default listen

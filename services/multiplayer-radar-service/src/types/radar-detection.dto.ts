@@ -28,7 +28,7 @@ export interface RadarDetectionQueryFilter {
   sourceHttpEndpoint?: string | { $like: string }
   targetHttpMethod?: string | { $like: string }
   targetHttpEndpoint?: string | { $like: string }
-  tags?: { $arrayExists: { '1'?: string, '2': string }[] }, // 1 is key, 2 is value
+  tags?: { $arrayExists: { key?: string, value: string }[] },
   Timestamp?: {
     $lt?: { $date: Date },
     $gt?: { $date: Date }
@@ -63,7 +63,7 @@ export interface RadarDetectionDeleteFilter {
   sourceHttpEndpoint?: string | { $like: string }
   targetHttpMethod?: string | { $like: string }
   targetHttpEndpoint?: string | { $like: string }
-  tags?: { $arrayExists: { '1'?: string, '2': string }[] }, // 1 is key, 2 is value
+  tags?: { $arrayExists: { key?: string, value: string }[] },
   Timestamp?: {
     $lt?: { $date: Date },
     $gt?: { $date: Date }

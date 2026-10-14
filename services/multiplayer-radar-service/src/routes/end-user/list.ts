@@ -4,13 +4,11 @@ import {
   Config as ModelsConfig,
 } from '@multiplayer/models'
 import {
-  MetricName ,
+  MetricName,
   IssueGroupBy,
+  MetricsGranularity,
 } from '@multiplayer/types'
 import { MetricsService } from '../../services'
-import {
-  MetricsGranularity,
-} from '../../types'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {

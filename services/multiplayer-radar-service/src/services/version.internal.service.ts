@@ -18,7 +18,7 @@ import {
 } from '@multiplayer/types'
 import { AbstractService } from './abstract.service'
 import {
-  INTERNAL_VERSION_SERVICE_URI,
+  INTERNAL_API_SERVICE_URI,
 } from '../config'
 
 type GetConflictsResponse = {
@@ -30,7 +30,7 @@ type GetConflictsResponse = {
 
 export class InternalVersionService extends AbstractService {
   protected getBaseUrl(): string {
-    return INTERNAL_VERSION_SERVICE_URI
+    return `${INTERNAL_API_SERVICE_URI}/version`
   }
 
   async createCommit(params: {

@@ -15,8 +15,6 @@ permissions:
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-  # aws ecr
-  DOCKER_REPOSITORY_PREFIX_AWS_ECR: multiplayer-staging-
   # docker hub
   DOCKER_REPOSITORY_PREFIX_DOCKERHUB: multiplayer-
   MONGODB_URI: mongodb://localhost
@@ -117,7 +115,7 @@ jobs:
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
-          MINIO_DEFAULT_BUCKETS: private-bucket
+          MINIO_DEFAULT_BUCKETS: private-bucket,debug-sessions-bucket
         # options: >-
         #   --health-cmd "curl -f http://localhost:9000/minio/health/live"
         #   --health-interval 10s
@@ -172,7 +170,6 @@ jobs:
 
       - name: Seed
         run: |
-          npm run seed-counter
           npm run seed-roles
         env:
           MONGODB_URI: mongodb://localhost
@@ -197,37 +194,20 @@ jobs:
   build-backend:
     strategy:
       matrix:
-        env: [staging]
         service:
           - "@multiplayer/api"
-          - "@multiplayer/authentication"
           - "@multiplayer/collaboration"
-          - "@multiplayer/git"
-          - "@multiplayer/notification"
           - "@multiplayer/radar"
-          - "@multiplayer/version"
-          - "@multiplayer/assets"
-          - "@multiplayer/signup-stats"
-    name: Build service ${{ matrix.service }} (${{ matrix.env }})
+          # - "@multiplayer/signup-stats"
+    name: Build service ${{ matrix.service }}
     needs:
       - lint
       - test-backend
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: ${{ matrix.env }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4.0.1
-        with:
-          aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-
-      - name: Login to AWS ECR
-        id: ecr-login
-        uses: aws-actions/amazon-ecr-login@v2
 
       - name: OIDC token
         id: docker_oidc
@@ -297,7 +277,6 @@ jobs:
           echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "DOCKER_IMAGE_DOCKERHUB=${{ vars.DOCKERHUB_ORGANIZATION }}/${{ env.DOCKER_REPOSITORY_PREFIX_DOCKERHUB }}${SERVICE_NAME}" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_AWS_ECR=${{ steps.ecr-login.outputs.registry }}/${{ env.DOCKER_REPOSITORY_PREFIX_AWS_ECR }}${SERVICE_NAME}" >> $GITHUB_ENV
 
       - name: Set Docker tags
         run: |
@@ -305,7 +284,6 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             TAGS="$TAGS,${{ env.DOCKER_IMAGE_DOCKERHUB }}:latest"
           fi
-          TAGS="$TAGS,${{ env.DOCKER_IMAGE_AWS_ECR }}:${{ env.SERVICE_VERSION }}"
           echo "DOCKER_TAGS=$TAGS" >> $GITHUB_ENV
 
       - name: Build
@@ -326,64 +304,64 @@ jobs:
         if: always()
         run: docker logout
 
-      - name: Login to Octopus Deploy
-        uses: OctopusDeploy/login@v1
-        with:
-          server: ${{ secrets.OCTOPUS_HOST }}
-          service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
+      # - name: Login to Octopus Deploy
+      #   uses: OctopusDeploy/login@v1
+      #   with:
+      #     server: ${{ secrets.OCTOPUS_HOST }}
+      #     service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
 
-      - name: Install OctopusCLI
-        uses: OctopusDeploy/install-octopus-cli-action@v3
-        with:
-          version: 1.2.0
+      # - name: Install OctopusCLI
+      #   uses: OctopusDeploy/install-octopus-cli-action@v3
+      #   with:
+      #     version: 1.2.0
 
-      - name: Create a release in Octopus Deploy
-        uses: OctopusDeploy/create-release-action@v3
-        with:
-          project: ${{ env.SERVICE_NAME }}
-          server: ${{ secrets.OCTOPUS_HOST }}
-          space: ${{ secrets.OCTOPUS_SPACE }}
-          release_number: ${{ env.SERVICE_VERSION }}
-          release_notes: "[GitHub commit: ${{
-            steps.commit.outputs.sha_short}}](https://github.com/${{
-            github.event.repository.full_name }}/commit/${{
-            steps.commit.outputs.sha_short}}) / [GitHub branch: ${{
-            env.BRANCH_NAME }}](https://github.com/${{
-            github.event.repository.full_name }}/compare/${{ env.BRANCH_NAME
-            }})"
+      # - name: Create a release in Octopus Deploy
+      #   uses: OctopusDeploy/create-release-action@v3
+      #   with:
+      #     project: ${{ env.SERVICE_NAME }}
+      #     server: ${{ secrets.OCTOPUS_HOST }}
+      #     space: ${{ secrets.OCTOPUS_SPACE }}
+      #     release_number: ${{ env.SERVICE_VERSION }}
+      #     release_notes: "[GitHub commit: ${{
+      #       steps.commit.outputs.sha_short}}](https://github.com/${{
+      #       github.event.repository.full_name }}/commit/${{
+      #       steps.commit.outputs.sha_short}}) / [GitHub branch: ${{
+      #       env.BRANCH_NAME }}](https://github.com/${{
+      #       github.event.repository.full_name }}/compare/${{ env.BRANCH_NAME
+      #       }})"
 
-      - name: Install multiplayer-app/cli
-        run: npm install -g @multiplayer-app/cli@latest
+      # - name: Install multiplayer-app/cli
+      #   run: npm install -g @multiplayer-app/cli@latest
 
-      - name: Create release in multiplayer
-        env:
-          MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
-          COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
-          COMMIT_SHA: ${{ github.sha }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
-          SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
-          REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
-        run: |
-          npm --prefix ${{ env.SERVICE_FOLDER_PATH }} run multiplayer:release
+      # - name: Create release in multiplayer
+      #   env:
+      #     MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
+      #     COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
+      #     COMMIT_SHA: ${{ github.sha }}
+      #     BRANCH_NAME: ${{ env.BRANCH_NAME }}
+      #     SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+      #     REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
+      #   run: |
+      #     npm --prefix ${{ env.SERVICE_FOLDER_PATH }} run multiplayer:release
 
-      - name: Upload source maps to multiplayer (production)
-        env:
-          MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
-          COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
-          COMMIT_SHA: ${{ github.sha }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
-          SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
-          REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
-        run: |
-          CONTAINER_ID=$(docker create "${{ env.DOCKER_IMAGE_DOCKERHUB }}:${{ env.SERVICE_VERSION }}")
-          mkdir -p ${{ env.SERVICE_FOLDER_PATH }}/dist
-          docker cp "$CONTAINER_ID:/app/${{ env.SERVICE_FOLDER_PATH }}/dist/." ${{ env.SERVICE_FOLDER_PATH }}/dist
-          docker rm "$CONTAINER_ID"
-          cd ${{ env.SERVICE_FOLDER_PATH }}/dist
-          multiplayer sourcemaps upload . \
-            --api-key="${{ secrets.MULTIPLAYER_API_KEY }}" \
-            --service="${{ env.SERVICE_NAME }}" \
-            --release="${{ env.SERVICE_VERSION }}"
+      # - name: Upload source maps to multiplayer (production)
+      #   env:
+      #     MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
+      #     COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
+      #     COMMIT_SHA: ${{ github.sha }}
+      #     BRANCH_NAME: ${{ env.BRANCH_NAME }}
+      #     SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+      #     REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
+      #   run: |
+      #     CONTAINER_ID=$(docker create "${{ env.DOCKER_IMAGE_DOCKERHUB }}:${{ env.SERVICE_VERSION }}")
+      #     mkdir -p ${{ env.SERVICE_FOLDER_PATH }}/dist
+      #     docker cp "$CONTAINER_ID:/app/${{ env.SERVICE_FOLDER_PATH }}/dist/." ${{ env.SERVICE_FOLDER_PATH }}/dist
+      #     docker rm "$CONTAINER_ID"
+      #     cd ${{ env.SERVICE_FOLDER_PATH }}/dist
+      #     multiplayer sourcemaps upload . \
+      #       --api-key="${{ secrets.MULTIPLAYER_API_KEY }}" \
+      #       --service="${{ env.SERVICE_NAME }}" \
+      #       --release="${{ env.SERVICE_VERSION }}"
 
   build-frontend:
     name: Build Frontend
@@ -404,14 +382,14 @@ jobs:
           node-version: 24
           cache: "pnpm"
 
-      - name: Cache turbo
-        uses: actions/cache@v4
-        id: turbo-cache
-        with:
-          path: turbo
-          key: turbo-cache-${{ github.sha }}
-          restore-keys: |
-            turbo-cache-
+      # - name: Cache turbo
+      #   uses: actions/cache@v4
+      #   id: turbo-cache
+      #   with:
+      #     path: turbo
+      #     key: turbo-cache-${{ github.sha }}
+      #     restore-keys: |
+      #       turbo-cache-
 
       - name: Cache pnpm
         uses: actions/cache@v4
@@ -433,8 +411,10 @@ jobs:
 
       - name: Build lib dependencies
         run: npx turbo run build --filter=@multiplayer/types
-          --filter=@multiplayer/entity --filter=@multiplayer/blocknote
-          --filter=@multiplayer/util-shared
+          --filter=@multiplayer/entity --filter=@multiplayer/util-shared
+
+      - name: Build blocknote
+        run: npx turbo run build --filter=@multiplayer/blocknote
 
       - name: Build Frontend
         run: npm --prefix clients/multiplayer-web-app run build
@@ -452,7 +432,10 @@ jobs:
   deploy-frontend:
     strategy:
       matrix:
-        env: [staging, production]
+        env: [
+            # staging,
+            production,
+          ]
     name: Deploy Frontend (${{ matrix.env }})
     environment: ${{ matrix.env }}
     needs: build-frontend
@@ -549,71 +532,71 @@ jobs:
         run: |
           npm --prefix clients/multiplayer-web-app run deploy-s3
 
-  release-frontend:
-    strategy:
-      matrix:
-        env: [production]
-    name: Release frontend
-    environment: ${{ matrix.env }}
-    needs: deploy-frontend
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-22.04
+  # release-frontend:
+  #   strategy:
+  #     matrix:
+  #       env: [production]
+  #   name: Release frontend
+  #   environment: ${{ matrix.env }}
+  #   needs: deploy-frontend
+  #   if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+  #   runs-on: ubuntu-22.04
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
-        with:
-          cache: true
+  #     - uses: pnpm/action-setup@v4
+  #       name: Install pnpm
+  #       with:
+  #         cache: true
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 24
-          cache: "pnpm"
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 24
+  #         cache: "pnpm"
 
-      - name: Set release tag
-        run: |
-          echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
-          echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+  #     - name: Set release tag
+  #       run: |
+  #         echo "SERVICE_VERSION=${BRANCH_NAME//\//-}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+  #         echo "COMMIT_SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Login to Octopus Deploy
-        uses: OctopusDeploy/login@v1
-        with:
-          server: ${{ secrets.OCTOPUS_HOST }}
-          service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
+  #     - name: Login to Octopus Deploy
+  #       uses: OctopusDeploy/login@v1
+  #       with:
+  #         server: ${{ secrets.OCTOPUS_HOST }}
+  #         service_account_id: ${{ secrets.OCTOPUS_SERVICE_ACCOUNT_ID }}
 
-      - name: Install OctopusCLI
-        uses: OctopusDeploy/install-octopus-cli-action@v3
-        with:
-          version: 1.2.0
+  #     - name: Install OctopusCLI
+  #       uses: OctopusDeploy/install-octopus-cli-action@v3
+  #       with:
+  #         version: 1.2.0
 
-      - name: Create a release in Octopus Deploy
-        uses: OctopusDeploy/create-release-action@v3
-        with:
-          project: web-app
-          server: ${{ secrets.OCTOPUS_HOST }}
-          space: ${{ secrets.OCTOPUS_SPACE }}
-          release_number: ${{ env.SERVICE_VERSION }}
-          release_notes: "[GitHub commit: ${{
-            steps.commit.outputs.sha_short}}](https://github.com/${{
-            github.event.repository.full_name }}/commit/${{
-            steps.commit.outputs.sha_short}}) / [GitHub branch: ${{
-            env.BRANCH_NAME }}](https://github.com/${{
-            github.event.repository.full_name }}/compare/${{ env.BRANCH_NAME
-            }})"
+  #     - name: Create a release in Octopus Deploy
+  #       uses: OctopusDeploy/create-release-action@v3
+  #       with:
+  #         project: web-app
+  #         server: ${{ secrets.OCTOPUS_HOST }}
+  #         space: ${{ secrets.OCTOPUS_SPACE }}
+  #         release_number: ${{ env.SERVICE_VERSION }}
+  #         release_notes: "[GitHub commit: ${{
+  #           steps.commit.outputs.sha_short}}](https://github.com/${{
+  #           github.event.repository.full_name }}/commit/${{
+  #           steps.commit.outputs.sha_short}}) / [GitHub branch: ${{
+  #           env.BRANCH_NAME }}](https://github.com/${{
+  #           github.event.repository.full_name }}/compare/${{ env.BRANCH_NAME
+  #           }})"
 
-      - name: Install multiplayer-app/cli
-        run: npm install -g @multiplayer-app/cli@latest
+  #     - name: Install multiplayer-app/cli
+  #       run: npm install -g @multiplayer-app/cli@latest
 
-      - name: Create release in multiplayer
-        env:
-          MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
-          COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
-          COMMIT_SHA: ${{ github.sha }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
-          SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
-          REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
-        run: |
-          npx lerna run multiplayer:release --scope @multiplayer/multiplayer-web-app
+  #     - name: Create release in multiplayer
+  #       env:
+  #         MULTIPLAYER_API_KEY: ${{ secrets.MULTIPLAYER_API_KEY }}
+  #         COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
+  #         COMMIT_SHA: ${{ github.sha }}
+  #         BRANCH_NAME: ${{ env.BRANCH_NAME }}
+  #         SERVICE_VERSION: ${{ env.SERVICE_VERSION }}
+  #         REPOSITORY_URL: ${{ env.REPOSITORY_URL }}
+  #       run: |
+  #         npx lerna run multiplayer:release --scope @multiplayer/multiplayer-web-app

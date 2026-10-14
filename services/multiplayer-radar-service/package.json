@@ -20,7 +20,7 @@
     "multiplayer:release": "bash ../../scripts/multiplayer-release.sh",
     "lint": "eslint src/**/*.ts --config ../../eslint.config.js",
     "test:local": "env-cmd -f .env.test-local jest --forceExit",
-    "test": "env-cmd -f .env.test jest --forceExit --runInBand"
+    "test": "env-cmd --no-override -f .env.test jest --forceExit --runInBand"
   },
   "author": "Multiplayer",
   "dependencies": {
@@ -30,6 +30,7 @@
     "@multiplayer/amqp": "0.0.1",
     "@multiplayer/apm": "0.0.1",
     "@multiplayer/auth": "0.0.1",
+    "@duckdb/node-api": "1.4.5-r.1",
     "@multiplayer/clickhouse": "0.0.1",
     "@multiplayer/entity": "0.0.1",
     "@multiplayer/fetch": "0.0.1",

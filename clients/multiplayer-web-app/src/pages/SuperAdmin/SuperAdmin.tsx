@@ -8,7 +8,7 @@ const WorkspaceManagement = lazyModule(() => import("./WorkspaceManagement"));
 
 const SuperAdmin = () => {
   // Redirect non-super admins
-  // if (!user?.superAdmin) {
+  // if (!user?.superadmin) {
   //   return <Navigate to="/dashboard" replace />;
   // }
 

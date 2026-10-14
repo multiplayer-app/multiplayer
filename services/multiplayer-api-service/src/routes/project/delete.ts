@@ -6,8 +6,7 @@ import {
   TeamModel,
   IUserDocument,
 } from '@multiplayer/models'
-import AMQP from '@multiplayer/amqp'
-import { AMQP_CLEANUP_QUEUE } from '../../config'
+import { CleanupUtil } from '../../util'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -29,19 +28,10 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       workspaceId,
     })
 
-    await AMQP.publish(
-      AMQP_CLEANUP_QUEUE,
-      {
-        variables: {
-          type: 'PROJECT',
-          workspace: workspaceId,
-          project: projectId,
-        },
-      },
-      {
-        durable: true,
-      },
-    )
+    // Fired off, not awaited: cleanup runs in the background, same as when this
+    // went through the `cleanup` AMQP queue. cleanupProject catches and logs
+    // its own errors, so nothing here needs to handle rejection.
+    CleanupUtil.cleanupProject(workspaceId, projectId)
 
     return res.sendStatus(204)
   } catch (err) {

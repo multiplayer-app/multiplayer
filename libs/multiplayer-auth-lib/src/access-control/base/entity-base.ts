@@ -94,7 +94,7 @@ export abstract class EntityBase {
 
     if (
       this.params._id
-      && !this.context.superAdmin
+      && !this.context.superadmin
       && !(await this.hasContextResourceAccess())
     ) {
       logger.debug(

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ISSUE_HASH_KEY } from "shared/configs/issues.configs";
+import { MetricsGranularity } from "@multiplayer/types";
 import {
   IssueRateChartPeriod,
-  MetricsGranularity,
   SortingDirection,
   SortingDirectionMap,
 } from "shared/models/enums";

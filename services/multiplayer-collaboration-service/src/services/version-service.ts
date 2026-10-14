@@ -2,12 +2,12 @@ import {
   IEntity,
   IEntityCommit,
 } from '@multiplayer/types'
-import { VERSION_SERVICE_URI } from '../config'
+import { API_SERVICE_URI } from '../config'
 import { AbstractService } from './abstract-service'
 
 export class VersionService extends AbstractService {
   protected getBaseUrl(): string {
-    return VERSION_SERVICE_URI
+    return `${API_SERVICE_URI}/version`
   }
 
   createEntity(params: {

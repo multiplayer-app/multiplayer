@@ -4,31 +4,61 @@ export const API_PREFIX = process.env.API_PREFIX || '/v0/radar'
 export const SWAGGER_ENABLED = (process.env.SWAGGER_ENABLED || 'false') === 'true'
 
 export const AMQP_RADAR_DETECTION_APPLY_QUEUE = process.env.AMQP_RADAR_DETECTION_APPLY_QUEUE || 'radar-detection-apply'
-export const AMQP_COLLABORATION_RPC_QUEUE = process.env.AMQP_COLLABORATION_RPC_QUEUE || 'collaboration-rpc'
 export const AMQP_EVENT_QUEUE = process.env.AMQP_EVENT_QUEUE || 'event'
 export const AMQP_RADAR_EVENT_QUEUE = process.env.AMQP_RADAR_EVENT_QUEUE || 'radar-event'
 export const AMQP_DEBUG_SESSION_MOVE_S3_QUEUE = process.env.AMQP_DEBUG_SESSION_MOVE_S3_QUEUE || 'debug-session-move-s3'
-export const AMQP_NOTIFICATION_QUEUE = process.env.AMQP_NOTIFICATION_QUEUE || 'notification'
+// Store request/reply RPC queue (see src/store/remote/remote.store.ts,
+// src/store/leader-listener.ts) - only used when ANALYTICS_DB_ENGINE=duckdb.
+export const AMQP_STORE_RPC_QUEUE = process.env.AMQP_STORE_RPC_QUEUE || 'radar-duckdb-store-rpc'
 
+// Analytics store backend for detections/params/flows/otel traces & logs/rrweb events.
+// 'clickhouse' (default) keeps the existing behavior unchanged. 'duckdb' is a
+// lightweight, fully self-hosted alternative (see services/multiplayer-radar-service/src/store).
+export const ANALYTICS_DB_ENGINE = process.env.ANALYTICS_DB_ENGINE || 'clickhouse'
 
-export const CLICKHOUSE_OTEL_DB = process.env.CLICKHOUSE_OTEL_DB || 'otel'
-export const CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME = process.env.CLICKHOUSE_OTEL_METRICS_GAUGE_TABLE_NAME || 'otel_metrics_gauge'
-// export const CLICKHOUSE_OTEL_TRACES_NAME = process.env.CLICKHOUSE_OTEL_TRACES_NAME || 'otel_traces'
+// Only used when ANALYTICS_DB_ENGINE=duckdb. Must be on a persistent volume in any real
+// deployment - a container restart wipes this path otherwise. Multi-replica deployments
+// are coordinated via Redis leader election (see src/store/leader-election.ts): one
+// leader owns all DuckDB I/O, followers forward over AMQP_STORE_RPC_QUEUE.
+export const DUCKDB_FILE_PATH = process.env.DUCKDB_FILE_PATH || './data/radar.duckdb'
 
-export const CLICKHOUSE_RADAR_DB = process.env.CLICKHOUSE_RADAR_DB || 'radar'
-export const CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME = process.env.CLICKHOUSE_RADAR_DETECTIONS_TABLE_NAME || 'detections'
-export const CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME = process.env.CLICKHOUSE_RADAR_DETECTION_PARAMS_TABLE_NAME || 'detection_params'
-export const CLICKHOUSE_RADAR_FLOWS_TABLE_NAME = process.env.CLICKHOUSE_RADAR_FLOWS_TABLE_NAME || 'flows'
+// Store leader election (only active when ANALYTICS_DB_ENGINE=duckdb). Routing to the
+// leader goes entirely through AMQP_STORE_RPC_QUEUE by name - the lease value only
+// identifies who holds it, not where to reach them, so no replica address is needed.
+export const REDIS_STORE_LEADER_KEY = process.env.REDIS_STORE_LEADER_KEY || 'radar:duckdb:leader'
+export const STORE_LEADER_TTL_SECONDS = process.env.STORE_LEADER_TTL_SECONDS
+  ? Number(process.env.STORE_LEADER_TTL_SECONDS)
+  : 15
+export const STORE_LEADER_RENEW_INTERVAL_MS = process.env.STORE_LEADER_RENEW_INTERVAL_MS
+  ? Number(process.env.STORE_LEADER_RENEW_INTERVAL_MS)
+  : 5000
+// Must comfortably exceed the worst-case failover detection window (TTL + one renew
+// tick, ~20s with the defaults above) so an in-flight forward has a real chance to
+// succeed once a new leader takes over, rather than timing out first.
+export const STORE_FORWARD_TIMEOUT_MS = process.env.STORE_FORWARD_TIMEOUT_MS
+  ? Number(process.env.STORE_FORWARD_TIMEOUT_MS)
+  : 30_000
+export const STORE_FORWARD_S3_MOVE_TIMEOUT_MS = process.env.STORE_FORWARD_S3_MOVE_TIMEOUT_MS
+  ? Number(process.env.STORE_FORWARD_S3_MOVE_TIMEOUT_MS)
+  : 300_000
+
+// Only used when ANALYTICS_DB_ENGINE=duckdb. On graceful shutdown, the leader
+// checkpoints every not-yet-transferred session's data to S3 (see
+// checkpointActiveDebugSessionsToS3 in debug-session.worker.ts) before the process
+// exits, since DuckDB's local file is otherwise the only copy of in-progress session
+// data. Bounded so shutdown can't hang indefinitely on a large backlog - keep
+// comfortably under whatever terminationGracePeriodSeconds the deployment uses.
+export const SHUTDOWN_S3_CHECKPOINT_TIMEOUT_MS = process.env.SHUTDOWN_S3_CHECKPOINT_TIMEOUT_MS
+  ? Number(process.env.SHUTDOWN_S3_CHECKPOINT_TIMEOUT_MS)
+  : 25_000
+export const SHUTDOWN_S3_CHECKPOINT_CONCURRENCY = process.env.SHUTDOWN_S3_CHECKPOINT_CONCURRENCY
+  ? Number(process.env.SHUTDOWN_S3_CHECKPOINT_CONCURRENCY)
+  : 3
 
 export const CLICKHOUSE_DEBUG_SESSION_DB = process.env.CLICKHOUSE_DEBUG_SESSION_DB || 'debug_session'
 export const CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME || 'rrweb_events'
 export const CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME || 'otel_traces'
 export const CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME || 'otel_logs'
-
-export const CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_DB = process.env.CLICKHOUSE_DEBUG_SESSION_DB || 'continuous_debug_session'
-export const CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_RRWEB_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_RRWEB_TABLE_NAME || 'rrweb_events'
-export const CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_TRACES_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_TRACES_TABLE_NAME || 'otel_traces'
-export const CLICKHOUSE_CONTINUOUS_DEBUG_SESSION_LOGS_TABLE_NAME = process.env.CLICKHOUSE_DEBUG_SESSION_LOGS_TABLE_NAME || 'otel_logs'
 
 export const REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_PREFIX = process.env.REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_PREFIX || 'auto_merge:'
 export const REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_LOCK_PREFIX = process.env.REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_LOCK_PREFIX || 'auto_merge_lock:'
@@ -104,9 +134,9 @@ export const REDIS_CLIENT_ID_END_USER_TTL = process.env.REDIS_CLIENT_ID_END_USER
   ? Number(process.env.REDIS_CLIENT_ID_END_USER_TTL)
   : 1 * 60 // 1 minute
 
-export const VERSION_SERVICE_URI = process.env.VERSION_SERVICE_URI || 'http://localhost:3000/v0/version'
-export const INTERNAL_VERSION_SERVICE_URI = process.env.INTERNAL_VERSION_SERVICE_URI || 'http://localhost:3000/internal/v0/version'
-export const INTERNAL_GIT_SERVICE_URI = process.env.INTERNAL_GIT_SERVICE_URI || 'http://localhost:3000/internal/v0/git'
+export const API_SERVICE_URI = process.env.API_SERVICE_URI || 'http://localhost:3001/v0/api'
+export const INTERNAL_API_SERVICE_URI = process.env.INTERNAL_API_SERVICE_URI || 'http://localhost:3001/internal/v0/api'
+export const INTERNAL_COLLABORATION_SERVICE_URI = process.env.INTERNAL_COLLABORATION_SERVICE_URI || 'http://localhost:3002/internal/v0/collaboration'
 
 export const INTEGRATION_JWT_SECRET = process.env.INTEGRATION_JWT_SECRET || 'sample_jwt_secret'
 

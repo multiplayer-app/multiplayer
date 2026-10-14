@@ -36,7 +36,7 @@ ENV SERVICE_FOLDER=$SERVICE_FOLDER
 WORKDIR /app/${SERVICE_FOLDER}
 
 USER node
-COPY --from=builder /app /app
+COPY --chown=node:node --from=builder /app /app
 
 EXPOSE 3000
 CMD node ./dist/index.js

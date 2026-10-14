@@ -1,9 +1,9 @@
 import restify from 'restify-errors'
-import AMQP from '@multiplayer/amqp'
 import { IUserDocument, WorkspaceModel } from '@multiplayer/models'
 import type { Request, Response, NextFunction } from 'express'
 import { InternalServerError } from 'restify-errors'
-import { AMQP_NOTIFICATION_QUEUE } from '../config'
+import logger from '@multiplayer/logger'
+import { NotificationLib } from '../lib'
 
 const { RestError, HttpError } = restify
 
@@ -38,20 +38,15 @@ export default async (
       return next(err)
     }
 
-    await AMQP.publish(
-      AMQP_NOTIFICATION_QUEUE,
-      {
-        variables: {
-          template: 'NOTICE_LIMITS',
-          email: user.primaryEmail,
-          data: {
-            user,
-            limit: billingPlanLimitation,
-            workspace,
-          },
-        },
+    NotificationLib.sendNotification({
+      template: 'NOTICE_LIMITS',
+      email: user.primaryEmail,
+      data: {
+        user,
+        limit: billingPlanLimitation,
+        workspace,
       },
-    )
+    }).catch(err => logger.error(err, 'Failed to send NOTICE_LIMITS notification'))
 
     return next(err)
   } catch (_error) {

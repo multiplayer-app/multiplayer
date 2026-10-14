@@ -33,8 +33,7 @@
     "scripts",
     "migrations",
     "static",
-    "babel.config.js",
-    "newrelic.js"
+    "babel.config.js"
   ],
   "references": []
 }

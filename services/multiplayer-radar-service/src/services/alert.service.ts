@@ -20,7 +20,7 @@ import {
   AlertRuleFilterCondition,
 } from '@multiplayer/types'
 import durationToMs from 'duration-to-ms'
-import AMQP from '@multiplayer/amqp'
+import logger from '@multiplayer/logger'
 import {
   slugifyString,
   getNestedProperty,
@@ -31,7 +31,7 @@ import {
 } from 'restify-errors'
 import { AlertRulesCache } from '../cache'
 import * as MetricsService from './metrics.service'
-import { AMQP_NOTIFICATION_QUEUE } from '../config'
+import { InternalNotificationService } from './notification.internal.service'
 
 interface IAlertPayload {
   issue?: IIssueDocument | IIssue,
@@ -280,37 +280,43 @@ export const sendAlert = async (
 
     await Promise.all(alertRule.actions.map(async (action) => {
       if (action.type === AlertRuleActionType.SEND_SLACK_NOTIFICATION) {
-        const amqpMethod = test ? 'request' : 'publish'
+        const variables: SendNotificationMessage['variables'] = {
+          notificationType: 'SLACK',
 
-        return AMQP[amqpMethod](
-          AMQP_NOTIFICATION_QUEUE,
-          {
-            variables: {
-              notificationType: 'SLACK',
+          integration: action.integration,
+          slackChannelOptions: action.slack,
 
-              integration: action.integration,
-              slackChannelOptions: action.slack,
+          template: alertRule.conditions[0].type,
+          email: '',
+          data: {
+            ...payload,
+            spanCount: alertRule.conditions
+              .find(({ type }) => type === AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN)?.spanCount,
+            affectedEndUsersCount: alertRule.conditions
+              .find(({ type }) => type === AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN)?.affectedEndUsersCount,
+            project: project.toObject(),
+            workspace: workspace.toObject(),
+            slackChannelOptions: action.slack,
+            interval: alertRule.conditions
+              .find(({ type }) => [
+                AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN,
+                AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN,
+              ].includes(type))?.interval,
+          },
+        }
 
-              template: alertRule.conditions[0].type,
-              email: '',
-              data: {
-                ...payload,
-                spanCount: alertRule.conditions
-                  .find(({ type }) => type === AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN)?.spanCount,
-                affectedEndUsersCount: alertRule.conditions
-                  .find(({ type }) => type === AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN)?.affectedEndUsersCount,
-                project: project.toObject(),
-                workspace: workspace.toObject(),
-                slackChannelOptions: action.slack,
-                interval: alertRule.conditions
-                  .find(({ type }) => [
-                    AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN,
-                    AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN,
-                  ].includes(type))?.interval,
-              },
-            },
-          } as SendNotificationMessage,
-        )
+        const notificationService = new InternalNotificationService()
+
+        // `test` mode wants the caller (the "test this alert rule" endpoint) to see
+        // success/failure synchronously, same as the old AMQP.request round-trip did.
+        // Otherwise this is fired off, not awaited, same as the old AMQP.publish did.
+        if (test) {
+          return notificationService.sendNotification(variables)
+        }
+
+        notificationService.sendNotification(variables)
+          .catch(err => logger.error(err, '[ALERT] Failed to send Slack notification'))
+        return
       } else {
         throw new InvalidArgumentError('Invalid action type')
       }
