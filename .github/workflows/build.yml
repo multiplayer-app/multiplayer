@@ -429,7 +429,8 @@ jobs:
       matrix:
         env: [
             # staging,
-            production,
+            # production,
+            test,
           ]
     name: Deploy Frontend (${{ matrix.env }})
     environment: ${{ matrix.env }}
