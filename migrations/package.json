@@ -2,6 +2,7 @@
   "name": "multiplayer-mongo-migrations",
   "version": "1.0.0",
   "dependencies": {
-    "migrate-mongo": "11.0.0"
+    "migrate-mongo": "11.0.0",
+    "mongodb-connection-string-url": "3.0.2"
   }
 }

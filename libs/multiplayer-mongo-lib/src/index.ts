@@ -25,7 +25,7 @@ export const Config = _Config
 Mongoose.set('debug', _Config.MONGO_DEBUG)
 
 Mongoose.connection.on('connected', () => {
-  logger.info(`[MONGO] Connected to ${MONGODB_URI_MASKED}`)
+  logger.info(`[MONGO] Connected to ${MONGODB_URI_MASKED}, db: ${Mongoose.connection.name}`)
 })
 
 Mongoose.connection.on('error', error => {
@@ -54,10 +54,13 @@ const connect = async () => {
   const encryptionKeyId = await encryption.getKeyId()
 
   const options: ConnectOptions = {
+    dbName: _Config.MONGODB_DB_NAME,
     autoIndex: true,
     connectTimeoutMS: 10000,
     socketTimeoutMS: 25000,
     minPoolSize: 3,
+    // Fields are encrypted explicitly via `encryption.encrypt()`; the driver only auto-decrypts on read.
+    // schemaMap is ignored while bypassAutoEncryption is true - keep it in sync for enabling auto-encryption.
     autoEncryption: {
       bypassAutoEncryption: true,
       keyVaultNamespace: encryption.keyVaultNamespace,

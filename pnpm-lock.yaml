@@ -1203,6 +1203,9 @@ importers:
       mongodb-client-encryption:
         specifier: 6.2.0
         version: 6.2.0
+      mongodb-connection-string-url:
+        specifier: 3.0.2
+        version: 3.0.2
       mongoose:
         specifier: 8.10.1
         version: 8.10.1(@aws-sdk/credential-providers@3.750.0)(mongodb-client-encryption@6.2.0)(socks@2.8.9)

@@ -5,6 +5,7 @@
 | Variable name                                   | Description                              | Required | Default                                       |
 |-------------------------------------------------|------------------------------------------|----------|-----------------------------------------------|
 | `MONGODB_URI`                                   | Connection URI                           |   ✘      | `mongodb://localhost:27017/multiplayer`       |
+| `MONGODB_DB_NAME`                               | Database name, overrides the one in `MONGODB_URI` |   ✘      | database from `MONGODB_URI`, else `multiplayer` |
 | `MONGO_DEBUG`                                   | Enable mongoose debug mode               |   ✘      | `false`                                       |
 | `MONGODB_ENCRYPTION_KEY_VAULT_DB_NAME`          | Db name for encryption keys              |   ✘      | `encryption`                                  |
 | `MONGODB_ENCRYPTION_KEY_VAULT_COLLECTION_NAME`  | Collection name for encryption keys      |   ✘      | `__keyVault`                                  |

@@ -22,9 +22,10 @@
     "dependencies": {
         "@aws-sdk/credential-providers": "3.750.0",
         "@multiplayer/logger": "0.0.1",
+        "mongodb": "6.13.0",
         "mongodb-client-encryption": "6.2.0",
-        "mongoose": "8.10.1",
-        "mongodb": "6.13.0"
+        "mongodb-connection-string-url": "3.0.2",
+        "mongoose": "8.10.1"
     },
     "devDependencies": {
         "@types/node": "25.5.0",
