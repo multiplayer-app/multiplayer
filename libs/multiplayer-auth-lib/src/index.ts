@@ -15,6 +15,7 @@ export * as AccessControlContext from './access-control/context'
 export * as AccessControlEntities from './access-control/entities'
 export * as AccessControlRoleUtil from './access-control/role'
 export * as UserSessionHelper from './helpers/user-session.helper'
+export * as EmailDomainHelper from './helpers/email-domain.helper'
 export {
   socketCookieParser,
   socketExpressSession,

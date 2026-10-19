@@ -9,7 +9,9 @@ import {
 import {
   InvalidCredentialsError,
   InvalidArgumentError,
+  ForbiddenError,
 } from 'restify-errors'
+import { EmailDomainHelper } from '@multiplayer/auth'
 import passport from '../../../passport'
 import { autoAddWorkspace } from '../../../util'
 import { EmailService } from '../../../services'
@@ -73,6 +75,10 @@ export const githubCallback = async (req: Request, res: Response, next: NextFunc
                 return next(new InvalidCredentialsError(ErrorMessage.EMAIL_ALREADY_USED))
               }
             } else {
+              if (!EmailDomainHelper.isAllowed(email)) {
+                throw new ForbiddenError(ErrorMessage.EMAIL_DOMAIN_NOT_ALLOWED)
+              }
+
               const [firstName, lastName] = githubProfile?.displayName?.split(' ') || []
 
               user = await UserModel.createByGithubProfile(
@@ -90,6 +96,10 @@ export const githubCallback = async (req: Request, res: Response, next: NextFunc
               await autoAddWorkspace(user)
             }
           }
+        }
+
+        if (!EmailDomainHelper.isAllowed(user.primaryEmail)) {
+          throw new ForbiddenError(ErrorMessage.EMAIL_DOMAIN_NOT_ALLOWED)
         }
 
         if (!req.session.users?.find((userId) => user?._id.equals(userId))) {

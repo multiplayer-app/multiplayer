@@ -48,3 +48,10 @@ export const OAUTH_HEADER_NAME = (process.env.OAUTH_HEADER_NAME || 'Authorizatio
 export const CURRENT_USER_HEADER_NAME = (process.env.CURRENT_USER_HEADER_NAME || 'x-multiplayer-user').toLowerCase()
 
 export const INTEGRATION_JWT_SECRET = process.env.INTEGRATION_JWT_SECRET || 'sample_jwt_secret'
+
+// Comma-separated list of email domains allowed to sign in (e.g. `acme.com,acme.io`).
+// Empty means no restriction.
+export const ALLOWED_EMAIL_DOMAINS = (process.env.ALLOWED_EMAIL_DOMAINS || '')
+  .split(',')
+  .map(domain => domain.trim().toLowerCase().replace(/^@/, ''))
+  .filter(Boolean)

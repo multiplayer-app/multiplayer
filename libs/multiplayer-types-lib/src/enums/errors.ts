@@ -21,6 +21,7 @@ export enum ErrorMessage {
   INVALID_LINKING_USER_ID = 'Invalid linking user id.',
   EMAIL_ALREADY_USED = 'Email already used. Login and link accounts.',
   EMAIL_NOT_CONFIRMED = 'Email not confirmed',
+  EMAIL_DOMAIN_NOT_ALLOWED = 'Email domain is not allowed.',
   SESSION_NOT_FOUND = 'Session not found',
 
   NOT_AUTHORIZED = 'User is not authorized',

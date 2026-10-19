@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
+import { ForbiddenError } from 'restify-errors'
+import { EmailDomainHelper } from '@multiplayer/auth'
 import { UserModel, TokenModel, IUserDocument } from '@multiplayer/models'
-import { TokenTypeEnum } from '@multiplayer/types'
+import { TokenTypeEnum, ErrorMessage } from '@multiplayer/types'
 import logger from '@multiplayer/logger'
 import { autoAddWorkspace } from '../../../util'
 import { NotificationLib } from '../../../lib'
@@ -9,6 +11,10 @@ import { EmailService } from '../../../services'
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {
     const payload = req.body
+
+    if (!EmailDomainHelper.isAllowed(payload.email)) {
+      throw new ForbiddenError(ErrorMessage.EMAIL_DOMAIN_NOT_ALLOWED)
+    }
 
     let user = await UserModel.findByPrimaryEmail(payload.email)
 

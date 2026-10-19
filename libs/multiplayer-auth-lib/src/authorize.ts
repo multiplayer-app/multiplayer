@@ -28,6 +28,7 @@ import {
   IntegrationHelper,
   UserHelper,
   AccessHelper,
+  EmailDomainHelper,
 } from './helpers'
 import {
   AUTH_HEADER_NAME,
@@ -66,6 +67,10 @@ const authorize = ({
 
         if (!user) {
           return next(new UnauthorizedError(ErrorMessage.AUTH_FAILED))
+        }
+
+        if (!EmailDomainHelper.isAllowed(user.primaryEmail)) {
+          return next(new ForbiddenError(ErrorMessage.EMAIL_DOMAIN_NOT_ALLOWED))
         }
 
         if (onlySuperadmin && !user.superadmin) {
@@ -107,6 +112,14 @@ const authorize = ({
           if (!user) {
             return next(new UnauthorizedError(ErrorMessage.AUTH_FAILED))
           }
+
+          // Drop sessions created before the domain restriction was enabled
+          if (!EmailDomainHelper.isAllowed(user.primaryEmail)) {
+            session.users = session.users.filter(userId => userId !== currentUserId)
+            session.current = session.users[0]
+            return next(new UnauthorizedError(ErrorMessage.EMAIL_DOMAIN_NOT_ALLOWED))
+          }
+
           session.current = currentUserId
           req.user = user
         } else {

@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express'
 import logger from '@multiplayer/logger'
 import { ErrorMessage } from '@multiplayer/types'
 import { UserModel } from '@multiplayer/models'
+import { EmailDomainHelper } from '@multiplayer/auth'
 import { EmailService } from '../../../services'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
@@ -12,6 +13,10 @@ export default async (req: Request, res: Response, next: NextFunction) => {
       if (err || !user) {
         logger.error(err)
         return next(err)
+      }
+
+      if (!EmailDomainHelper.isAllowed(user.primaryEmail)) {
+        throw new ForbiddenError(ErrorMessage.EMAIL_DOMAIN_NOT_ALLOWED)
       }
 
       if (!user?.profiles?.local?.isEmailConfirmed) {

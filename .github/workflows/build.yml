@@ -213,7 +213,7 @@ jobs:
         id: docker_oidc
         uses: docker/oidc-action@v1
         with:
-          connection-id: ${{ secrets.DOCKERHUB_OIDC_ID }}
+          connection-id: ${{ vars.DOCKERHUB_OIDC_CONNECTIONID }}
 
       - name: Docker login
         uses: docker/login-action@v3
