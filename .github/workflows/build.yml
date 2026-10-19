@@ -518,7 +518,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4.0.1
         with:
           aws-region: us-east-1
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
 
       - name: Deploy to S3
         env:
