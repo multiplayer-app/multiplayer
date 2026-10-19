@@ -766,7 +766,7 @@ IssueEndUserSchema.index({
   unique: true,
 })
 
-IssueSchema.index(
+IssueEndUserSchema.index(
   {
     lastSeen: 1,
   },

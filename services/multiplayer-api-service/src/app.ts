@@ -30,8 +30,8 @@ import {
 } from './config'
 import { wellKnown } from './routes'
 
-mongo.connect().catch(() => {
-  logger.error('Error happened on initial Mongo connection. Exiting...')
+mongo.connect().catch(error => {
+  logger.error(error, 'Error happened on initial Mongo connection. Exiting...')
   process.exit(1)
 })
 AMQP.connect()
