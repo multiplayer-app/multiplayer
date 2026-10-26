@@ -329,7 +329,7 @@ CommentSchema.statics.updateCommentById = function (
       $set: _payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

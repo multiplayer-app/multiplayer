@@ -16,10 +16,10 @@
     "@multiplayer/mongo": "0.0.1",
     "@multiplayer/logger": "0.0.1",
     "@multiplayer/types": "0.0.1",
-    "dotenv": "16.3.1"
+    "dotenv": "18.0.8"
   },
   "devDependencies": {
     "@types/node": "25.5.0",
-    "typescript": "6.0.2"
+    "typescript": "7.0.2"
   }
 }

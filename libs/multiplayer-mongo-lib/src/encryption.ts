@@ -10,6 +10,7 @@ import {
   AWS_KMS_KEY_ARN,
   AWS_REGION,
 } from './config'
+import { runtimeAdapters } from './runtime-adapters'
 
 let dataKeyId
 
@@ -58,7 +59,7 @@ let clientEncryption: ClientEncryption
 
 export const connect = async () => {
   if (!unencryptedClient) {
-    unencryptedClient = await new MongoClient(MONGODB_URI).connect()
+    unencryptedClient = await new MongoClient(MONGODB_URI, { runtimeAdapters }).connect()
 
     unencryptedClient.on('connectionReady', () => {
       logger.info(`[MONGO] Unencrypted Client Connected to ${MONGODB_URI_MASKED}`)

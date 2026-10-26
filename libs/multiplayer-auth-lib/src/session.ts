@@ -1,6 +1,6 @@
 import type { Express, RequestHandler } from 'express'
 import session, { CookieOptions } from 'express-session'
-import RedisStore from 'connect-redis'
+import { RedisStore } from 'connect-redis'
 import * as redis from '@multiplayer/redis'
 import {
   COOKIE_DOMAIN,

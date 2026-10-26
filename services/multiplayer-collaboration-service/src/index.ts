@@ -56,8 +56,8 @@ const exitHandler = async (error: Error) => {
     await mongo.disconnect()
   }
   await kafkaProducer.disconnect()
-  await redisPubClient.disconnect()
-  await redisSubClient.disconnect()
+  await redisPubClient.destroy()
+  await redisSubClient.destroy()
   logger.info('Server shut down')
   process.removeListener('exit', exitHandler)
   process.exit()

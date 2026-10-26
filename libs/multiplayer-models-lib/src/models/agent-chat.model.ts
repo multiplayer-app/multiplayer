@@ -187,7 +187,7 @@ AgentChatSchema.statics.upsertAgentChat = function (payload: Partial<IAgentChat>
     payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -301,7 +301,7 @@ AgentChatSchema.statics.updateAgentChatById = function (
       $set: set,
       $unset: unset,
     },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   )
 }
 
@@ -330,7 +330,7 @@ AgentChatSchema.statics.finalizeAgentChatStatus = function (
       $set: { status },
       $unset: { respondBy: 1 },
     },
-    { new: false, runValidators: true },
+    { returnDocument: 'before', runValidators: true },
   )
 }
 
@@ -394,7 +394,7 @@ AgentChatSchema.statics.pushAttachedDebugSession = function (
   return this.findOneAndUpdate(
     { _id: new ObjectId(chatId) },
     { $addToSet: { 'metadata.attachedDebugSessions': { _id: new ObjectId(debugSessionId) } } },
-    { new: true },
+    { returnDocument: 'after' },
   )
 }
 
@@ -405,7 +405,7 @@ AgentChatSchema.statics.pullAttachedDebugSession = function (
   return this.findOneAndUpdate(
     { _id: new ObjectId(chatId) },
     { $pull: { 'metadata.attachedDebugSessions': { _id: new ObjectId(debugSessionId) } } },
-    { new: true },
+    { returnDocument: 'after' },
   )
 }
 
@@ -434,7 +434,7 @@ AgentChatSchema.statics.findChatsWithDebugSession = function (debugSessionId: st
 }
 
 AgentChatSchema.set('toJSON', {
-  transform: function (doc, ret, opt) {
+  transform: function (doc, ret: Record<string, any>, opt) {
     ret.id = ret._id
 
     return ret
@@ -442,7 +442,7 @@ AgentChatSchema.set('toJSON', {
 })
 
 AgentChatSchema.set('toObject', {
-  transform: function (doc, ret, opt) {
+  transform: function (doc, ret: Record<string, any>, opt) {
     ret.id = ret._id
 
     return ret

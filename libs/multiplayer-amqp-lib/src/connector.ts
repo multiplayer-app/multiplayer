@@ -13,13 +13,14 @@ import type {
   AssertExchangeOptions,
 } from './types'
 
-/* eslint-disable class-methods-use-this */
+
 class AmqpConnector extends EventEmitter {
   amqpUrl: string
   private _amqpUrlMasked: string
   connected: boolean
   connectOptions: ConnectOptions
-  connection: amqp.Connection | false
+  // amqplib's bundled types: connect() resolves to a ChannelModel (Connection is the low-level transport)
+  connection: amqp.ChannelModel | false
   channel: any
   forceDisconnect: boolean
   channels: any[]
@@ -147,7 +148,7 @@ class AmqpConnector extends EventEmitter {
    * @param {ConnectOptions} [options={}]
    * @returns {Promise<void>}
    */
-  // eslint-disable-next-line max-statements
+
   async connect (URL, options = {}) {
     this.amqpUrl = URL || this.amqpUrl
     this.amqpUrlMasked = this.amqpUrl
@@ -198,7 +199,7 @@ class AmqpConnector extends EventEmitter {
    * @param {ConnectOptions} [options={}]
    * @returns {Promise<void>}
    */
-  // eslint-disable-next-line max-statements
+
   async tryConnect (URL?: string, options = {}) {
     while (!this.connected) {
       await this.connect(URL, options)

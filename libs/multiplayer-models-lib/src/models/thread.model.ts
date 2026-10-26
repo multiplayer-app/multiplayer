@@ -230,7 +230,7 @@ ThreadSchema.statics.updateThreadById = function (
     },
     updateQuery,
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

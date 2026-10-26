@@ -171,7 +171,7 @@ FlowMetadataSchema.statics.createFlowMetadata = function (
     payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -330,7 +330,7 @@ FlowMetadataSchema.statics.updateFlowMetadataById = function (
     },
     updateQuery,
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -356,7 +356,7 @@ FlowMetadataSchema.statics.addFlowMetadataStarById = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -382,7 +382,7 @@ FlowMetadataSchema.statics.removeFlowMetadataStarById = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

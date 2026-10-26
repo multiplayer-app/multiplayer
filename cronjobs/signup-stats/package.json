@@ -32,11 +32,11 @@
       "@multiplayer/logger": "0.0.1",
       "@json2csv/plainjs": "7.0.1",
       "axios": "1.8.4",
-      "dotenv": "16.3.1",
+      "dotenv": "18.0.8",
       "form-data": "4.0.0"
   },
   "devDependencies": {
       "eslint": "10.1.0",
-      "typescript": "6.0.2"
+      "typescript": "7.0.2"
   }
 }

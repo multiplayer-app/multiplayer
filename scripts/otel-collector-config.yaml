@@ -146,6 +146,9 @@ processors:
         - attributes["http.target"] == "/jaeger/v1/traces"
         - attributes["http.target"] == "/v1/traces"
         - attributes["http.target"] == "/v1/logs"
+        - attributes["url.path"] == "/jaeger/v1/traces"
+        - attributes["url.path"] == "/v1/traces"
+        - attributes["url.path"] == "/v1/logs"
         - attributes["http.route"] == "/health"
         - attributes["http.route"] == "/healthz"
     logs:
@@ -162,6 +165,9 @@ processors:
         - attributes["http.target"] == "/jaeger/v1/traces"
         - attributes["http.target"] == "/v1/traces"
         - attributes["http.target"] == "/v1/logs"
+        - attributes["url.path"] == "/jaeger/v1/traces"
+        - attributes["url.path"] == "/v1/traces"
+        - attributes["url.path"] == "/v1/logs"
         - attributes["http.route"] == "/health"
         - attributes["http.route"] == "/healthz"
 
@@ -174,6 +180,9 @@ processors:
         - attributes["http.target"] == "/jaeger/v1/traces"
         - attributes["http.target"] == "/v1/traces"
         - attributes["http.target"] == "/v1/logs"
+        - attributes["url.path"] == "/jaeger/v1/traces"
+        - attributes["url.path"] == "/v1/traces"
+        - attributes["url.path"] == "/v1/logs"
         - attributes["http.route"] == "/health"
         - attributes["http.route"] == "/healthz"
     logs:
@@ -190,6 +199,9 @@ processors:
         - attributes["http.target"] == "/jaeger/v1/traces"
         - attributes["http.target"] == "/v1/traces"
         - attributes["http.target"] == "/v1/logs"
+        - attributes["url.path"] == "/jaeger/v1/traces"
+        - attributes["url.path"] == "/v1/traces"
+        - attributes["url.path"] == "/v1/logs"
         - attributes["http.route"] == "/health"
         - attributes["http.route"] == "/healthz"
 
@@ -208,6 +220,9 @@ processors:
         - attributes["http.target"] == "/jaeger/v1/traces"
         - attributes["http.target"] == "/v1/traces"
         - attributes["http.target"] == "/v1/logs"
+        - attributes["url.path"] == "/jaeger/v1/traces"
+        - attributes["url.path"] == "/v1/traces"
+        - attributes["url.path"] == "/v1/logs"
         - attributes["http.route"] == "/health"
         - attributes["http.route"] == "/healthz"
     logs:
@@ -224,6 +239,9 @@ processors:
         - attributes["http.target"] == "/jaeger/v1/traces"
         - attributes["http.target"] == "/v1/traces"
         - attributes["http.target"] == "/v1/logs"
+        - attributes["url.path"] == "/jaeger/v1/traces"
+        - attributes["url.path"] == "/v1/traces"
+        - attributes["url.path"] == "/v1/logs"
         - attributes["http.route"] == "/health"
         - attributes["http.route"] == "/healthz"
     logs:

@@ -81,12 +81,12 @@
     <<: *envs
 
 apps:
-  - name: app
+  - name: multiplayer-web-app
     <<: *common
     watch: false
     script: npm
     args: start
-    namespace: frontend
+    namespace: multiplayer
     cwd: ./clients/multiplayer-web-app
     env:
       <<: *envs
@@ -100,9 +100,9 @@ apps:
       REACT_APP_RADAR_PREFIX: /v0/radar
       REACT_APP_NOTEBOOK_PREFIX: /v0/api # will be changed to notebook when new service is supported
 
-  - name: api
+  - name: multiplayer-api
     <<: *common
-    namespace: back
+    namespace: multiplayer
     cwd: ./services/multiplayer-api-service
     # node_args: "--inspect=3500"
     env:
@@ -113,9 +113,9 @@ apps:
       API_PREFIX: /v0/api
       COMMIT_TIMEOUT_INTERVAL_MS: '10000'
 
-  - name: collaboration
+  - name: multiplayer-collaboration
     <<: *common
-    namespace: back
+    namespace: multiplayer
     cwd: ./services/multiplayer-collaboration-service
     env:
       <<: *envs
@@ -123,30 +123,9 @@ apps:
       OTEL_EXPORTER_OTLP_METRICS_PORT: 4003
       SWAGGER_ENABLED: true
 
-  # - name: directory
-  #   <<: *common
-  #   namespace: back
-  #   cwd: ./services/multiplayer-directory-service
-  #   env:
-  #     <<: *envs
-  #     PORT: 3004
-  #     SWAGGER_ENABLED: true
-  #     API_PREFIX: /v0/directory
-
-#  - name: notebook
-#    <<: *common
-#    namespace: back
-#    cwd: ./services/multiplayer-notebook-service
-#    env:
-#      <<: *envs
-#      PORT: 3008
-#      OTEL_EXPORTER_OTLP_METRICS_PORT: 4008
-#      SWAGGER_ENABLED: true
-#      API_PREFIX: /v0/notebook
-
-  - name: radar
+  - name: multiplayer-radar
     <<: *common
-    namespace: back
+    namespace: multiplayer
     cwd: ./services/multiplayer-radar-service
     # node_args: "--inspect=3500"
     env:
@@ -160,7 +139,7 @@ apps:
       OTLP_METRICS_ENABLED: true
       # LOG_LEVEL: info
 
-  - name: rebuild-services-watch
+  - name: multiplayer-rebuild-services-watch
     script: npx lerna watch --sort --scope={$(npx lerna list --all --parseable --toposort --long | grep libs | sed -E "s/[^:]+:([^:]+).+/\1/" | paste -d , -s -)} -- npx lerna run --scope=\$LERNA_PACKAGE_NAME build \&\& pm2 restart back
 
 

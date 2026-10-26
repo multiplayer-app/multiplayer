@@ -79,7 +79,7 @@ SessionNoteSchema.statics.updateSessionNote = function (
   return this.findOneAndUpdate(
     { session: sessionId },
     { $set: payload },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   )
 }
 

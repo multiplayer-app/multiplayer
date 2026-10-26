@@ -111,7 +111,7 @@ PlatformRelationSchema.statics.createPlatformRelation = function (payload: Omit<
     payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

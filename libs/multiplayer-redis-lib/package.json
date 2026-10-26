@@ -20,11 +20,11 @@
     ],
     "dependencies": {
       "@multiplayer/logger": "0.0.1",
-      "redis": "4.6.13"
+      "redis": "6.3.0"
     },
     "devDependencies": {
         "@types/node": "25.5.0",
         "eslint": "10.1.0",
-        "typescript": "6.0.2"
+        "typescript": "7.0.2"
     }
 }

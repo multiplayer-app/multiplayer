@@ -348,7 +348,7 @@ ProjectLinkSchema.statics.createProjectLink = async function (
     },
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
     },
   )
 }
@@ -369,7 +369,6 @@ ProjectLinkSchema.statics.updateManyLinks = async function (
       $unset: unset,
     },
     {
-      new: true,
       runValidators: true,
     },
   )
@@ -759,7 +758,7 @@ ProjectLinkSchema.statics.updateProjectLinkById = async function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -785,7 +784,7 @@ ProjectLinkSchema.statics.updateProjectLinkGitPath = async function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

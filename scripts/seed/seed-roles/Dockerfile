@@ -1,8 +1,8 @@
-ARG NODE_VERSION=24.13.1
+ARG NODE_VERSION=26.12.1
 
 FROM node:${NODE_VERSION}-bookworm-slim AS base
 ENV PNPM_HOME="/pnpm"
-RUN corepack enable
+RUN npm i -g corepack@0.36.0 && corepack enable
 RUN npm i -g turbo
 
 

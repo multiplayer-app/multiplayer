@@ -12,6 +12,7 @@ import { Blocknote,
 } from '@multiplayer/types'
 import { Readable } from 'stream'
 import logger from '@multiplayer/logger'
+import { OtelSemconv } from '@multiplayer/util'
 import StreamArray from 'stream-json/streamers/StreamArray'
 import { BlocknoteHelper, BlocknoteTemplates } from '@multiplayer/entity'
 import { DebugSessionService, VersionService } from '../../services'
@@ -85,7 +86,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
             .filter((node) => {
               return node.meta.StatusCode === 'STATUS_CODE_ERROR' ||
               node.meta['Events.Name'].includes('error') ||
-              Number.parseInt(node.meta.SpanAttributes['http.status_code']) >= 500 ||
+              Number.parseInt(OtelSemconv.getAttributeFromMap(node.meta.SpanAttributes, 'http.status_code')) >= 500 ||
               !node.meta.ParentSpanId
             }),
         ).map(minimizeNodeData)
@@ -283,10 +284,12 @@ function convertTraceToBlock(trace: ITraceData, authConfig: {
   value: string
 }[], existingEnv: Record<string, string>): { block: Blocknote.BlockElement, env: string[], envWithValues: Record<string, string> } | undefined {
   try {
-    if (trace.SpanKind !== '3' || !trace.SpanAttributes['http.method'] || trace.ParentSpanId)
+    const method = OtelSemconv.getAttributeFromMap(trace.SpanAttributes, 'http.method')
+
+    if (trace.SpanKind !== '3' || !method || trace.ParentSpanId)
       return undefined
 
-    const url = trace.SpanAttributes['http.url']
+    const url = OtelSemconv.getAttributeFromMap(trace.SpanAttributes, 'http.url')
     const urlParams = extractEnvFromUrl(url, existingEnv)
 
     const rawHeaders = getParsed(trace.SpanAttributes['multiplayer.http.request.headers'], {})
@@ -296,9 +299,9 @@ function convertTraceToBlock(trace: ITraceData, authConfig: {
       getParsed(trace.SpanAttributes['multiplayer.http.request.body'], undefined))
 
     const block = BlocknoteHelper.convertToRestApiBlock({
-      _globalName: `${toMethodName(trace.SpanAttributes['http.method'], url)}`,
+      _globalName: `${toMethodName(method, url)}`,
       url: urlParams.url,
-      method: trace.SpanAttributes['http.method'],
+      method,
       headers: headers.result,
       authentication: authConfig.map((config) => ({
         ...config,

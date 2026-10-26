@@ -16,6 +16,7 @@ import {
 } from '@multiplayer-app/session-recorder-node'
 import logger from '@multiplayer/logger'
 import { ObjectId } from '@multiplayer/mongo'
+import { OtelSemconv } from '@multiplayer/util'
 import {
   OtelSpanCh,
   OtelLogCh,
@@ -55,14 +56,10 @@ const sanitizeStacktraceFilenames = (stack?: string): string => {
   return String(stack).split('\n').map(line => line.replace(filenameRegex, '$2$3')).join('\n')
 }
 
-export const getAttributeValue = (
-  attributes: IKeyValue[] | undefined,
-  attributeName,
+const findAttributeValue = (
+  attributes: IKeyValue[],
+  attributeName: string,
 ): string | number | boolean | Uint8Array | undefined => {
-  if (!attributes) {
-    return undefined
-  }
-
   const attribute = attributes.find(({ key }) => key === attributeName)
 
   if (!attribute) {
@@ -73,6 +70,21 @@ export const getAttributeValue = (
 
 
   return attribute?.value?.[valueKey]
+}
+
+// Resolves legacy and stable semconv names interchangeably (see OtelSemconv).
+export const getAttributeValue = (
+  attributes: IKeyValue[] | undefined,
+  attributeName,
+): string | number | boolean | Uint8Array | undefined => {
+  if (!attributes) {
+    return undefined
+  }
+
+  return OtelSemconv.getAttribute(
+    key => findAttributeValue(attributes, key),
+    attributeName,
+  ) as string | number | boolean | Uint8Array | undefined
 }
 
 const traceIDToHexOrEmptyString = (id: string | Uint8Array): string => {
@@ -125,14 +137,14 @@ export const getExternalDependencyNameFromSpan = (
   }
 
   if ((span as OtelSpanCh).SpanAttributes) {
-    const dbSystem = (span as OtelSpanCh).SpanAttributes[SEMATTRS_DB_SYSTEM]
+    const dbSystem = OtelSemconv.getAttributeFromMap((span as OtelSpanCh).SpanAttributes, SEMATTRS_DB_SYSTEM)
 
     if (dbSystem) {
       return slugifyString((dbSystem as string).trim().toLowerCase())
     }
 
-    const rpcSystem = (span as OtelSpanCh).SpanAttributes[SEMATTRS_RPC_SYSTEM]
-    const rpcService = (span as OtelSpanCh).SpanAttributes[SEMATTRS_RPC_SERVICE]
+    const rpcSystem = OtelSemconv.getAttributeFromMap((span as OtelSpanCh).SpanAttributes, SEMATTRS_RPC_SYSTEM)
+    const rpcService = OtelSemconv.getAttributeFromMap((span as OtelSpanCh).SpanAttributes, SEMATTRS_RPC_SERVICE)
 
     if (rpcSystem || rpcService) {
       return slugifyString(`${rpcSystem}-${rpcService}`.trim().toLowerCase())
@@ -669,12 +681,12 @@ export const getIssueFromSpan = (
   const projectId = span.SpanAttributes[ATTR_MULTIPLAYER_PROJECT_ID]
 
   const serviceVersion = span.ResourceAttributes[SEMRESATTRS_SERVICE_VERSION]
-  const environmentName = span.ResourceAttributes[SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]
+  const environmentName = OtelSemconv.getAttributeFromMap(span.ResourceAttributes, SEMRESATTRS_DEPLOYMENT_ENVIRONMENT)
 
-  const httpMethod = span.SpanAttributes[SEMATTRS_HTTP_METHOD]
+  const httpMethod = OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_HTTP_METHOD)
   const httpRoute = normalizeString(span.SpanAttributes[SEMATTRS_HTTP_ROUTE])
-  const httpTarget = normalizeString(span.SpanAttributes[SEMATTRS_HTTP_TARGET])
-  const httpUrl = normalizeString(span.SpanAttributes[SEMATTRS_HTTP_URL])
+  const httpTarget = normalizeString(OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_HTTP_TARGET))
+  const httpUrl = normalizeString(OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_HTTP_URL))
   const customHash = span.SpanAttributes[ATTR_MULTIPLAYER_ISSUE_CUSTOM_HASH]
 
   const serviceName = span.ServiceName || span?.ResourceAttributes[SEMRESATTRS_SERVICE_NAME] || span?.SpanAttributes[SEMRESATTRS_SERVICE_NAME] || ''

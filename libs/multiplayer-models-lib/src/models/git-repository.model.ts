@@ -195,7 +195,7 @@ GitRepositorySchema.statics.createGitRepository = function (payload: any) {
     payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -372,7 +372,7 @@ GitRepositorySchema.statics.updateGitRepositoryById = function (
       $set: payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -390,7 +390,6 @@ GitRepositorySchema.statics.updateGitRepositoriesByGitId = function (
       $set: payload,
     },
     {
-      new: true,
       runValidators: true,
     },
   )

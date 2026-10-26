@@ -3,8 +3,11 @@ import Mongoose, { ConnectOptions } from 'mongoose'
 import logger from '@multiplayer/logger'
 import * as _Config from './config'
 import * as _encryption from './encryption'
+import { runtimeAdapters } from './runtime-adapters'
 
 export const encryption = _encryption
+
+export { runtimeAdapters }
 
 const MONGODB_URI_MASKED = _Config.MONGODB_URI?.replace(/:\/\/(.*):(.*)@/, '://***:***@')
 
@@ -59,6 +62,7 @@ const connect = async () => {
     connectTimeoutMS: 10000,
     socketTimeoutMS: 25000,
     minPoolSize: 3,
+    runtimeAdapters,
     // Fields are encrypted explicitly via `encryption.encrypt()`; the driver only auto-decrypts on read.
     // schemaMap is ignored while bypassAutoEncryption is true - keep it in sync for enabling auto-encryption.
     autoEncryption: {

@@ -317,7 +317,7 @@ EndUserSchema.statics.createEndUser = async function (
     _payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -619,7 +619,7 @@ EndUserSchema.statics.updateConditionalRecordingSettings = async function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -648,7 +648,6 @@ EndUserSchema.statics.bulkUpdateRemoteSessionRecordingSettings = async function 
       $unset: unset,
     },
     {
-      new: true,
       runValidators: true,
     },
   )
@@ -688,7 +687,7 @@ EndUserSchema.statics.upsertSocketIdToEndUserByHash = async function (
         },
       },
     },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   )
 
   if (endUser) {
@@ -716,7 +715,7 @@ EndUserSchema.statics.upsertSocketIdToEndUserByHash = async function (
         },
       },
     },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   )
 }
 
@@ -744,7 +743,7 @@ EndUserSchema.statics.upsertSocketIdToEndUserById = async function (
         },
       },
     },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   )
 
   if (endUser) {
@@ -771,7 +770,7 @@ EndUserSchema.statics.upsertSocketIdToEndUserById = async function (
         },
       },
     },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   )
 }
 
@@ -826,7 +825,7 @@ EndUserSchema.statics.updateEndUserStateBySocketId = async function (
         },
       },
     },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   )
 }
 
@@ -863,7 +862,7 @@ EndUserSchema.statics.incrementSessionRecordingsCount = async function (filter: 
         'conditionalRecordingSettings.sessionRecordingsCount': 1,
       },
     },
-    { new: true, runValidators: true },
+    { returnDocument: 'after', runValidators: true },
   )
 }
 

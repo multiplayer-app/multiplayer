@@ -75,7 +75,7 @@ EntityContentSchema.statics.createEntityContent = function (
     payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

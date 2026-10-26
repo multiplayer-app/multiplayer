@@ -263,7 +263,7 @@ VariableSchemaSchema.statics.updateVariableSchemaById = function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

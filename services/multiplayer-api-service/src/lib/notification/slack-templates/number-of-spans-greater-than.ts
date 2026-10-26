@@ -6,6 +6,7 @@ import {
   IWorkspace,
   IAlertRule,
 } from '@multiplayer/types'
+import { OtelSemconv } from '@multiplayer/util'
 import { buildIssueUrl } from './issue-url'
 import type {
   SectionBlock,
@@ -48,8 +49,8 @@ export default (
 
   const routeFromSpan = (span?.SpanAttributes as any)?.['http.route']
     || (span?.SpanAttributes as any)?.['express.name']
-    || (span?.SpanAttributes as any)?.['http.target']
-  const methodFromSpan = (span?.SpanAttributes as any)?.['http.method']
+    || OtelSemconv.getAttributeFromMap(span?.SpanAttributes, 'http.target')
+  const methodFromSpan = OtelSemconv.getAttributeFromMap(span?.SpanAttributes, 'http.method')
   const resolvedRoute = metadata?.httpRoute || routeFromSpan
   const resolvedMethod = metadata?.httpMethod || methodFromSpan
   const resolvedSpanKind = SPAN_KIND_MAP[span?.SpanKind ?? metadata?.spanKind] || 'Unknown'

@@ -244,7 +244,7 @@ RoleSchema.statics.updateRoleById = function (
       $set: payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

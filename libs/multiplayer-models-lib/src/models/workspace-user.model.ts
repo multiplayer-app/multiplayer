@@ -253,7 +253,7 @@ WorkspaceUserSchema.statics.updateWorkspaceUser = async function (
       $set: _payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
