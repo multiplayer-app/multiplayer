@@ -20,6 +20,8 @@ export type RuleFilterState = {
 };
 
 export type RuleActionState = {
+  // Lets the API keep the stored, write-only credentials of this action
+  _id?: string;
   type: AlertRuleActionType;
   integration?: string;
   slack: {
@@ -28,6 +30,25 @@ export type RuleActionState = {
     channelName?: string;
     notes?: string;
     tags?: string;
+  };
+  email: {
+    workspaceUsers: string[];
+  };
+  webhook: {
+    url: string;
+    // Write-only: left empty, the stored secret is kept
+    secret: string;
+    hasSecret?: boolean;
+  };
+  teams: {
+    // Write-only: left empty, the stored URL is kept
+    webhookUrl: string;
+    hasWebhookUrl?: boolean;
+  };
+  slackWebhook: {
+    // Write-only: left empty, the stored URL is kept
+    webhookUrl: string;
+    hasWebhookUrl?: boolean;
   };
 };
 

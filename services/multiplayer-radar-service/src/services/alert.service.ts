@@ -5,6 +5,9 @@ import {
   ProjectModel,
   WorkspaceModel,
   AlertHistoryModel,
+  IssueEndUserModel,
+  WorkspaceUserModel,
+  findStoredAction,
 } from '@multiplayer/models'
 import {
   IAlertRule,
@@ -12,15 +15,18 @@ import {
   AlertRuleConditionType,
   AlertRuleFilterType,
   AlertRuleActionType,
+  NotificationType,
   SendNotificationMessage,
   ErrorMessage,
   IIssue,
   IDebugSession,
   MetricName,
   AlertRuleFilterCondition,
+  WorkspaceUserStatus,
 } from '@multiplayer/types'
 import durationToMs from 'duration-to-ms'
 import logger from '@multiplayer/logger'
+import redis from '@multiplayer/redis'
 import {
   slugifyString,
   getNestedProperty,
@@ -30,6 +36,7 @@ import {
   NotFoundError,
 } from 'restify-errors'
 import { AlertRulesCache } from '../cache'
+import { REDIS_ALERT_THRESHOLD_COOLDOWN_PREFIX } from '../config'
 import * as MetricsService from './metrics.service'
 import { InternalNotificationService } from './notification.internal.service'
 
@@ -45,6 +52,51 @@ interface IAlertPayload {
     codeChanges?: { additions?: number, deletions?: number },
   },
   conditionType?: AlertRuleConditionType
+}
+
+// Conditions fired by an explicit issue state change rather than by an issue occurrence.
+const ISSUE_TRANSITION_CONDITION_TYPES: AlertRuleConditionType[] = [
+  AlertRuleConditionType.ISSUE_MARKED_AS_UNRESOLVED,
+  AlertRuleConditionType.ISSUE_UNARCHIVED,
+  AlertRuleConditionType.NEW_ISSUE_SEVERITY_MARKED_AS_HIGH,
+  AlertRuleConditionType.EXISTING_ISSUE_SEVERITY_MARKED_AS_HIGH,
+]
+
+const THRESHOLD_CONDITION_TYPES: AlertRuleConditionType[] = [
+  AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN,
+  AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN,
+]
+
+const MIN_THRESHOLD_COOLDOWN_SECONDS = 60
+
+const isInScope = (alertRule: IAlertRule, payload: IAlertPayload) => !(
+  (
+    alertRule?.scope?.componentName
+    && slugifyString(alertRule.scope.componentName) !== payload?.issue?.service.serviceNameSlug
+  ) || (
+    alertRule?.scope?.environmentName
+    && slugifyString(alertRule.scope.environmentName) !== payload?.issue?.service.environmentSlug
+  )
+)
+
+// A crossed threshold stays crossed for a while: alert once per rule, issue and interval rather
+// than on every following occurrence. Other conditions fire once per event by nature.
+const isOutOfThresholdCooldown = async (alertRule: IAlertRule, payload: IAlertPayload): Promise<boolean> => {
+  const thresholdConditions = alertRule.conditions.filter(({ type }) => THRESHOLD_CONDITION_TYPES.includes(type))
+
+  if (payload.conditionType || !thresholdConditions.length || !payload.issue?.componentHash) {
+    return true
+  }
+
+  const cooldownSeconds = Math.max(
+    MIN_THRESHOLD_COOLDOWN_SECONDS,
+    ...thresholdConditions.map(({ interval }) => Math.floor(durationToMs(interval || '') / 1000) || 0),
+  )
+
+  return redis.lockKey(
+    `${REDIS_ALERT_THRESHOLD_COOLDOWN_PREFIX}${alertRule._id}:${payload.issue.componentHash}`,
+    cooldownSeconds,
+  )
 }
 
 export const getAlertRules = async (
@@ -89,6 +141,14 @@ export const checkAlertRules = async (
   ) {
     throw new InvalidArgumentError('Issue is required')
   } else if (
+    payload.conditionType
+    && ISSUE_TRANSITION_CONDITION_TYPES.includes(payload.conditionType)
+  ) {
+    // State changes come from users/agents, so there is no span to attach
+    if (!payload.issue) {
+      throw new InvalidArgumentError('Issue is required')
+    }
+  } else if (
     payload.conditionType !== AlertRuleConditionType.SESSION_RECORDING_CREATED
     && payload.conditionType !== AlertRuleConditionType.DEBUGGING_AGENT_FIX_PUSHED
     && (
@@ -99,9 +159,15 @@ export const checkAlertRules = async (
     throw new InvalidArgumentError('Issue and span are required')
   }
 
-  let alertRules: IAlertRule[] = await getAlertRules(workspaceId, projectId)
+  // Thresholds are evaluated on occurrences only - a regression alert accompanies the
+  // occurrence alert for the same span and must not count it twice.
+  const isTransitionEvent = Boolean(payload.conditionType && ISSUE_TRANSITION_CONDITION_TYPES.includes(payload.conditionType))
 
-  alertRules = await Promise.all(alertRules.map(async (alertRule) => {
+  // Out-of-scope rules are dropped before their thresholds cost a query each
+  let alertRules: IAlertRule[] = (await getAlertRules(workspaceId, projectId))
+    .filter(alertRule => isInScope(alertRule, payload))
+
+  alertRules = isTransitionEvent ? alertRules : await Promise.all(alertRules.map(async (alertRule) => {
     alertRule.conditions = await Promise.all(alertRule.conditions.map(async (condition) => {
       if (
         condition.type === AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN
@@ -117,6 +183,18 @@ export const checkAlertRules = async (
           new Date(new Date().getTime() - durationToMs(condition.interval || '')),
           new Date(),
         )
+      } else if (
+        condition.type === AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN
+        && payload?.issue?.componentHash
+      ) {
+        const affectedEndUserHashes = await IssueEndUserModel.distinct('endUser.hash', {
+          workspace: workspaceId,
+          project: projectId,
+          'issue.componentHash': payload.issue.componentHash,
+          lastSeen: { $gte: new Date(new Date().getTime() - durationToMs(condition.interval || '')) },
+        })
+
+        condition.affectedEndUsersCount = affectedEndUserHashes.length
       }
 
       return condition
@@ -126,20 +204,6 @@ export const checkAlertRules = async (
   }))
 
   const matchingAlertRules = alertRules.filter((alertRule) => {
-    if (
-      alertRule?.scope?.componentName
-      && slugifyString(alertRule.scope.componentName) !== payload?.issue?.service.serviceNameSlug
-    ) {
-      return false
-    }
-
-    if (
-      alertRule?.scope?.environmentName
-      && slugifyString(alertRule.scope.environmentName) !== payload?.issue?.service.environmentSlug
-    ) {
-      return false
-    }
-
     const conditionFilter = alertRule.conditionOperator === 'ALL' ? 'every' : 'some'
 
     return alertRule.conditions[conditionFilter]((condition) => {
@@ -152,7 +216,19 @@ export const checkAlertRules = async (
         return true
       } else if (
         condition.type === AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN
+        && !isTransitionEvent
         && (condition.spanCount || 0) >= (Number(condition.value) || 0)
+      ) {
+        return true
+      } else if (
+        condition.type === AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN
+        && !isTransitionEvent
+        && (condition.affectedEndUsersCount || 0) >= (Number(condition.value) || 0)
+      ) {
+        return true
+      } else if (
+        ISSUE_TRANSITION_CONDITION_TYPES.includes(condition.type)
+        && payload.conditionType === condition.type
       ) {
         return true
       } else if (
@@ -231,6 +307,73 @@ export const checkAlertRules = async (
   return matchingAlertRules
 }
 
+type AlertRuleActions = IAlertRule['actions']
+type NotificationContent = Pick<SendNotificationMessage['variables'], 'template' | 'data'>
+
+// The notifications an alert action delivers (one per target); undefined for an unsupported type
+const buildNotifications = async (
+  workspaceId: string,
+  action: AlertRuleActions[number],
+  getStoredAction: () => Promise<AlertRuleActions[number] | undefined>,
+  content: NotificationContent,
+): Promise<SendNotificationMessage['variables'][] | undefined> => {
+  switch (action.type) {
+    case AlertRuleActionType.SEND_SLACK_NOTIFICATION:
+      return [{
+        notificationType: NotificationType.SLACK,
+        integration: action.integration,
+        slackChannelOptions: action.slack,
+        email: '',
+        ...content,
+        data: { ...content.data, slackChannelOptions: action.slack },
+      }]
+
+    case AlertRuleActionType.SEND_EMAIL_NOTIFICATION: {
+      const workspaceUsers = await WorkspaceUserModel.findWorkspaceUserByIds(action.email?.workspaceUsers || [])
+
+      // Only active members of this workspace receive alerts, whatever ids the rule holds
+      return workspaceUsers
+        .filter(workspaceUser => workspaceUser.status === WorkspaceUserStatus.ACTIVE
+          && String(workspaceUser.workspace) === String(workspaceId)
+          && (workspaceUser.user as any)?.primaryEmail)
+        .map(workspaceUser => ({
+          notificationType: NotificationType.EMAIL,
+          email: (workspaceUser.user as any).primaryEmail,
+          ...content,
+        }))
+    }
+
+    case AlertRuleActionType.SEND_WEBHOOK_NOTIFICATION: {
+      if (!action.webhook?.url) {
+        return []
+      }
+
+      const secret = action.webhook.secret || (await getStoredAction())?.webhook?.secret
+
+      return [{ notificationType: NotificationType.WEBHOOK, webhookOptions: { url: action.webhook.url, secret }, email: '', ...content }]
+    }
+
+    case AlertRuleActionType.SEND_TEAMS_NOTIFICATION: {
+      const webhookUrl = action.teams?.webhookUrl || (await getStoredAction())?.teams?.webhookUrl
+
+      return webhookUrl
+        ? [{ notificationType: NotificationType.TEAMS, teamsOptions: { webhookUrl }, email: '', ...content }]
+        : []
+    }
+
+    case AlertRuleActionType.SEND_SLACK_WEBHOOK_NOTIFICATION: {
+      const webhookUrl = action.slackWebhook?.webhookUrl || (await getStoredAction())?.slackWebhook?.webhookUrl
+
+      return webhookUrl
+        ? [{ notificationType: NotificationType.SLACK_WEBHOOK, slackWebhookOptions: { webhookUrl }, email: '', ...content }]
+        : []
+    }
+
+    default:
+      return undefined
+  }
+}
+
 export const sendAlert = async (
   workspaceId: string,
   projectId: string,
@@ -248,11 +391,20 @@ export const sendAlert = async (
 
     matchingAlertRules = [testingAlertRule]
   } else {
-    matchingAlertRules = await checkAlertRules(
+    const checkedAlertRules = await checkAlertRules(
       workspaceId,
       projectId,
       payload,
     )
+
+    matchingAlertRules = (await Promise.all(checkedAlertRules.map(async alertRule => (
+      await isOutOfThresholdCooldown(alertRule, payload) ? alertRule : undefined
+    )))).filter((alertRule): alertRule is IAlertRule => Boolean(alertRule))
+  }
+
+  // Most occurrences match no rule: the project and workspace are only needed to notify
+  if (!matchingAlertRules.length) {
+    return
   }
 
   const project = await ProjectModel.findProjectById(projectId)
@@ -267,58 +419,70 @@ export const sendAlert = async (
     throw new NotFoundError(ErrorMessage.WORKSPACE_NOT_FOUND)
   }
 
-  if (!matchingAlertRules.length) {
-    return
-  }
-
   return Promise.all(matchingAlertRules.map(async (alertRule) => {
     await AlertHistoryModel.createAlertHistory({
       workspace: workspaceId,
       project: projectId,
-      alertRule: matchingAlertRules[0]._id,
+      alertRule: alertRule._id,
     })
 
-    await Promise.all(alertRule.actions.map(async (action) => {
-      if (action.type === AlertRuleActionType.SEND_SLACK_NOTIFICATION) {
-        const variables: SendNotificationMessage['variables'] = {
-          notificationType: 'SLACK',
+    const content: NotificationContent = {
+      // State-change events render their own template; occurrences use the rule's first condition
+      template: payload.conditionType || alertRule.conditions[0].type,
+      data: {
+        ...payload,
+        spanCount: alertRule.conditions
+          .find(({ type }) => type === AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN)?.spanCount,
+        affectedEndUsersCount: alertRule.conditions
+          .find(({ type }) => type === AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN)?.affectedEndUsersCount,
+        project: project.toObject(),
+        workspace: workspace.toObject(),
+        alertRuleName: alertRule.name,
+        interval: alertRule.conditions
+          .find(({ type }) => [
+            AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN,
+            AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN,
+          ].includes(type))?.interval,
+      },
+    }
 
-          integration: action.integration,
-          slackChannelOptions: action.slack,
+    // Cached rules carry no credentials; load them once, and only if a channel needs them.
+    // The promise is memoized because the rule's actions are dispatched concurrently.
+    let storedActions: Promise<AlertRuleActions> | undefined
+    const getStoredAction = async (index: number) => {
+      storedActions ??= AlertRuleModel.findAlertRuleCredentials(alertRule._id, projectId, workspaceId)
+        .then(stored => stored?.actions || [])
 
-          template: alertRule.conditions[0].type,
-          email: '',
-          data: {
-            ...payload,
-            spanCount: alertRule.conditions
-              .find(({ type }) => type === AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN)?.spanCount,
-            affectedEndUsersCount: alertRule.conditions
-              .find(({ type }) => type === AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN)?.affectedEndUsersCount,
-            project: project.toObject(),
-            workspace: workspace.toObject(),
-            slackChannelOptions: action.slack,
-            interval: alertRule.conditions
-              .find(({ type }) => [
-                AlertRuleConditionType.NUMBER_OF_SPANS_IN_ISSUE_GREATER_THAN,
-                AlertRuleConditionType.NUMBER_OF_AFFECTED_END_USERS_IN_ISSUE_GREATER_THAN,
-              ].includes(type))?.interval,
-          },
-        }
+      return findStoredAction(alertRule.actions, index, await storedActions)
+    }
 
-        const notificationService = new InternalNotificationService()
+    await Promise.all(alertRule.actions.map(async (action, index) => {
+      const notifications = await buildNotifications(workspaceId, action, () => getStoredAction(index), content)
 
-        // `test` mode wants the caller (the "test this alert rule" endpoint) to see
-        // success/failure synchronously, same as the old AMQP.request round-trip did.
-        // Otherwise this is fired off, not awaited, same as the old AMQP.publish did.
+      if (!notifications) {
+        // An unsupported action must not abort the rule's other actions or the issue
+        // pipeline awaiting this alert; only the "test alert rule" endpoint surfaces it.
         if (test) {
-          return notificationService.sendNotification(variables)
+          throw new InvalidArgumentError('Invalid action type')
         }
 
-        notificationService.sendNotification(variables)
-          .catch(err => logger.error(err, '[ALERT] Failed to send Slack notification'))
+        logger.error({ alertRuleId: alertRule._id, actionType: action.type }, '[ALERT] Unsupported alert action type')
         return
-      } else {
-        throw new InvalidArgumentError('Invalid action type')
+      }
+
+      const notificationService = new InternalNotificationService()
+
+      // `test` mode wants the caller (the "test this alert rule" endpoint) to see
+      // success/failure synchronously, same as the old AMQP.request round-trip did.
+      // Otherwise this is fired off, not awaited, same as the old AMQP.publish did.
+      if (test) {
+        await Promise.all(notifications.map(variables => notificationService.sendNotification(variables)))
+        return
+      }
+
+      for (const variables of notifications) {
+        notificationService.sendNotification(variables)
+          .catch(err => logger.error(err, `[ALERT] Failed to send ${variables.notificationType} notification`))
       }
     }))
   },

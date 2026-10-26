@@ -3,6 +3,7 @@ import {
   Button,
   Flex,
   FormControl,
+  FormHelperText,
   FormLabel,
   Grid,
   GridItem,
@@ -15,22 +16,47 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { IntegrationTypeEnum } from "@multiplayer/types";
+import {
+  AlertRuleActionType,
+  IntegrationTypeEnum,
+  WorkspaceUserStatus,
+} from "@multiplayer/types";
 import { useAlertRules } from "shared/providers/AlertRulesContext";
+import { useWorkspaceUsers } from "shared/providers/WorkspaceContext";
 import useMessage from "shared/hooks/useMessage";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, FieldErrors, useForm } from "react-hook-form";
 import CreatableSelect from "shared/components/CreatableSelect";
+import MultiSelect from "shared/components/MultiSelect";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useIntegrations } from "shared/providers/IntegrationsContext";
 import { testAlertRuleAction } from "shared/services/radar.service";
-import { ENVIRONMENT_OPTIONS, CONDITION_LABELS } from "../alertRules.constants";
+import {
+  ENVIRONMENT_OPTIONS,
+  CONDITION_LABELS,
+  ACTION_TYPE_LABELS,
+} from "../alertRules.constants";
 import {
   createEmptyRule,
   mapRuleToForm,
   buildPayload,
+  buildActionPayload,
 } from "../alertRules.utils";
 import { alertRuleSchema } from "../alertRules.schema";
 import { RuleFormState } from "../alertRules.types";
+
+// First validation message in a nested react-hook-form errors object. `ref` holds the
+// field's DOM element and is never descended into.
+const firstErrorMessage = (
+  errors: FieldErrors | undefined,
+): string | undefined => {
+  for (const [key, error] of Object.entries(errors || {})) {
+    if (key === "ref" || !error || typeof error !== "object") continue;
+    if (typeof error.message === "string") return error.message;
+    const nested = firstErrorMessage(error as FieldErrors);
+    if (nested) return nested;
+  }
+  return undefined;
+};
 
 interface AlertRuleProps {
   mode: "create" | "edit";
@@ -50,6 +76,7 @@ const AlertRule = ({ mode, ruleId, onClose, onSaved }: AlertRuleProps) => {
     setProjectId,
   } = useAlertRules();
   const { projects, integrations } = useIntegrations();
+  const workspaceUsers = useWorkspaceUsers();
   const [loading, setLoading] = useState(mode !== "create");
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -111,7 +138,27 @@ const AlertRule = ({ mode, ruleId, onClose, onSaved }: AlertRuleProps) => {
     setSelectedProjectId(projectId ?? "");
   }, [projectId]);
 
+  const memberOptions = useMemo(
+    () =>
+      Object.values(workspaceUsers)
+        .filter((member) => member.status === WorkspaceUserStatus.ACTIVE)
+        .map((member) => {
+          const name =
+            [member.firstName, member.lastName].filter(Boolean).join(" ") ||
+            member.username;
+          return {
+            label: member.primaryEmail ? `${name} (${member.primaryEmail})` : name,
+            value: member._id,
+          };
+        }),
+    [workspaceUsers],
+  );
+
   const watchedName = watch("name");
+  const actionType = watch("actions.0.type");
+  const hasWebhookSecret = watch("actions.0.webhook.hasSecret");
+  const hasTeamsWebhookUrl = watch("actions.0.teams.hasWebhookUrl");
+  const hasSlackWebhookUrl = watch("actions.0.slackWebhook.hasWebhookUrl");
   const canSubmit = !!projectId && !!watchedName?.trim() && !saving;
 
   const onSubmit = async (values: RuleFormState) => {
@@ -133,6 +180,12 @@ const AlertRule = ({ mode, ruleId, onClose, onSaved }: AlertRuleProps) => {
     }
   };
 
+  const onInvalid = (errors: FieldErrors<RuleFormState>) => {
+    message.handleError({
+      message: firstErrorMessage(errors) || "Please check the notification rule",
+    });
+  };
+
   const handleTestNotification = async () => {
     if (!workspaceId || !projectId || !ruleId) return;
 
@@ -146,8 +199,12 @@ const AlertRule = ({ mode, ruleId, onClose, onSaved }: AlertRuleProps) => {
 
     try {
       setTesting(true);
-      const { _id, ...action } = actions[0] as any;
-      await testAlertRuleAction(workspaceId, projectId, ruleId, action);
+      await testAlertRuleAction(
+        workspaceId,
+        projectId,
+        ruleId,
+        buildActionPayload(actions[0]),
+      );
       message.success("Test notification sent successfully!");
     } catch (err) {
       message.handleError(err);
@@ -263,35 +320,164 @@ const AlertRule = ({ mode, ruleId, onClose, onSaved }: AlertRuleProps) => {
             </FormControl>
 
             <FormControl>
-              <FormLabel fontSize="sm">Slack Workspace</FormLabel>
-              <Input
-                size="sm"
-                value={slackTeamName}
-                isReadOnly
-                bg="bg.subtle"
-                cursor="default"
-                _focus={{ boxShadow: "none" }}
-              />
+              <FormLabel fontSize="sm">Notify via</FormLabel>
+              <Select size="sm" {...register("actions.0.type")}>
+                {Object.entries(ACTION_TYPE_LABELS).map(([value, label]) => (
+                  <option
+                    key={value}
+                    value={value}
+                    disabled={
+                      value === AlertRuleActionType.SEND_SLACK_NOTIFICATION &&
+                      !slackIntegration &&
+                      actionType !== value
+                    }
+                  >
+                    {label}
+                  </option>
+                ))}
+              </Select>
             </FormControl>
 
-            <FormControl>
-              <FormLabel fontSize="sm">Channel</FormLabel>
-              <Flex gap={2} alignItems="center">
+            {actionType === AlertRuleActionType.SEND_SLACK_NOTIFICATION && (
+              <>
+                <FormControl>
+                  <FormLabel fontSize="sm">Slack Workspace</FormLabel>
+                  <Input
+                    size="sm"
+                    value={slackTeamName}
+                    isReadOnly
+                    bg="bg.subtle"
+                    cursor="default"
+                    _focus={{ boxShadow: "none" }}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel fontSize="sm">Channel</FormLabel>
+                  <Flex gap={2} alignItems="center">
+                    <Input
+                      size="sm"
+                      placeholder="Channel ID"
+                      {...register("actions.0.slack.channelId")}
+                    />
+                    <Text fontSize="sm" color="muted" flexShrink={0}>
+                      or
+                    </Text>
+                    <Input
+                      size="sm"
+                      placeholder="Channel Name"
+                      {...register("actions.0.slack.channelName")}
+                    />
+                  </Flex>
+                </FormControl>
+              </>
+            )}
+
+            {actionType === AlertRuleActionType.SEND_EMAIL_NOTIFICATION && (
+              <FormControl>
+                <FormLabel fontSize="sm">Recipients</FormLabel>
+                <Controller
+                  name="actions.0.email.workspaceUsers"
+                  control={control}
+                  render={({ field }) => (
+                    <MultiSelect
+                      // MultiSelect reads its options once; remount when members load
+                      key={memberOptions.length}
+                      searchable
+                      options={memberOptions}
+                      selection={memberOptions.filter((option) =>
+                        (field.value || []).includes(option.value),
+                      )}
+                      setSelection={(selection) =>
+                        field.onChange(selection.map(({ value }) => value))
+                      }
+                      placeholder="Select workspace members"
+                    />
+                  )}
+                />
+                <FormHelperText fontSize="xs">
+                  Active workspace members receive the alert at their primary
+                  email address.
+                </FormHelperText>
+              </FormControl>
+            )}
+
+            {actionType === AlertRuleActionType.SEND_WEBHOOK_NOTIFICATION && (
+              <>
+                <FormControl>
+                  <FormLabel fontSize="sm">Webhook URL</FormLabel>
+                  <Input
+                    size="sm"
+                    placeholder="https://example.com/multiplayer-alerts"
+                    {...register("actions.0.webhook.url")}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel fontSize="sm">Signing secret</FormLabel>
+                  <Input
+                    size="sm"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder={
+                      hasWebhookSecret
+                        ? "Configured - leave empty to keep it"
+                        : "Optional, 16 characters or more"
+                    }
+                    {...register("actions.0.webhook.secret")}
+                  />
+                  <FormHelperText fontSize="xs">
+                    Deliveries are signed: X-Multiplayer-Signature is
+                    &quot;sha256=&quot; + HMAC-SHA256(secret,
+                    X-Multiplayer-Timestamp + &quot;.&quot; + body).
+                  </FormHelperText>
+                </FormControl>
+              </>
+            )}
+
+            {actionType ===
+              AlertRuleActionType.SEND_SLACK_WEBHOOK_NOTIFICATION && (
+              <FormControl>
+                <FormLabel fontSize="sm">Slack webhook URL</FormLabel>
                 <Input
                   size="sm"
-                  placeholder="Channel ID"
-                  {...register("actions.0.slack.channelId")}
+                  type="password"
+                  autoComplete="off"
+                  placeholder={
+                    hasSlackWebhookUrl
+                      ? "Configured - leave empty to keep it"
+                      : "https://hooks.slack.com/services/..."
+                  }
+                  {...register("actions.0.slackWebhook.webhookUrl")}
                 />
-                <Text fontSize="sm" color="muted" flexShrink={0}>
-                  or
-                </Text>
+                <FormHelperText fontSize="xs">
+                  Create an incoming webhook for the channel in your Slack app
+                  settings (Incoming Webhooks) and paste its URL. No Slack
+                  integration is needed.
+                </FormHelperText>
+              </FormControl>
+            )}
+
+            {actionType === AlertRuleActionType.SEND_TEAMS_NOTIFICATION && (
+              <FormControl>
+                <FormLabel fontSize="sm">Teams Workflows webhook URL</FormLabel>
                 <Input
                   size="sm"
-                  placeholder="Channel Name"
-                  {...register("actions.0.slack.channelName")}
+                  type="password"
+                  autoComplete="off"
+                  placeholder={
+                    hasTeamsWebhookUrl
+                      ? "Configured - leave empty to keep it"
+                      : "https://...logic.azure.com/workflows/..."
+                  }
+                  {...register("actions.0.teams.webhookUrl")}
                 />
-              </Flex>
-            </FormControl>
+                <FormHelperText fontSize="xs">
+                  In the Teams channel, add the &quot;Post to a channel when a
+                  webhook request is received&quot; workflow and paste its URL.
+                </FormHelperText>
+              </FormControl>
+            )}
           </Stack>
         )}
       </Box>
@@ -320,7 +506,7 @@ const AlertRule = ({ mode, ruleId, onClose, onSaved }: AlertRuleProps) => {
         )}
         <Button
           colorScheme="blue"
-          onClick={rhfHandleSubmit(onSubmit)}
+          onClick={rhfHandleSubmit(onSubmit, onInvalid)}
           isDisabled={!canSubmit}
           isLoading={saving}
         >

@@ -14,7 +14,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
     const projectId = req.params.projectId as string
     const alertRuleId = req.params.alertRuleId as string
 
-    const alertRule = await AlertRuleModel.findAlertRuleById(alertRuleId)
+    const alertRule = await AlertRuleModel.findAlertRuleByIdAndProjectAndWorkspace(alertRuleId, projectId, workspaceId)
 
     if (!alertRule) {
       throw new NotFoundError(ErrorMessage.ALERT_RULE_NOT_FOUND)

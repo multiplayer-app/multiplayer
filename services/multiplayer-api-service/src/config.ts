@@ -17,6 +17,9 @@ export const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@multiplayer.a
 
 export const FROM_EMAIL = process.env.FROM_EMAIL || 'no-reply@multiplayer.app'
 export const POSTMARK_API_TOKEN = process.env.POSTMARK_API_TOKEN as string || '{{POSTMARK_API_TOKEN}}'
+// Local development and tests only: lets alert webhooks/Teams reach http and private network
+// targets. Leave unset in any deployed environment - it disables the SSRF protection.
+export const NOTIFICATION_ALLOW_PRIVATE_NETWORK = process.env.NOTIFICATION_ALLOW_PRIVATE_NETWORK === 'true'
 export const SPARKPOST_API_TOKEN = process.env.SPARKPOST_API_TOKEN as string
 export const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY as string
 export const MANDRILL_API_KEY = process.env.SENDGRID_API_KEY as string

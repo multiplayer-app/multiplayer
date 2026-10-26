@@ -25,7 +25,7 @@
         "mongodb": "7.7.0",
         "mongodb-client-encryption": "7.2.1",
         "mongodb-connection-string-url": "7.0.2",
-        "mongoose": "9.11.2"
+        "mongoose": "9.11.4"
     },
     "devDependencies": {
         "@types/node": "25.5.0",

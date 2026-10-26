@@ -862,6 +862,9 @@ export class AgentNamespaceHandler {
         },
       )
 
+      await IssueService.resetOccurrenceThrottle(socket.data.workspaceId, socket.data.projectId, componentHash)
+        .catch(err => logger.error(err, { componentHash }, '[WS_AGENT_HANDLER] Failed to reset issue occurrence throttle'))
+
       const update: Partial<IAgentChat> = {
         status: AgentChatStatus.Finished,
         git: {

@@ -6,6 +6,47 @@ import {
   AlertRuleFilterCondition,
 } from '@multiplayer/types'
 
+// Slack incoming webhooks, including GovSlack
+const slackWebhookUrl = Joi.string()
+  .uri({ scheme: ['https'] })
+  .max(2048)
+  .pattern(/^https:\/\/hooks\.slack(-gov)?\.com\//, 'Slack incoming webhook URL')
+
+// Fields of the email / webhook / Teams / Slack webhook alert actions. Credentials are write-only: required when a
+// rule is created, optional afterwards (an edit that omits them keeps the stored value).
+const channelActionFields = ({ requireCredentials }: { requireCredentials: boolean }) => {
+  const requiredFor = (type: AlertRuleActionType) => ({ is: type, then: Joi.required(), otherwise: Joi.forbidden() })
+
+  return {
+    // Identifies the stored action whose credentials an edit or test keeps
+    ...requireCredentials ? {} : { _id: Joi.string().hex().length(24) },
+
+    email: Joi.object({
+      workspaceUsers: Joi.array().items(Joi.string().hex().length(24)).min(1).max(100).required(),
+    }).when('type', requiredFor(AlertRuleActionType.SEND_EMAIL_NOTIFICATION)),
+
+    webhook: Joi.object({
+      url: Joi.string().uri({ scheme: ['https'] }).max(2048).required(),
+      secret: Joi.string().min(16).max(256),
+      hasSecret: Joi.any().strip(),
+    }).when('type', requiredFor(AlertRuleActionType.SEND_WEBHOOK_NOTIFICATION)),
+
+    teams: Joi.object({
+      webhookUrl: requireCredentials
+        ? Joi.string().uri({ scheme: ['https'] }).max(4096).required()
+        : Joi.string().uri({ scheme: ['https'] }).max(4096),
+      hasWebhookUrl: Joi.any().strip(),
+    }).when('type', requiredFor(AlertRuleActionType.SEND_TEAMS_NOTIFICATION)),
+
+    slackWebhook: Joi.object({
+      webhookUrl: requireCredentials
+        ? slackWebhookUrl.required()
+        : slackWebhookUrl,
+      hasWebhookUrl: Joi.any().strip(),
+    }).when('type', requiredFor(AlertRuleActionType.SEND_SLACK_WEBHOOK_NOTIFICATION)),
+  }
+}
+
 
 export const listAlertRulesSchema = Joi.object({
   params: Joi.object({
@@ -84,6 +125,8 @@ export const createAlertRuleSchema = Joi.object({
           notes: Joi.string().max(500),
           tags: Joi.string().max(200),
         }),
+
+        ...channelActionFields({ requireCredentials: true }),
       }),
     )
       .min(1)
@@ -145,6 +188,8 @@ export const updateAlertRuleSchema = Joi.object({
           notes: Joi.string().max(500),
           tags: Joi.string().max(200),
         }),
+
+        ...channelActionFields({ requireCredentials: false }),
       }),
     ).min(1),
   }).required(),
@@ -177,5 +222,7 @@ export const runAlertRuleActionTestSchema = Joi.object({
       notes: Joi.string().max(500).allow('', null),
       tags: Joi.string().max(200).allow('', null),
     }),
+
+    ...channelActionFields({ requireCredentials: false }),
   }).required(),
 })

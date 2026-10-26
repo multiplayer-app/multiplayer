@@ -1,11 +1,11 @@
 import redis from '@multiplayer/redis'
 import {
-  REDIS_ALER_RULES_CACHE_PREFIX,
-  REDIS_ALER_RULES_CACHE_TTL,
+  REDIS_ALERT_RULES_CACHE_PREFIX,
+  REDIS_ALERT_RULES_CACHE_TTL,
 } from '../config'
 import { IAlertRule } from '@multiplayer/types'
 
-const getKey = (projectId: string) => `${REDIS_ALER_RULES_CACHE_PREFIX}${projectId}`
+const getKey = (projectId: string) => `${REDIS_ALERT_RULES_CACHE_PREFIX}${projectId}`
 
 export const get = async (
   projectId: string,
@@ -22,7 +22,7 @@ export const set = async (
   await redis.set(
     getKey(projectId),
     payload,
-    REDIS_ALER_RULES_CACHE_TTL,
+    REDIS_ALERT_RULES_CACHE_TTL,
   )
 }
 

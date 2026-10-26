@@ -1,0 +1,71 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" lang="en">
+
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+  <meta name="x-apple-disable-message-reformatting" />
+</head>
+<div style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0">{{ headline }}: {{ title }}</div>
+
+<body
+  style="background-color:#FAFBFB;padding:16px;margin:0 auto;font-family:-apple-system, BlinkMacSystemFont, &#x27;Segoe UI&#x27;, &#x27;Roboto&#x27;, &#x27;Oxygen&#x27;, &#x27;Ubuntu&#x27;, &#x27;Cantarell&#x27;, &#x27;Fira Sans&#x27;, &#x27;Droid Sans&#x27;, &#x27;Helvetica Neue&#x27;, sans-serif">
+  <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation"
+    style="max-width:600px;margin:0 auto;background-color:#FAFBFB">
+    <tbody>
+      <tr style="width:100%">
+        <td>
+          <table align="center" width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation"
+            style="margin-top:44px;margin-bottom:44px">
+            <tbody>
+              <tr>
+                <td><img alt="Multiplayer" height="32" src="https://assets.multiplayer.app/email/logo.png"
+                    style="display:block;outline:none;border:none;text-decoration:none" width="144" />
+                  <p style="font-size:12px;line-height:normal;margin:30px 0 0;color:#E01E5A;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
+                    {{ headline }}</p>
+                  <h1
+                    style="color:#2D3748;font-size:22px;text-align:left;font-weight:500;margin:8px 0 16px;padding:0;line-height:normal;word-break:break-word">
+                    {{ title }}</h1>
+                  {{#if summary}}
+                  <p style="font-size:14px;line-height:normal;margin:16px 0;color:#5D5D8F;text-align:left;font-weight:400">
+                    {{ summary }}</p>
+                  {{/if}}
+                  <table width="100%" border="0" cellPadding="0" cellSpacing="0" role="presentation"
+                    style="margin:16px 0;border:1px solid #eaeaea;border-radius:8px;background-color:#ffffff">
+                    <tbody>
+                      {{#if project}}
+                      <tr>
+                        <td style="padding:8px 12px;font-size:13px;color:#5D5D8F;width:30%;vertical-align:top">Project</td>
+                        <td style="padding:8px 12px;font-size:13px;color:#2D3748;word-break:break-word">{{ project.name }}</td>
+                      </tr>
+                      {{/if}}
+                      {{#each facts}}
+                      <tr>
+                        <td style="padding:8px 12px;font-size:13px;color:#5D5D8F;width:30%;vertical-align:top;border-top:1px solid #f1f1f1">{{ name }}</td>
+                        <td style="padding:8px 12px;font-size:13px;color:#2D3748;word-break:break-word;border-top:1px solid #f1f1f1">{{ value }}</td>
+                      </tr>
+                      {{/each}}
+                    </tbody>
+                  </table>
+                  {{#each links}}
+                  <a href="{{ url }}"
+                    style="line-height:100%;text-decoration:none;display:block;max-width:100%;mso-padding-alt:0px;background-color:#473CFB;border-radius:8px;color:#ffffff;font-size:14px;text-align:center;border:1px solid rgba(0, 0, 0, 0.06);padding:10px 10px 10px 10px;margin:8px 0;box-shadow:0px 1px 2px 0px rgba(0, 0, 0, 0.05)"
+                    target="_blank"><span
+                      style="max-width:100%;display:inline-block;line-height:120%;mso-padding-alt:0px;mso-text-raise:7.5px">{{ title }}</span></a>
+                  {{/each}}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <hr style="width:100%;border:none;border-top:1px solid #eaeaea" />
+          <p style="font-size:12px;line-height:15px;margin:16px 0;color:#b7b7b7;text-align:left">You received this
+            email because an alert rule{{#if alertRuleName}} ({{ alertRuleName }}){{/if}} in the {{ workspace.name }}
+            workspace notifies you. Alert rules are managed in workspace settings.<br /><br />©Multiplayer Software, Inc.
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>

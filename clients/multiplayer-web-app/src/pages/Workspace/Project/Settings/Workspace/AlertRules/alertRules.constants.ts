@@ -1,4 +1,5 @@
 import {
+  AlertRuleActionType,
   AlertRuleConditionType,
   AlertRuleFilterType,
 } from "@multiplayer/types";
@@ -36,7 +37,21 @@ export const CONDITION_LABELS: Partial<Record<AlertRuleConditionType, string>> =
     [AlertRuleConditionType.SESSION_RECORDING_CREATED]:
       "Session Recording created",
     [AlertRuleConditionType.ISSUE_UNARCHIVED]: "Issue unarchived",
+    [AlertRuleConditionType.ISSUE_MARKED_AS_UNRESOLVED]:
+      "Resolved issue occurred again or was reopened",
+    [AlertRuleConditionType.NEW_ISSUE_SEVERITY_MARKED_AS_HIGH]:
+      "New issue triaged as high severity",
+    [AlertRuleConditionType.EXISTING_ISSUE_SEVERITY_MARKED_AS_HIGH]:
+      "Issue severity raised to high",
   };
+
+export const ACTION_TYPE_LABELS: Record<AlertRuleActionType, string> = {
+  [AlertRuleActionType.SEND_SLACK_NOTIFICATION]: "Slack",
+  [AlertRuleActionType.SEND_SLACK_WEBHOOK_NOTIFICATION]: "Slack (incoming webhook)",
+  [AlertRuleActionType.SEND_EMAIL_NOTIFICATION]: "Email",
+  [AlertRuleActionType.SEND_TEAMS_NOTIFICATION]: "Microsoft Teams",
+  [AlertRuleActionType.SEND_WEBHOOK_NOTIFICATION]: "Webhook",
+};
 
 export const FILTER_LABELS: Record<AlertRuleFilterType, string> = {
   [AlertRuleFilterType.ISSUE_OLDER_THAN]: "older",

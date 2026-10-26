@@ -5,17 +5,17 @@ import { ProjectModel } from '@multiplayer/models'
 import { ProjectCache } from '../cache'
 
 export const getProject = async (projectId: string): Promise<IProject> => {
-  let project: IProject | undefined = await ProjectCache.get(projectId)
+  const cachedProject: IProject | undefined = await ProjectCache.get(projectId)
 
-
-  if (!project) {
-    project = (await ProjectModel.findProjectById(projectId))?.toObject()
+  if (cachedProject) {
+    return cachedProject
   }
+
+  const project = (await ProjectModel.findProjectById(projectId))?.toObject() as IProject | undefined
 
   if (!project) {
     throw new NotFoundError(ErrorMessage.PROJECT_NOT_FOUND)
   }
-
 
   await ProjectCache.set(
     projectId,

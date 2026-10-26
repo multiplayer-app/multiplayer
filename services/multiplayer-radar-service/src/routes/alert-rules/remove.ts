@@ -4,10 +4,11 @@ import { AlertRulesCache } from '../../cache'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const workspaceId = req.params.workspaceId as string
     const projectId = req.params.projectId as string
     const alertRuleId = req.params.alertRuleId as string
 
-    await AlertRuleModel.deleteAlertRuleById(alertRuleId)
+    await AlertRuleModel.deleteAlertRuleById(workspaceId, projectId, alertRuleId)
 
     await AlertRulesCache.del(projectId)
 

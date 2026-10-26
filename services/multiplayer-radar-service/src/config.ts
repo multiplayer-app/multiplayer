@@ -210,10 +210,16 @@ export const DEFAULT_MODEL_NAME = process.env.DEFAULT_MODEL_NAME || 'openai/gpt-
 
 export const MULTIPLAYER_BASE_API_URL = process.env.MULTIPLAYER_BASE_API_URL || 'https://api.multiplayer.app'
 
-export const REDIS_ALER_RULES_CACHE_PREFIX = process.env.REDIS_ALER_RULES_CACHE_PREFIX || 'alert_rules:'
-export const REDIS_ALER_RULES_CACHE_TTL = process.env.REDIS_CONDITIONAL_SESSION_RECORDINGS_FILTERS_TTL
-  ? Number(process.env.REDIS_ALER_RULES_CACHE_TTL)
+// REDIS_ALER_RULES_* are the former, misspelled names - still read so existing deployments keep their overrides
+export const REDIS_ALERT_RULES_CACHE_PREFIX = process.env.REDIS_ALERT_RULES_CACHE_PREFIX
+  || process.env.REDIS_ALER_RULES_CACHE_PREFIX
+  || 'alert_rules:'
+const _REDIS_ALERT_RULES_CACHE_TTL = process.env.REDIS_ALERT_RULES_CACHE_TTL || process.env.REDIS_ALER_RULES_CACHE_TTL
+export const REDIS_ALERT_RULES_CACHE_TTL = _REDIS_ALERT_RULES_CACHE_TTL
+  ? Number(_REDIS_ALERT_RULES_CACHE_TTL)
   : 4 * 60
+
+export const REDIS_ALERT_THRESHOLD_COOLDOWN_PREFIX = process.env.REDIS_ALERT_THRESHOLD_COOLDOWN_PREFIX || 'alert_threshold_cooldown:'
 
 export const REDIS_AGENT_SESSION_PREFIX = process.env.REDIS_AGENT_SESSION_PREFIX || 'agent_session:'
 export const REDIS_AGENT_SESSION_TTL = process.env.REDIS_AGENT_SESSION_TTL

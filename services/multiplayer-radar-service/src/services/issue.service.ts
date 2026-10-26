@@ -11,6 +11,7 @@ import {
 import { Timer } from '@multiplayer/util'
 import { ObjectId } from '@multiplayer/mongo'
 import { NotFoundError } from 'restify-errors'
+import NodeCache from 'node-cache'
 import {
   ATTR_MULTIPLAYER_INTEGRATION_ID,
   ATTR_MULTIPLAYER_WORKSPACE_ID,
@@ -31,6 +32,7 @@ import {
   IEndUser,
   OtelSpanCh,
   IDebugSession,
+  AlertRuleConditionType,
 } from '@multiplayer/types'
 import * as MetricsService from './metrics.service'
 import * as DebugSessionService from './debug-session.service'
@@ -61,6 +63,7 @@ import {
 
 const totalErrorSpansCounter = metrics.createCounter('processed_error_spans_total')
 const processingErrorSpansErrorRate = metrics.createCounter('processing_error_spans_error_rate')
+const failedErrorSpansCounter = metrics.createCounter('failed_error_spans_total')
 const processingErrorSpansDuration = metrics.createHistogram(
   'processing_error_spans_duration',
   {
@@ -176,9 +179,13 @@ export const createIssue = async (payload: Partial<IIssue>) => {
     payload.componentHash as string,
   )
 
+  // A new occurrence of a resolved issue is a regression: reopen it. Archived means ignored,
+  // so an archived issue keeps its state.
+  const regressed = Boolean(existingIssue?.resolved && !existingIssue?.archived)
+
   if (existingIssue) {
     payload.archived = existingIssue.archived || false
-    payload.resolved = existingIssue.resolved || false
+    payload.resolved = existingIssue.archived ? existingIssue.resolved || false : false
     payload.solution = existingIssue.solution || undefined
     if (payload.fixabilityScore === undefined) {
       payload.fixabilityScore = existingIssue.fixabilityScore
@@ -187,7 +194,71 @@ export const createIssue = async (payload: Partial<IIssue>) => {
 
   const issue = await IssueModel.createIssue(payload)
 
-  return issue
+  return { issue, regressed }
+}
+
+// Throttled occurrences only record a metric. Once a minute per issue (and replica) they also
+// refresh it: its `lastSeen`, its threshold alerts, and whether it was resolved meanwhile.
+const THROTTLED_ISSUE_REFRESH_SECONDS = 60
+const throttledIssueRefreshes = new NodeCache({ stdTTL: THROTTLED_ISSUE_REFRESH_SECONDS })
+
+const shouldRefreshThrottledIssue = (issueHash: string): boolean => {
+  if (throttledIssueRefreshes.get(issueHash)) {
+    return false
+  }
+
+  throttledIssueRefreshes.set(issueHash, true)
+  return true
+}
+
+/**
+ * Refreshes a known issue from one of its throttled occurrences.
+ * @returns the stored issue when it turned out to be resolved: the occurrence is a regression
+ * and must take the full path
+ */
+const refreshThrottledIssue = async (
+  workspaceId: string,
+  projectId: string,
+  issue: IIssue,
+  span: OtelSpanCh,
+): Promise<boolean> => {
+  const storedIssue = await IssueModel.findOneAndUpdate(
+    { workspace: workspaceId, project: projectId, hash: issue.hash } as any,
+    { $set: { lastSeen: new Date() } },
+    { returnDocument: 'after' as const },
+  )
+
+  if (!storedIssue || storedIssue.archived) {
+    return false
+  }
+
+  // Resolved without the throttle being reset (or reset on another replica): a regression
+  if (storedIssue.resolved) {
+    await SessionRecordingIssueThrottleCache.del(workspaceId, projectId, issue.hash)
+    return true
+  }
+
+  await AlertService.sendAlert(workspaceId, projectId, { issue: storedIssue, span })
+  return false
+}
+
+// Occurrences of an issue are throttled for hours; clear that when it gets resolved so the
+// next occurrence takes the full path and is caught as a regression right away.
+export const resetOccurrenceThrottle = async (
+  workspaceId: string,
+  projectId: string,
+  componentHash: string,
+) => {
+  const issues = await IssueModel.find(
+    { workspace: workspaceId, project: projectId, componentHash },
+    { hash: 1 },
+  ).lean()
+
+  await Promise.all(issues.map(({ hash }) => SessionRecordingIssueThrottleCache.del(
+    workspaceId,
+    projectId,
+    hash,
+  )))
 }
 
 export const getIssueByComponentHash = async (
@@ -276,16 +347,8 @@ export const handleIssueInTraceRequest = async (
   try {
     let spans = OtlpLib.convertExportTraceToCh(traceRequest)
 
-    const sessionType = OtlpLib.getSessionTypeFromTraceId(traceId)
-
-    if (!sessionType) {
-      logger.warn({ traceId }, '[OTEL-ERROR-TRACE] Missing session type in trace')
-      return {
-        spanIssueMap: {},
-        debugSession: undefined,
-      }
-    }
-
+    // Errors outside any recorded session (API clients, webhooks, consumers, jobs) are issues
+    // too: they carry a plain trace id and get a debug session auto-created below.
     spans = spans.filter(OtlpLib.isErrorSpan)
 
     if (!spans.length) {
@@ -351,15 +414,46 @@ export const handleIssueInTraceRequest = async (
     }
 
     for (const _spanWithError of spans) {
-      let _issue: IIssue | IIssueDocument | undefined = OtlpLib.getIssueFromSpan(_spanWithError)
+      // One span failing (a database hiccup, a bad payload) must not drop the others
+      try {
+        let _issue: IIssue | IIssueDocument | undefined = OtlpLib.getIssueFromSpan(_spanWithError)
 
-      if (!_issue) {
-        continue
-      }
+        if (!_issue) {
+          continue
+        }
 
-      const shouldCreateIssue = await IssueSettingsLib.shouldCreateIssue(_issue, integrationId)
+        const shouldCreateIssue = await IssueSettingsLib.shouldCreateIssue(_issue, integrationId)
 
-      if (!shouldCreateIssue) {
+        if (!shouldCreateIssue) {
+          logger.debug({
+            traceId: _spanWithError.TraceId,
+            spanId: _spanWithError.SpanId,
+            category: _issue.category,
+            issueHash: _issue.hash,
+            issueComponentHash: _issue.componentHash,
+            issueTitleHash: _issue.titleHash,
+          }, '[OTEL-ERROR-TRACE] Issue category not in create only for categories')
+          continue
+        }
+
+        const claimed = await OtelSpanIdCache.claim(
+          workspaceId,
+          projectId,
+          _spanWithError.TraceId as string,
+          _spanWithError.SpanId as string,
+        )
+
+        if (!claimed) {
+          spanIssueMap[_spanWithError.SpanId] = _issue
+          continue
+        }
+
+        const shouldThrottleSessionRecordingCreation = await SessionRecordingIssueThrottleCache.get(
+          workspaceId,
+          projectId,
+          _issue.hash,
+        )
+
         logger.debug({
           traceId: _spanWithError.TraceId,
           spanId: _spanWithError.SpanId,
@@ -367,179 +461,170 @@ export const handleIssueInTraceRequest = async (
           issueHash: _issue.hash,
           issueComponentHash: _issue.componentHash,
           issueTitleHash: _issue.titleHash,
-        }, '[OTEL-ERROR-TRACE] Issue category not in create only for categories')
-        continue
-      }
+          shouldThrottleSessionRecordingCreation,
+        }, '[OTEL-ERROR-TRACE] Issue throttling info')
 
-      const isAlreadyProcessed = await OtelSpanIdCache.get(
-        workspaceId,
-        projectId,
-        _spanWithError.TraceId as string,
-        _spanWithError.SpanId as string,
-      )
+        // console.dir({
+        //   t: '=======ISSUE_HANDLER========',
+        //   ...JSON.parse(JSON.stringify({
+        //     _issue,
+        //     shouldThrottleSessionRecordingCreation,
+        //     debugSession: debugSession || false,
+        //     insertSpans,
+        //   })),
+        // }, { depth: null, colors: true })
+
+        // A throttled occurrence of an issue that was resolved meanwhile is a regression: it
+        // takes the full path below instead
+        const isRegression = !debugSession
+          && shouldThrottleSessionRecordingCreation
+          && shouldRefreshThrottledIssue(_issue.hash)
+          && await refreshThrottledIssue(workspaceId, projectId, _issue, _spanWithError)
+
+        if (
+          !debugSession
+          && shouldThrottleSessionRecordingCreation
+          && !isRegression
+        ) {
+          // create issue rate metric and end user <-> issue relation for throttled issue
+          // for non throttled issue, it will be created in the next step
+          const promises: Promise<any>[] = [
+            MetricsService.createIssueRateMetric(
+              _issue,
+              {
+                endUserHash: endUser?.hash,
+                // debugSessionId: debugSession?._id,
+              },
+            ),
+          ]
+
+          if (endUser) {
+            promises.push(IssueEndUserModel.createIssueEndUser({
+              workspace: workspaceId,
+              project: projectId,
+              issue: _issue,
+              endUser,
+            }))
+          }
+
+          await Promise.all(promises)
+
+          continue
+        }
 
 
-      if (isAlreadyProcessed) {
+        _issue.integration = integrationId
+        const { issue: upsertedIssue, regressed } = await createIssue(_issue)
+        _issue = upsertedIssue
+        // issues.push(_issue as IIssueDocument)
         spanIssueMap[_spanWithError.SpanId] = _issue
-        continue
-      }
 
-      await OtelSpanIdCache.set(
-        workspaceId,
-        projectId,
-        _spanWithError.TraceId as string,
-        _spanWithError.SpanId as string,
-      )
-
-
-      const shouldThrottleSessionRecordingCreation = await SessionRecordingIssueThrottleCache.get(
-        workspaceId,
-        projectId,
-        _issue.hash,
-      )
-
-      logger.debug({
-        traceId: _spanWithError.TraceId,
-        spanId: _spanWithError.SpanId,
-        category: _issue.category,
-        issueHash: _issue.hash,
-        issueComponentHash: _issue.componentHash,
-        issueTitleHash: _issue.titleHash,
-        shouldThrottleSessionRecordingCreation,
-      }, '[OTEL-ERROR-TRACE] Issue throttling info')
-
-      // console.dir({
-      //   t: '=======ISSUE_HANDLER========',
-      //   ...JSON.parse(JSON.stringify({
-      //     _issue,
-      //     shouldThrottleSessionRecordingCreation,
-      //     debugSession: debugSession || false,
-      //     insertSpans,
-      //   })),
-      // }, { depth: null, colors: true })
-
-      if (
-        !debugSession
-        && shouldThrottleSessionRecordingCreation
-      ) {
-        // create issue rate metric and end user <-> issue relation for throttled issue
-        // for non throttled issue, it will be created in the next step
-        const promises: Promise<any>[] = [
-          MetricsService.createIssueRateMetric(
-            _issue,
-            {
-              endUserHash: endUser?.hash,
-              // debugSessionId: debugSession?._id,
-            },
-          ),
-        ]
-
-        if (endUser) {
-          promises.push(IssueEndUserModel.createIssueEndUser({
-            workspace: workspaceId,
-            project: projectId,
-            issue: _issue,
-            endUser,
-          }))
-        }
-
-        await Promise.all(promises)
-
-        continue
-      }
-
-
-      _issue.integration = integrationId
-      _issue = await createIssue(_issue)
-      // issues.push(_issue as IIssueDocument)
-      spanIssueMap[_spanWithError.SpanId] = _issue
-
-      await SessionRecordingIssueThrottleCache.set(
-        workspaceId,
-        projectId,
-        _issue.hash,
-      )
-
-      if (!debugSession) {
-        const _createDebugSessionResult = await DebugSessionService.createDebugSessionForIssue(
-          _issue.toObject(),
-          _spanWithError,
-          clientId,
-        )
-
-        debugSession = _createDebugSessionResult.debugSession
-        endUser = _createDebugSessionResult.endUser
-
-        if (endUser) {
-          await MetricsService.createSessionRecordingRateMetric(
-            workspaceId,
-            projectId,
-            debugSession._id,
-            endUser.hash,
-          )
-        }
-      }
-
-      if (_issue.resolved || _issue.archived) {
-        await MetricsService.createIssueRateMetric(
-          _issue.toObject(),
-          {
-            endUserHash: endUser?.hash,
-            debugSessionId: debugSession._id,
-          },
-        )
-        continue
-      }
-
-      _spanWithError.SpanAttributes[ATTR_MULTIPLAYER_SESSION_ID] = debugSession._id
-      _spanWithError.SpanAttributes[ATTR_MULTIPLAYER_ISSUE_HASH] = _issue.hash
-      _spanWithError.SpanAttributes[ATTR_MULTIPLAYER_ISSUE_COMPONENT_HASH] = _issue.componentHash
-      _spanWithError.SpanAttributes[ATTR_MULTIPLAYER_ISSUE_TITLE_HASH] = _issue.titleHash
-
-      spansWithError.push(_spanWithError)
-
-      await Promise.all([
-        ReleaseService.upsertRelease(
-          _issue.workspace.toString(),
-          _issue.project.toString(),
-          _issue.service.serviceName,
-          _issue.service.release as string,
-        ),
-        AlertService.sendAlert(
+        await SessionRecordingIssueThrottleCache.set(
           workspaceId,
           projectId,
-          {
-            issue: _issue,
-            span: _spanWithError,
-            sessionRecording: debugSession,
-          },
-        ),
-        MetricsService.createSessionRecordingWithErrorRateMetric(
-          _issue.toObject(),
-          debugSession._id,
-          endUser?.hash,
-        ),
-        MetricsService.createIssueRateMetric(
-          _issue.toObject(),
-          {
-            endUserHash: endUser?.hash,
-            debugSessionId: debugSession._id,
-          },
-        ),
-        DebugSessionModel.addIssueById(
-          _issue.workspace,
-          _issue.project,
-          debugSession._id,
-          {
-            issueHash: _issue.hash,
-            issueTitleHash: _issue.titleHash,
-            issueComponentHash: _issue.componentHash,
-            issueCustomHash: _issue.customHash,
-            spanId: _spanWithError.SpanId,
-            traceId: _spanWithError.TraceId,
-          },
-        ),
-      ])
+          _issue.hash,
+        )
+
+        if (!debugSession) {
+          const _createDebugSessionResult = await DebugSessionService.createDebugSessionForIssue(
+            _issue.toObject(),
+            _spanWithError,
+            clientId,
+          )
+
+          debugSession = _createDebugSessionResult.debugSession
+          endUser = _createDebugSessionResult.endUser
+
+          if (endUser) {
+            await MetricsService.createSessionRecordingRateMetric(
+              workspaceId,
+              projectId,
+              debugSession._id,
+              endUser.hash,
+            )
+          }
+        }
+
+        if (_issue.resolved || _issue.archived) {
+          await MetricsService.createIssueRateMetric(
+            _issue.toObject(),
+            {
+              endUserHash: endUser?.hash,
+              debugSessionId: debugSession._id,
+            },
+          )
+          continue
+        }
+
+        _spanWithError.SpanAttributes[ATTR_MULTIPLAYER_SESSION_ID] = debugSession._id
+        _spanWithError.SpanAttributes[ATTR_MULTIPLAYER_ISSUE_HASH] = _issue.hash
+        _spanWithError.SpanAttributes[ATTR_MULTIPLAYER_ISSUE_COMPONENT_HASH] = _issue.componentHash
+        _spanWithError.SpanAttributes[ATTR_MULTIPLAYER_ISSUE_TITLE_HASH] = _issue.titleHash
+
+        spansWithError.push(_spanWithError)
+
+        await Promise.all([
+          ReleaseService.upsertRelease(
+            _issue.workspace.toString(),
+            _issue.project.toString(),
+            _issue.service.serviceName,
+            _issue.service.release as string,
+          ),
+          AlertService.sendAlert(
+            workspaceId,
+            projectId,
+            {
+              issue: _issue,
+              span: _spanWithError,
+              sessionRecording: debugSession,
+            },
+          ),
+          ...regressed
+            ? [AlertService.sendAlert(
+              workspaceId,
+              projectId,
+              {
+                issue: _issue,
+                span: _spanWithError,
+                sessionRecording: debugSession,
+                conditionType: AlertRuleConditionType.ISSUE_MARKED_AS_UNRESOLVED,
+              },
+            )]
+            : [],
+          MetricsService.createSessionRecordingWithErrorRateMetric(
+            _issue.toObject(),
+            debugSession._id,
+            endUser?.hash,
+          ),
+          MetricsService.createIssueRateMetric(
+            _issue.toObject(),
+            {
+              endUserHash: endUser?.hash,
+              debugSessionId: debugSession._id,
+            },
+          ),
+          DebugSessionModel.addIssueById(
+            _issue.workspace,
+            _issue.project,
+            debugSession._id,
+            {
+              issueHash: _issue.hash,
+              issueTitleHash: _issue.titleHash,
+              issueComponentHash: _issue.componentHash,
+              issueCustomHash: _issue.customHash,
+              spanId: _spanWithError.SpanId,
+              traceId: _spanWithError.TraceId,
+            },
+          ),
+        ])
+      } catch (error) {
+        failedErrorSpansCounter.add(1)
+        logger.error({
+          err: error,
+          traceId: _spanWithError.TraceId,
+          spanId: _spanWithError.SpanId,
+        }, '[OTEL-ERROR-TRACE] Failed to process error span')
+      }
     }
 
     if (!Object.keys(spanIssueMap).length) {

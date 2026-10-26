@@ -21,15 +21,9 @@ export const shouldCreateIssue = async (
 
   const issuesSettings = project.settings.issue
 
-  let shouldCreate = false
-
-
-
-  if (!issuesSettings.createOnlyForCategories.length) {
-    shouldCreate = true
-  }
-
-  shouldCreate = issuesSettings.createOnlyForCategories.includes(issue.category)
+  // No categories selected means no restriction
+  const categories = issuesSettings?.createOnlyForCategories || []
+  const shouldCreate = !categories.length || categories.includes(issue.category)
 
   logger.debug(
     {

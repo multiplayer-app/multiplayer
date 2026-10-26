@@ -4,6 +4,7 @@ import logger from '@multiplayer/logger'
 import * as AMQP from '@multiplayer/amqp'
 import { ObjectId } from '@multiplayer/mongo'
 import redis from '@multiplayer/redis'
+import NodeCache from 'node-cache'
 import {
   IIntegration,
   IRadarDetection,
@@ -20,13 +21,26 @@ import {
   AMQP_RADAR_DETECTION_APPLY_QUEUE,
   REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_LOCK_PREFIX,
   REDIS_RADAR_DETECTION_ACTIVE_AUTO_MERGE_PREFIX,
+  REDIS_OTEL_INTEGRATION_STATUS_TTL,
 } from '../config'
 
+
+// Integrations already marked in Redis, per flag: every message marks its integration, and after
+// the first time that is two Redis round trips for nothing. The status is a liveness signal that
+// expires, so it is still refreshed several times per TTL while data keeps coming.
+const markedOtelIntegrationStatus = new NodeCache({
+  stdTTL: Math.max(1, Math.floor(REDIS_OTEL_INTEGRATION_STATUS_TTL / 3)),
+})
 
 export const upsertOtelIntegrationStatus = async (
   integrationId: string,
   status: OtelIntegrationStatusType,
 ): Promise<void> => {
+  const flags = (Object.keys(status) as (keyof OtelIntegrationStatusType)[]).filter(flag => status[flag])
+  if (flags.length && flags.every(flag => markedOtelIntegrationStatus.get(`${integrationId}:${flag}`))) {
+    return
+  }
+
   const existingStatus = await OtelIntegrationStatusCache.get(integrationId)
 
   const _status: OtelIntegrationStatusType = {
@@ -36,6 +50,10 @@ export const upsertOtelIntegrationStatus = async (
   }
 
   await OtelIntegrationStatusCache.set(integrationId, _status)
+
+  for (const flag of flags) {
+    markedOtelIntegrationStatus.set(`${integrationId}:${flag}`, true)
+  }
 }
 
 export const getIntegrationById = async (integrationId: string): Promise<IIntegration> => {

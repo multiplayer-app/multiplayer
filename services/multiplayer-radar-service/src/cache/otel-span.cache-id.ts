@@ -14,7 +14,12 @@ const getKey = (
 
 const spanIdCache = new NodeCache({ stdTTL: 5 })
 
-export const get = async (
+/**
+ * Claims a span for processing. An error span of a session trace arrives on two topics; only the
+ * first claim wins, atomically, so it is never processed (and counted) twice.
+ * @returns true when this caller claimed the span
+ */
+export const claim = async (
   workspaceId: string,
   projectId: string,
   traceId: string,
@@ -27,38 +32,11 @@ export const get = async (
     spanId,
   )
 
-  let data = spanIdCache.get(key) as string | undefined
-
-  if (data === '1') {
-    return true
+  if (spanIdCache.get(key)) {
+    return false
   }
 
-  data = await redis.get(key) as any | undefined
+  spanIdCache.set(key, true)
 
-  return data === '1'
-}
-
-export const set = async (
-  workspaceId: string,
-  projectId: string,
-  traceId: string,
-  spanId: string,
-) => {
-  const key = getKey(
-    workspaceId,
-    projectId,
-    traceId,
-    spanId,
-  )
-
-  spanIdCache.set(
-    key,
-    '1',
-  )
-
-  await redis.set(
-    key,
-    '1',
-    REDIS_OTEL_SPAN_ID_CACHE_TTL,
-  )
+  return redis.lockKey(key, REDIS_OTEL_SPAN_ID_CACHE_TTL)
 }

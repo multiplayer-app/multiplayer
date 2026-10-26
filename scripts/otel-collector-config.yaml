@@ -211,6 +211,19 @@ processors:
       span:
         - status.code != STATUS_CODE_ERROR and (attributes["exception.type"] == nil or attributes["exception.message"] == nil)
 
+  # Errors are never dropped for their size, unlike in the other pipelines: captured payloads are
+  # truncated instead, so a batch stays under Kafka's message size limit (1MB by default) - a
+  # rejected batch would lose every error in it.
+  transform/truncate_error:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - truncate_all(attributes, 16384)
+      - context: spanevent
+        statements:
+          - truncate_all(attributes, 16384)
+
   filter/cdbcac:
     error_mode: ignore
     traces:
@@ -439,6 +452,7 @@ service:
       processors:
         - size
         - filter/error
+        - transform/truncate_error
         - transform/set_client_id
         - attributes/from_auth_context
         - transform/add_resource_from_attributes

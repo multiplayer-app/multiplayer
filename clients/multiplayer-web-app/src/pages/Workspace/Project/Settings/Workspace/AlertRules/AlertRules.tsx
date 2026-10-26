@@ -173,8 +173,8 @@ const AlertRulesContent = () => {
       if (!workspaceId || !projectId || !rule._id || !rule.actions?.length)
         return;
       try {
-        const { _id, ...action } = rule.actions[0] as any;
-        await testAlertRuleAction(workspaceId, projectId, rule._id, action);
+        // Sent with its id, so the API tests it with the stored write-only credentials
+        await testAlertRuleAction(workspaceId, projectId, rule._id, rule.actions[0]);
         message.success("Test notification sent!");
       } catch (err) {
         message.handleError(err);

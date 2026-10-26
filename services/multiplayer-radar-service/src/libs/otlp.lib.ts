@@ -473,8 +473,33 @@ export const maskResponsePayload = (spans: OtelSpanCh[]): OtelSpanCh[] => {
 }
 
 
+// Same rule as the collector's error pipeline: an error status, or an exception recorded as attributes
 export const isErrorSpan = (span: OtelSpanCh): boolean => {
   return span.StatusCode === OTEL_STATUS_CODE_VALUE_ERROR
+    || (!!span.SpanAttributes?.['exception.type'] && !!span.SpanAttributes?.['exception.message'])
+}
+
+// The `exception` event carries the stack trace; other events (timings, logs) may come first
+const getExceptionEventAttributes = (span: OtelSpanCh): Record<string, any> | undefined => {
+  const flattenedAttributes = span['Events.Attributes']
+  if (Array.isArray(flattenedAttributes) && flattenedAttributes.length) {
+    const exceptionIndex = (span['Events.Name'] || []).indexOf('exception')
+    return flattenedAttributes[exceptionIndex >= 0 ? exceptionIndex : 0]
+  }
+
+  const events = Array.isArray(span?.Events) ? span.Events : []
+  return (events.find(event => event?.Name === 'exception') || events[0])?.Attributes
+}
+
+// `exception.message` first; otherwise an attribute named like a message (`*.message`), which
+// excludes ids and sizes such as `messaging.message.id`
+const getErrorMessageAttribute = (attributes: Record<string, any> = {}) => {
+  if (attributes['exception.message']) {
+    return attributes['exception.message']
+  }
+
+  const key = Object.keys(attributes).find(name => name === 'message' || name.endsWith('.message'))
+  return key ? attributes[key] : undefined
 }
 
 export const normalizeString = (title: string): string => {
@@ -696,12 +721,9 @@ export const getIssueFromSpan = (
     ? slugifyString(environmentName)
     : undefined
 
-  const errorEvent = (
-    span['Events.Attributes']?.[0]
-    || span?.Events[0]?.Attributes
-  )
+  const errorEvent = getExceptionEventAttributes(span)
 
-  const errorMessage = span?.SpanAttributes?.[Object.keys(span?.SpanAttributes).find(key => key.includes('message')) as string]
+  const errorMessage = getErrorMessageAttribute(span?.SpanAttributes)
     || errorEvent?.['exception.message']
     || span.StatusMessage
   const errorStackTrace = errorEvent?.['exception.stacktrace']
