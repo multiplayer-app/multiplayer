@@ -11,7 +11,7 @@ export const REDIS_URI = _REDIS_URI
 
 const REDIS_URI_MASKED = REDIS_URI?.replace(/:\/\/(.*):(.*)@/, '://***:***@')
 
-export type RedisClient = RedisClientType<any, any, any>
+export type RedisClient = RedisClientType<any, any, any, 2, {}>
 
 export let client: RedisClient
 let clientForSubscriptions: RedisClient
@@ -19,6 +19,11 @@ let clientForSubscriptions: RedisClient
 export const createClient = (redisUri?: string): RedisClient => {
   const _client = redis.createClient({
     url: redisUri || REDIS_URI,
+    // Pin the node-redis v4/v5 wire protocol and defaults: v6 switched to RESP3 (different reply
+    // shapes, Redis >= 6 only), a 5s command timeout and a 30s keep-alive delay.
+    RESP: 2,
+    commandOptions: { timeout: undefined },
+    socket: { keepAliveInitialDelay: 5000 },
   })
     .on(
       'error',
@@ -53,7 +58,7 @@ export const connect = async () => {
 
 export const disconnect = async () => {
   if (client) {
-    await client.disconnect()
+    await client.destroy()
     logger.info(`[REDIS] Disconnected from ${REDIS_URI_MASKED}`)
   }
 }
@@ -120,13 +125,18 @@ export const del = async (key: string | string[]) => {
 
 export const deleteByPattern = async (keyPattern: string) => {
   try {
-    for await (const key of client.scanIterator({
+    // Iterators yield whole SCAN batches since node-redis v5; a batch can be empty.
+    for await (const keys of client.scanIterator({
       TYPE: 'string',
       MATCH: keyPattern,
       COUNT: 100,
     })) {
-      logger.debug({ key }, '[REDIS] Unlinking key')
-      await client.unlink(key)
+      if (!keys.length) {
+        continue
+      }
+
+      logger.debug({ keys }, '[REDIS] Unlinking keys')
+      await client.unlink(keys)
     }
   } catch (error: any) {
     if (!error.stack) {

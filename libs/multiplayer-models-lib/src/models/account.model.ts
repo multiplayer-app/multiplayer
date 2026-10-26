@@ -122,7 +122,7 @@ AccountSchema.statics.updateAccountById = function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -157,7 +157,7 @@ AccountSchema.statics.updateAccountAccess = async function(
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

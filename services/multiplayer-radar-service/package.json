@@ -26,7 +26,7 @@
   "dependencies": {
     "@hyperjump/json-schema": "1.9.2",
     "@multiplayer-app/ai-agent-types": "0.1.0-beta.92",
-    "@multiplayer-app/session-recorder-node": "2.0.85",
+    "@multiplayer-app/session-recorder-node": "2.0.89",
     "@multiplayer/amqp": "0.0.1",
     "@multiplayer/apm": "0.0.1",
     "@multiplayer/auth": "0.0.1",
@@ -43,18 +43,17 @@
     "@multiplayer/types": "0.0.1",
     "@multiplayer/util": "0.0.1",
     "@multiplayer/util-shared": "0.0.1",
-    "@opentelemetry/api": "1.9.0",
-    "@opentelemetry/otlp-transformer": "0.203.0",
-    "@opentelemetry/semantic-conventions": "1.36.0",
+    "@opentelemetry/api": "1.10.0",
+    "@opentelemetry/semantic-conventions": "1.43.0",
     "@socket.io/redis-adapter": "8.3.0",
     "ajv": "8.17.1",
     "ajv-formats": "3.0.1",
     "body-parser": "1.20.2",
     "cookie-parser": "1.4.6",
     "cron": "4.0.0",
-    "dotenv": "16.3.1",
+    "dotenv": "18.0.8",
     "duration-to-ms": "0.1.7",
-    "express": "5.2.1",
+    "express": "5.3.0",
     "express-jsdoc-swagger": "1.8.0",
     "express-session": "1.17.3",
     "joi": "17.10.0",
@@ -89,6 +88,6 @@
     "jest-environment-node": "30.3.0",
     "nodemon": "3.1.14",
     "supertest": "6.3.3",
-    "typescript": "6.0.2"
+    "typescript": "7.0.2"
   }
 }

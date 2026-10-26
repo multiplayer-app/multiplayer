@@ -111,7 +111,7 @@ OauthClientSchema.statics.updateOauthClientById = async function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

@@ -1,4 +1,5 @@
 import { OtelSpanCh } from '@multiplayer/types'
+import { OtelSemconv } from '@multiplayer/util'
 import {
   ATTR_MULTIPLAYER_WORKSPACE_ID,
   ATTR_MULTIPLAYER_PROJECT_ID,
@@ -35,7 +36,7 @@ export const extractSequenceFromSpans = (spans: OtelSpanCh[]): ICachedFlow | und
 
   const workspaceId = spans[0].SpanAttributes[ATTR_MULTIPLAYER_WORKSPACE_ID]
   const projectId = spans[0].SpanAttributes[ATTR_MULTIPLAYER_PROJECT_ID]
-  const environmentName = spans[0].ResourceAttributes[SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]?.toLowerCase()
+  const environmentName = OtelSemconv.getAttributeFromMap(spans[0].ResourceAttributes, SEMRESATTRS_DEPLOYMENT_ENVIRONMENT)?.toLowerCase()
   const entityPlatformId = spans[0].ResourceAttributes[ATTR_MULTIPLAYER_PLATFORM_ID]
   const integrationId = spans[0].ResourceAttributes[ATTR_MULTIPLAYER_INTEGRATION_ID]
 
@@ -51,18 +52,18 @@ export const extractSequenceFromSpans = (spans: OtelSpanCh[]): ICachedFlow | und
         parentSpanId: span.ParentSpanId,
         componentName: span.ServiceName?.toLowerCase(),
         name: span.SpanName,
-        httpHost: span.SpanAttributes[SEMATTRS_HTTP_HOST],
-        httpMethod: span.SpanAttributes[SEMATTRS_HTTP_METHOD],
+        httpHost: OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_HTTP_HOST),
+        httpMethod: OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_HTTP_METHOD),
         httpEndpoint: replaceIdInString(span.SpanAttributes[SEMATTRS_HTTP_ROUTE]),
-        httpStatus: span.SpanAttributes[SEMATTRS_HTTP_STATUS_CODE],
+        httpStatus: OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_HTTP_STATUS_CODE),
         externalDependency: OtelLib.getExternalDependencyNameFromSpan(span),
         kind: span.SpanKind,
         messagingSystem: replaceIdInString(span.SpanAttributes[SEMATTRS_MESSAGING_SYSTEM]),
-        messagingDestination: replaceIdInString(span.SpanAttributes[SEMATTRS_MESSAGING_DESTINATION]),
-        dbSystem: replaceIdInString(span.SpanAttributes[SEMATTRS_DB_SYSTEM]),
-        rpcSystem: replaceIdInString(span.SpanAttributes[SEMATTRS_RPC_SYSTEM]),
-        rpcService: replaceIdInString(span.SpanAttributes[SEMATTRS_RPC_SERVICE]),
-        rpcMethod: replaceIdInString(span.SpanAttributes[SEMATTRS_RPC_METHOD]),
+        messagingDestination: replaceIdInString(OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_MESSAGING_DESTINATION)),
+        dbSystem: replaceIdInString(OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_DB_SYSTEM)),
+        rpcSystem: replaceIdInString(OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_RPC_SYSTEM)),
+        rpcService: replaceIdInString(OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_RPC_SERVICE)),
+        rpcMethod: replaceIdInString(OtelSemconv.getAttributeFromMap(span.SpanAttributes, SEMATTRS_RPC_METHOD)),
       }
 
       if (sequence.httpStatus) {

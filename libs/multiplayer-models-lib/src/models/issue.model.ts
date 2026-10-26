@@ -229,7 +229,9 @@ export const IssueSchema = new Schema({
 
   severity: {
     type: Number,
-    enum: Object.values(IssueSeverityLevel),
+    // Numeric TS enums also carry reverse-mapped names ('LOW', ...); mongoose 9 casts every
+    // Number enum value at schema creation and throws on them.
+    enum: Object.values(IssueSeverityLevel).filter(value => typeof value === 'number'),
   },
   fixabilityScore: {
     type: Number,
@@ -362,7 +364,7 @@ IssueSchema.statics.createIssue = async function (
     },
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -877,7 +879,7 @@ IssueSchema.statics.updateIssueById = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

@@ -1,4 +1,4 @@
-FROM node:22 AS build
+FROM node:26.12.1 AS build
 WORKDIR /usr/src/
 
 COPY . .

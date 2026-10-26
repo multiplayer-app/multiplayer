@@ -269,7 +269,7 @@ ConditionalRecordingFiltersSchema.statics.updateConditionalRecordingFiltersById 
     },
     update,
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

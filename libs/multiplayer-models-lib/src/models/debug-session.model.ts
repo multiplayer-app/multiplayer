@@ -350,7 +350,7 @@ DebugSessionSchema.statics.createDebugSession = async function (
     _payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -658,7 +658,7 @@ DebugSessionSchema.statics.updateDebugSessionById = function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -685,7 +685,7 @@ DebugSessionSchema.statics.addDebugSessionViewById = async function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -717,7 +717,7 @@ DebugSessionSchema.statics.updateDebugSessionViewById = async function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -747,7 +747,7 @@ DebugSessionSchema.statics.removeDebugSessionViewById = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -773,7 +773,7 @@ DebugSessionSchema.statics.addDebugSessionStarredItemById = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -799,7 +799,7 @@ DebugSessionSchema.statics.removeDebugSessionStarredItemById = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -849,7 +849,7 @@ DebugSessionSchema.statics.stopDebugSessionById = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -942,7 +942,6 @@ DebugSessionSchema.statics.addS3File = function (
       s3Files: s3File,
     },
   }, {
-    new: true,
     runValidators: true,
   })
 }
@@ -998,7 +997,7 @@ DebugSessionSchema.statics.addIssueById = async function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1036,7 +1035,7 @@ DebugSessionSchema.statics.addIssueByShortId = async function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1099,7 +1098,7 @@ DebugSessionSchema.statics.updateDebugSessionBySocketId = function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

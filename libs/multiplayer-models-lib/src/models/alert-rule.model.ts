@@ -174,7 +174,7 @@ AlertRuleSchema.statics.createAlertRule = function (
     payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -276,7 +276,7 @@ AlertRuleSchema.statics.updateAlertRuleById = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

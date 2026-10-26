@@ -113,7 +113,7 @@ ReleaseSchema.statics.upsertRelease = function (
     payload,
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -203,7 +203,7 @@ ReleaseSchema.statics.updateReleaseById = function (
       $set: payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

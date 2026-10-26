@@ -21,6 +21,7 @@ import {
   DebugSessionModel,
   IDebugSessionDocument,
 } from '@multiplayer/models'
+import type { QueryFilter } from 'mongoose'
 import {
   ATTR_MULTIPLAYER_SESSION_ID,
   ATTR_MULTIPLAYER_WORKSPACE_ID,
@@ -121,6 +122,9 @@ export const saveContinuousDebugSession = async (
   let debugSession: IDebugSessionDocument | undefined
 
   if (creationReason === DebugSessionCreationReasonType.AUTO) {
+    // IDebugSessionDocument types ids as strings (the wire shape) and extends the DOM `Document`
+    // instead of mongoose's, while the collection stores ObjectIds - mongoose 9's strictly typed
+    // filters can't be satisfied without this assertion until it's retyped.
     const debugSessionToDebounce = await DebugSessionModel.findOne({
       workspace: new ObjectId(continuousDebugSession.workspace),
       project: new ObjectId(continuousDebugSession.project),
@@ -130,7 +134,7 @@ export const saveContinuousDebugSession = async (
       stoppedAt: {
         $gte: new Date(now.getTime() - (CONTINUOUS_DEBUG_SESSION_DEBOUNCE_SECONDS * 1000)),
       },
-    })
+    } as unknown as QueryFilter<IDebugSessionDocument>)
 
     if (debugSessionToDebounce) {
       await DebugSessionShortIdCache.unset(debugSessionToDebounce.shortId)

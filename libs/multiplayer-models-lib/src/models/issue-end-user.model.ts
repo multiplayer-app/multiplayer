@@ -475,7 +475,7 @@ IssueEndUserSchema.statics.createIssueEndUser = async function (
     },
     {
       upsert: true,
-      new: true,
+      returnDocument: 'after',
       // runValidators: true,
     },
   )

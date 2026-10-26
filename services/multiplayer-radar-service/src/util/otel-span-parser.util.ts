@@ -54,8 +54,6 @@ import {
 } from '../helpers'
 import * as EntityService from '../services/entity.service'
 
-const SEMATTRS_MESSAGING_DESTINATION_NAME = 'messaging.destination.name'
-
 interface DetectedHttpEndpoint {
   httpEndpoint: string
   httpMethod: HttpMethod
@@ -155,20 +153,12 @@ export const parseTraceRequest = async (
             SEMATTRS_MESSAGING_SYSTEM,
           ) as string | undefined,
         )
-        let messagingDestination = replaceIdInString(
+        const messagingDestination = replaceIdInString(
           OtlpLib.getAttributeValue(
             span.attributes,
             SEMATTRS_MESSAGING_DESTINATION,
           ) as string | undefined,
         )
-        if (!messagingDestination) {
-          messagingDestination = replaceIdInString(
-            OtlpLib.getAttributeValue(
-              span.attributes,
-              SEMATTRS_MESSAGING_DESTINATION_NAME,
-            ) as string | undefined,
-          )
-        }
 
         let parentDependency: {
           serviceName: string,
@@ -581,18 +571,10 @@ export const getHttpEndpoint = async (
     span.attributes,
     SEMATTRS_HTTP_METHOD,
   ) as string | undefined || '')?.toUpperCase()
-    || (OtlpLib.getAttributeValue(
-      span.attributes,
-      'http.request.method',
-    ) as string | undefined || '')?.toUpperCase()
-  const status = (OtlpLib.getAttributeValue(
+  const status = OtlpLib.getAttributeValue(
     span.attributes,
     SEMATTRS_HTTP_STATUS_CODE,
-  )
-    || OtlpLib.getAttributeValue(
-      span.attributes,
-      'http.response.status_code',
-    )) as string | undefined
+  ) as string | undefined
 
   if (!endpoint?.length || !method?.length || !status) {
     return undefined

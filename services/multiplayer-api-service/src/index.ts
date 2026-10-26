@@ -33,7 +33,7 @@ const exitHandler = async (error: Error) => {
   if (error) logger.info('Server exited with error', error)
   await mongo.disconnect()
   await AMQP.disconnect()
-  await redisClient.disconnect()
+  await redisClient.destroy()
   await kafkaConsumer.disconnect()
   await kafkaProducer.disconnect()
   process.removeListener('exit', exitHandler)

@@ -222,7 +222,7 @@ AgentSchema.statics.upsertAgentByIdentity = function (payload: Partial<IAgent>) 
         consecutiveTimeouts: 0,
       },
     },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: 'after' },
   )
 }
 
@@ -341,7 +341,7 @@ AgentSchema.statics.updateAgentById = function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -461,7 +461,7 @@ AgentSchema.statics.findAgentWithAvailableSlot = function (filter: {
   return this.findOneAndUpdate(
     conditions,
     { $inc: { issuesInProgress: 1 } },
-    { new: true },
+    { returnDocument: 'after' },
   )
 }
 
@@ -481,7 +481,7 @@ AgentSchema.statics.claimIssueCapacitySlot = function (
         issuesInProgress: 1,
       },
     },
-    { new: true },
+    { returnDocument: 'after' },
   )
 }
 
@@ -505,7 +505,7 @@ AgentSchema.statics.claimIssueCapacitySlotIfAvailable = function (
       },
     },
     { $inc: { issuesInProgress: 1 } },
-    { new: true },
+    { returnDocument: 'after' },
   )
 }
 
@@ -531,7 +531,7 @@ AgentSchema.statics.incrementConsecutiveTimeouts = function (
   return this.findOneAndUpdate(
     { _id: id },
     { $inc: { consecutiveTimeouts: 1 } },
-    { new: true },
+    { returnDocument: 'after' },
   )
 }
 

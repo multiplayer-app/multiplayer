@@ -233,7 +233,6 @@ GitRefTagSchema.statics.updateManyGitRefTags = async function (
       $set: set,
       $unset: unset,
     }, {
-      new: true,
       runValidators: true,
     },
   )
@@ -499,7 +498,7 @@ GitRefTagSchema.statics.updateGitRefTagById = async function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -525,7 +524,7 @@ GitRefTagSchema.statics.updateGitRefTagGitPath = async function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

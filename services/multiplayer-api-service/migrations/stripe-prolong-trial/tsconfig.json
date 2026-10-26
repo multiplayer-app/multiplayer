@@ -2,7 +2,6 @@
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,
-    "baseUrl": ".",
     "module": "commonjs",
     "noImplicitAny": false,
     "noUnusedParameters": false,
@@ -11,7 +10,6 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "moduleResolution": "node",
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noUnusedLocals": false,
@@ -21,7 +19,6 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "target": "ES2018",
-    "downlevelIteration": true,
     "strict": true,
     "composite": true,
     "outDir": "./dist/",

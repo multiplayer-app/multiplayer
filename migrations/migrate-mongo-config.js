@@ -4,9 +4,8 @@ module.exports = {
   mongodb: {
     url: process.env.MONGODB_URI || 'mongodb://localhost:27017/multiplayer',
 
-    options: {
-      useNewUrlParser: true,
-    },
+    // useNewUrlParser was removed in MongoDB driver 7 (and has been a no-op since 4.x)
+    options: {},
   },
 
   // The migrations dir, can be an relative or absolute path. Only edit this when really necessary.

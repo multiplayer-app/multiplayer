@@ -97,6 +97,7 @@
   "peerDependencies": {
     "@monaco-editor/react": "4.6.0",
     "@multiplayer-app/session-recorder-common": "2.0.85",
+    "@opentelemetry/api": "1.9.1",
     "@multiplayer/entity": "0.0.1",
     "@multiplayer/types": "0.0.1",
     "axios": "1.8.4",

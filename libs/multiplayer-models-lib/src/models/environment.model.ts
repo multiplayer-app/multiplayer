@@ -232,7 +232,7 @@ EnvironmentSchema.statics.updateEnvironmentById = function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

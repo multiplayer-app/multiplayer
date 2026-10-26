@@ -9,7 +9,9 @@ import {
   IssueModel,
   IAgentDocument,
   IntegrationModel,
+  IAgentChatMessageDocument,
 } from '@multiplayer/models'
+import type { QueryFilter } from 'mongoose'
 import {
   EntityType,
   AgentEvents,
@@ -158,12 +160,15 @@ export const bulkRemoveAgentChats = async (
   const workspaceOid = new ObjectId(workspaceId)
   const projectOid = new ObjectId(projectId)
 
+  // IAgentChatMessageDocument types ids as strings (the wire shape) and extends the DOM
+  // `Document` instead of mongoose's, while the collection stores ObjectIds - mongoose 9's
+  // strictly typed filters can't be satisfied without these assertions until it's retyped.
   const messagesWithAttachments = await AgentChatMessageModel.find({
     workspace: workspaceOid,
     project: projectOid,
     chat: { $in: chatObjectIds },
     'attachments.metadata.s3Key': { $exists: true },
-  }).select('attachments').lean()
+  } as unknown as QueryFilter<IAgentChatMessageDocument>).select('attachments').lean()
 
   const s3Deletions = messagesWithAttachments.flatMap(msg =>
     (msg.attachments ?? [])
@@ -176,7 +181,7 @@ export const bulkRemoveAgentChats = async (
       workspace: workspaceOid,
       project: projectOid,
       chat: { $in: chatObjectIds },
-    }),
+    } as unknown as QueryFilter<IAgentChatMessageDocument>),
     ...s3Deletions,
   ])
 

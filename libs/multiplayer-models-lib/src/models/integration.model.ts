@@ -304,7 +304,7 @@ const IntegrationSchema = new Schema({
 })
 
 IntegrationSchema.set('toJSON', {
-  transform: function (doc, ret, opt) {
+  transform: function (doc, ret: Record<string, any>, opt) {
     delete ret?.gitlab?.accessToken
     delete ret?.gitlab?.refreshToken
 
@@ -548,7 +548,7 @@ IntegrationSchema.statics.updateIntegrationById = async function (
       $set: _payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

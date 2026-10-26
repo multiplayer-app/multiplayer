@@ -9,14 +9,13 @@
   ],
   "dependencies": {
     "@multiplayer/logger": "0.0.1",
-    "amqplib": "0.10.3",
+    "amqplib": "2.2.0",
     "json-stringify-safe": "5.0.1"
   },
   "devDependencies": {
-    "@types/amqplib": "0.10.1",
     "@types/node": "25.5.0",
     "eslint": "10.1.0",
-    "typescript": "6.0.2"
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=18",

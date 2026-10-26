@@ -37,14 +37,27 @@
     "eslint": "10.1.0",
     "husky": "9.1.5",
     "lint-staged": "13.1.2",
-    "turbo": "^2.8.20"
+    "turbo": "^2.8.20",
+    "typescript": "6.0.2"
   },
   "resolutions": {
     "zod": "3.25.55"
   },
   "pnpm": {
     "overrides": {
-      "@multiplayer/multiplayer-web-app>eslint": "^8.57.0"
+      "@multiplayer/multiplayer-web-app>eslint": "^8.57.0",
+      "@multiplayer-app/session-recorder-common@2.0.85>@opentelemetry/core": "2.6.1",
+      "@multiplayer-app/session-recorder-common@2.0.85>@opentelemetry/resources": "2.6.1",
+      "@multiplayer-app/session-recorder-common@2.0.85>@opentelemetry/sdk-trace-base": "2.6.1",
+      "@opentelemetry/instrumentation-user-interaction@0.48.1>@opentelemetry/core": "2.6.1",
+      "@multiplayer-app/session-recorder-common@2.0.85>@opentelemetry/semantic-conventions": "1.40.0",
+      "@opentelemetry/core@2.0.1>@opentelemetry/semantic-conventions": "1.40.0",
+      "@opentelemetry/core@2.6.1>@opentelemetry/semantic-conventions": "1.40.0",
+      "@opentelemetry/resources@2.0.1>@opentelemetry/semantic-conventions": "1.40.0",
+      "@opentelemetry/sdk-trace-base@2.0.1>@opentelemetry/semantic-conventions": "1.40.0",
+      "@opentelemetry/instrumentation-fetch@0.203.0>@opentelemetry/semantic-conventions": "1.40.0",
+      "@opentelemetry/instrumentation-xml-http-request@0.203.0>@opentelemetry/semantic-conventions": "1.40.0",
+      "@opentelemetry/api-logs@0.203.0>@opentelemetry/api": "1.9.1"
     },
     "onlyBuiltDependencies": [
       "bcrypt",

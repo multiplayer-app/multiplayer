@@ -918,7 +918,7 @@ UserSchema.statics.updateUserById = function (
   }, {
     $set: _payload,
   }, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   })
 }
@@ -961,7 +961,7 @@ UserSchema.statics.confirmLocalEmail = function (id: string | ObjectId) {
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -990,7 +990,7 @@ UserSchema.statics.addGoogleProfile = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1017,7 +1017,7 @@ UserSchema.statics.addGithubProfile = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1044,7 +1044,7 @@ UserSchema.statics.addGitlabProfile = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1078,7 +1078,7 @@ UserSchema.statics.addLocalProfile = async function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1100,7 +1100,7 @@ UserSchema.statics.removeGoogleProfile = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1122,7 +1122,7 @@ UserSchema.statics.removeGithubProfile = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1144,7 +1144,7 @@ UserSchema.statics.removeGitlabProfile = function (
       },
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

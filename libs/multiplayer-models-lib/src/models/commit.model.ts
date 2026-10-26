@@ -290,7 +290,7 @@ CommitSchema.statics.updateCommitById = function (
       $set: payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   ).populate('entityCommits')

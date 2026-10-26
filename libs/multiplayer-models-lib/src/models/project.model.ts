@@ -311,7 +311,7 @@ ProjectSchema.statics.updateProjectById = function (
       $set: payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -506,7 +506,7 @@ ProjectSchema.statics.addUsers = async function (
       },
     },
   }
-  const options = { new: true, runValidators: true }
+  const options = { returnDocument: 'after' as const, runValidators: true }
 
   const project = await this.findOneAndUpdate(filter, update, options)
 
@@ -529,7 +529,7 @@ ProjectSchema.statics.updateUser = async function (
   const update = {
     $set: _payload,
   }
-  const options = { new: true, runValidators: true }
+  const options = { returnDocument: 'after' as const, runValidators: true }
 
   const project = await this.findOneAndUpdate(filter, update, options).populate('users')
 
@@ -544,7 +544,7 @@ ProjectSchema.statics.removeUser = function (
 ) {
   const filter = { _id: id }
   const update = { $pull: { users: { _id: projectMemberId } } }
-  const options = { new: true, runValidators: true }
+  const options = { returnDocument: 'after' as const, runValidators: true }
 
   return this.findOneAndUpdate(filter, update, options)
 }
@@ -557,7 +557,7 @@ ProjectSchema.statics.removeUserFromAllWorkspaceProjects = function (
     workspace: workspaceId,
   }
   const update = { $pull: { users: { workspaceUser: workspaceUserId } } }
-  const options = { new: true, runValidators: true }
+  const options = { runValidators: true }
 
   return this.updateMany(filter, update, options)
 }
@@ -578,7 +578,7 @@ ProjectSchema.statics.updateProjectAccess = async function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -602,7 +602,7 @@ ProjectSchema.statics.updateConditionalRecordingSettings = async function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -626,7 +626,7 @@ ProjectSchema.statics.updateIssuesSettings = async function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )

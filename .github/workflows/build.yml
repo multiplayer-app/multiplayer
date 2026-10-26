@@ -56,7 +56,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: "pnpm"
 
       - run: npm i -g turbo
@@ -157,7 +157,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: "pnpm"
 
       - run: npm i -g turbo
@@ -374,7 +374,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: "pnpm"
 
       # - name: Cache turbo
@@ -449,7 +449,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: "pnpm"
 
       - name: Set release tag
@@ -549,7 +549,7 @@ jobs:
 
   #     - uses: actions/setup-node@v3
   #       with:
-  #         node-version: 24
+  #         node-version-file: .nvmrc
   #         cache: "pnpm"
 
   #     - name: Set release tag

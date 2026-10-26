@@ -127,7 +127,7 @@ AgentChatMessageSchema.statics.upsertMessage = function (
           ...(project ? { project: new ObjectId(project) } : {}),
         },
       },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: 'after' },
     )
   }
 
@@ -190,7 +190,8 @@ AgentChatMessageSchema.statics.upsertMessage = function (
         },
       },
     ],
-    { upsert: true, new: true },
+    // Mongoose 9 rejects update pipelines unless explicitly enabled per query.
+    { upsert: true, returnDocument: 'after', updatePipeline: true },
   )
 }
 
@@ -285,7 +286,7 @@ AgentChatMessageSchema.statics.findMessages = async function (
 }
 
 AgentChatMessageSchema.set('toJSON', {
-  transform: function (doc, ret, opt) {
+  transform: function (doc, ret: Record<string, any>, opt) {
     ret.id = ret._id
 
     return ret
@@ -293,7 +294,7 @@ AgentChatMessageSchema.set('toJSON', {
 })
 
 AgentChatMessageSchema.set('toObject', {
-  transform: function (doc, ret, opt) {
+  transform: function (doc, ret: Record<string, any>, opt) {
     ret.id = ret._id
 
     return ret

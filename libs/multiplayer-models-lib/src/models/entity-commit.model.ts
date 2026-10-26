@@ -579,7 +579,7 @@ EntityCommitSchema.statics.updateEntityCommitById = function (
   }, {
     $set: payload,
   }, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   })
 }
@@ -597,7 +597,6 @@ EntityCommitSchema.statics.updateEntityCommitByIds = function (
   }, {
     $set: payload,
   }, {
-    new: true,
     runValidators: true,
   })
 }

@@ -1,21 +1,24 @@
 import './metrics'
 import {
-  node,
   NodeSDK,
   type NodeSDKConfiguration,
 } from '@opentelemetry/sdk-node'
 import {
   ParentBasedSampler,
+  TracerProvider,
 // AlwaysOnSampler,
 // TraceIdRatioBasedSampler,
-} from '@opentelemetry/sdk-trace-base'
+} from '@opentelemetry/sdk-trace'
 import api, {
-  TracerProvider,
   DiagConsoleLogger,
   DiagLogLevel,
 } from '@opentelemetry/api'
-import * as apiLogs from '@opentelemetry/api-logs'
-import { W3CTraceContextPropagator } from '@opentelemetry/core'
+import {
+  CompositePropagator,
+  W3CBaggagePropagator,
+  W3CTraceContextPropagator,
+} from '@opentelemetry/core'
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks'
 import { LoggerProvider } from '@opentelemetry/sdk-logs'
 import {
   SessionRecorderTraceIdRatioBasedSampler,
@@ -81,7 +84,7 @@ export const opentelemetry = () => {
 
 
 
-  const traceProvider = new node.NodeTracerProvider({
+  const traceProvider = new TracerProvider({
     resource,
     idGenerator: new SessionRecorderIdGenerator(),
     sampler: new ParentBasedSampler({
@@ -134,12 +137,19 @@ export const opentelemetry = () => {
   }
 
 
-  traceProvider.register()
-  apiLogs.logs.setGlobalLoggerProvider(loggerProvider)
-  api.trace.setGlobalTracerProvider(traceProvider as unknown as TracerProvider)
-  api.propagation.setGlobalPropagator(
-    new W3CTraceContextPropagator(),
-  )
+  // TracerProvider doesn't self-register like NodeTracerProvider#register() did. Without the
+  // context manager spans lose their parent across async boundaries. The propagator matches
+  // what register() installed by default (OTEL_PROPAGATORS=tracecontext,baggage).
+  // Must run before sdk.start(): the first global registration wins.
+  api.trace.setGlobalTracerProvider(traceProvider)
+  api.context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable())
+  api.propagation.setGlobalPropagator(new CompositePropagator({
+    propagators: [
+      new W3CTraceContextPropagator(),
+      new W3CBaggagePropagator(),
+    ],
+  }))
+  api.logs.setGlobalLoggerProvider(loggerProvider)
 
   const sdk = new NodeSDK(nodeSDKConfiguration)
 

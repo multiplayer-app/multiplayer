@@ -338,14 +338,14 @@ const EntitySchema = new Schema({
 })
 
 EntitySchema.set('toJSON', {
-  transform: function (doc, ret, opt) {
+  transform: function (doc, ret: Record<string, any>, opt) {
     delete ret._id
     delete ret.__v
     return ret
   },
 })
 EntitySchema.set('toObject', {
-  transform: function (doc, ret, opt) {
+  transform: function (doc, ret: Record<string, any>, opt) {
     delete ret._id
     delete ret.__v
     return ret
@@ -787,7 +787,7 @@ EntitySchema.statics.updateEntityInBranch = function (
       $unset: unset,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -1279,7 +1279,7 @@ EntitySchema.statics.removeAliasFromEntityInBranch = function (
       keyAliases: keyAlias,
     },
   }
-  const options = { new: true, runValidators: true }
+  const options = { returnDocument: 'after' as const, runValidators: true }
 
   return this.findOneAndUpdate(filter, update, options)
 }
@@ -1302,7 +1302,7 @@ EntitySchema.statics.updateEntityAccess = function (
     $set: set,
     $unset: unset,
   }
-  const options = { new: true, runValidators: true }
+  const options = { runValidators: true }
 
   return this.updateMany(filter, update, options)
 }

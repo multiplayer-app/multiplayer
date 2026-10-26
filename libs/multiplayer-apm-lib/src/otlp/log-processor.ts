@@ -9,5 +9,5 @@ export const getLogRecordProcessor = (endpoint, headers) => {
     keepAlive: true,
   })
 
-  return new BatchLogRecordProcessor(logExporter)
+  return new BatchLogRecordProcessor({ exporter: logExporter })
 }

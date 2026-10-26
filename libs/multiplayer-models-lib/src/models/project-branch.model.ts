@@ -511,7 +511,7 @@ ProjectBranchSchema.statics.updateProjectBranchById = function (
       $set: payload,
     },
     {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     },
   )
@@ -617,7 +617,7 @@ ProjectBranchSchema.statics.addReviewers = async function (
       },
     },
   }
-  const options = { new: true, runValidators: true }
+  const options = { returnDocument: 'after' as const, runValidators: true }
 
   const branch = await this.findOneAndUpdate(conditions, update, options)
 
@@ -644,7 +644,7 @@ ProjectBranchSchema.statics.addReview = async function (
       },
     },
   }
-  const options = { new: true, runValidators: true }
+  const options = { returnDocument: 'after' as const, runValidators: true }
 
   const branch = await this.findOneAndUpdate(conditions, update, options)
 
@@ -667,7 +667,7 @@ ProjectBranchSchema.statics.updateReview = async function (
     $set: _payload,
   }
 
-  const options = { new: true, runValidators: true }
+  const options = { returnDocument: 'after' as const, runValidators: true }
 
   const branch = await this.findOneAndUpdate(conditions, update, options)
 
@@ -689,7 +689,7 @@ ProjectBranchSchema.statics.removeReview = function (
       },
     },
   }
-  const options = { new: true, runValidators: true }
+  const options = { returnDocument: 'after' as const, runValidators: true }
 
   return this.findOneAndUpdate(conditions, update, options)
 }
