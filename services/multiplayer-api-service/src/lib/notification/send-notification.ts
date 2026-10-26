@@ -23,6 +23,7 @@ const buildAlertEmail = (template: string, data: any) => {
   return buildEmailTemplate('ALERT', {
     ...content,
     subject,
+    headlineColor: content.tone === 'success' ? '#2F9E44' : '#E01E5A',
     project: data?.project,
     workspace: data?.workspace,
     alertRuleName: data?.alertRuleName,
@@ -30,69 +31,38 @@ const buildAlertEmail = (template: string, data: any) => {
 }
 
 export const sendNotification = async (variables: SendNotificationMessage['variables']) => {
-  const {
-    integration,
-    slackChannelOptions,
-    webhookOptions,
-    teamsOptions,
-    slackWebhookOptions,
+  const { template, data } = variables
 
-    email,
-    template,
-    data,
-    sendAt,
-  } = variables
-
+  // Each case narrows `variables` to its channel, whose options are then required
   switch (variables.notificationType) {
-    case NotificationType.SLACK: {
-      const message = buildSlackTemplate(template, data)
-
+    case NotificationType.SLACK:
       await slackLib.sendSlackNotification(
-        integration,
-        slackChannelOptions,
-        message,
+        variables.integration,
+        variables.slackChannelOptions,
+        buildSlackTemplate(template, data),
       )
-      logger.info(`Successfully sent ${template} slack notification`)
-      return
-    }
+      break
 
-    case NotificationType.SLACK_WEBHOOK: {
-      if (!slackWebhookOptions) {
-        throw new Error('Slack webhook options are required')
-      }
+    case NotificationType.SLACK_WEBHOOK:
+      await sendSlackWebhookNotification(variables.slackWebhookOptions, template, data)
+      break
 
-      await sendSlackWebhookNotification(slackWebhookOptions, template, data)
-      logger.info(`Successfully sent ${template} slack webhook notification`)
-      return
-    }
+    case NotificationType.WEBHOOK:
+      await sendWebhookNotification(variables.webhookOptions, template, data)
+      break
 
-    case NotificationType.WEBHOOK: {
-      if (!webhookOptions) {
-        throw new Error('Webhook options are required')
-      }
-
-      await sendWebhookNotification(webhookOptions, template, data)
-      logger.info(`Successfully sent ${template} webhook notification`)
-      return
-    }
-
-    case NotificationType.TEAMS: {
-      if (!teamsOptions) {
-        throw new Error('Teams options are required')
-      }
-
-      await sendTeamsNotification(teamsOptions, template, data)
-      logger.info(`Successfully sent ${template} teams notification`)
-      return
-    }
+    case NotificationType.TEAMS:
+      await sendTeamsNotification(variables.teamsOptions, template, data)
+      break
 
     default: {
       const { html, subject } = ALERT_TEMPLATES.has(template)
         ? buildAlertEmail(template, data)
         : buildEmailTemplate(template, data)
 
-      await sendEmail(email, subject, html, sendAt)
-      logger.info(`Successfully sent ${template} email to ${email}`)
+      await sendEmail(variables.email, subject, html, variables.sendAt)
     }
   }
+
+  logger.info({ template, notificationType: variables.notificationType || NotificationType.EMAIL }, 'Notification sent')
 }

@@ -8,6 +8,7 @@ import { ExternalLinkIcon } from "shared/icons";
 import IconButton from "shared/components/IconButton";
 import Drawer, { DrawerContent } from "shared/components/Drawer";
 import TraceNodeDetails from "shared/components/TraceNodeDetails";
+import TraceLinks from "shared/components/TraceLinks";
 import { NavigationMode, useTabs } from "shared/providers/TabsContext";
 
 import { IssueDetailsContent } from "pages/Workspace/Project/Issues/IssuePreview/IssueDetails";
@@ -139,6 +140,7 @@ const EventDetails = ({ type, data }: { type: string; data: any }) => {
             direction="column"
             className="custom-scroll"
           >
+            <TraceLinks span={data} mb="4" />
             <TraceNodeDetails type={DebugSessionNodeType.Trace} meta={data} />
           </Flex>
         </Flex>

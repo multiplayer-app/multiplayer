@@ -15,6 +15,7 @@ export { default as conditionalRecordingFilters } from './conditional-recording-
 export { default as conditionalRecordingAgent } from './conditional-recording-agent'
 export { default as globalConditionalRecordingSettings } from './global-conditional-recording-settings'
 export { default as issues } from './issues'
+export { default as traces } from './traces'
 export { default as endUser } from './end-user'
 export { default as metrics } from './metrics'
 export { default as alertRules } from './alert-rules'

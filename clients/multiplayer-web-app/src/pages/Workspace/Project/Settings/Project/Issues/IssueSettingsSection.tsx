@@ -32,9 +32,13 @@ const IssueSettingsSection = ({
 }: Props) => {
   const message = useMessage();
 
-  const updateProjectSettings = async (settings: Partial<IProject>) => {
+  const updateProjectSettings = async (
+    settings: WorkspaceService.ProjectUpdate["settings"]
+  ) => {
     try {
-      await WorkspaceService.updateProject(workspaceId, projectId, settings);
+      await WorkspaceService.updateProject(workspaceId, projectId, {
+        settings,
+      });
 
       await onUpdate();
       message.success("Project settings updated successfully");
@@ -51,20 +55,19 @@ const IssueSettingsSection = ({
 
     const n = Number(raw);
     if (!Number.isFinite(n)) return;
-    const parsed = Math.max(0, Math.min(100, n));
+    // The API takes whole numbers
+    const parsed = Math.max(0, Math.min(100, Math.round(n)));
     if (
       parsed === (project.settings?.agent?.fixabilityScoreThreshold ?? null)
     ) {
       return;
     }
 
+    // Only this section: the project's other settings may have changed since it was loaded
     await updateProjectSettings({
-      settings: {
-        ...project.settings,
-        agent: {
-          ...project.settings?.agent,
-          fixabilityScoreThreshold: parsed,
-        },
+      agent: {
+        ...project.settings?.agent,
+        fixabilityScoreThreshold: parsed,
       },
     });
   };

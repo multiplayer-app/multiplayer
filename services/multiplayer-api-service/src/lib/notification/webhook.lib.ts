@@ -30,6 +30,7 @@ export const buildWebhookPayload = (
     summary: content.summary,
     url: content.url,
     facts: content.facts,
+    links: content.links,
     workspace: workspace ? { id: String(workspace._id), name: workspace.name } : undefined,
     project: project ? { id: String(project._id), name: project.name } : undefined,
     issue: issue

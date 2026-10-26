@@ -1,4 +1,9 @@
-import { IAccess, IProject, IWorkspaceSettings } from "@multiplayer/types";
+import {
+  IAccess,
+  IProject,
+  IProjectSettings,
+  IWorkspaceSettings,
+} from "@multiplayer/types";
 import { apiInstance } from "shared/api";
 import { IReqParamsBase } from "shared/models/interfaces";
 import { memoizeApiFunction } from "shared/helpers/api.helpers";
@@ -298,10 +303,15 @@ export const getProject = (
   return apiInstance.get(`/workspaces/${workspaceId}/projects/${projectId}`);
 };
 
+// Settings are saved per section: the sections given replace theirs, the others are kept
+export type ProjectUpdate = Partial<Omit<IProject, "settings">> & {
+  settings?: Partial<IProjectSettings>;
+};
+
 export const updateProject = (
   workspaceId: string,
   projectId: string,
-  body: Partial<IProject>
+  body: ProjectUpdate
 ): Promise<any> => {
   return apiInstance.patch(
     `/workspaces/${workspaceId}/projects/${projectId}`,

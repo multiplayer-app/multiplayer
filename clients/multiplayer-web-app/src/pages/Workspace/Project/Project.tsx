@@ -26,6 +26,7 @@ const SystemCatalog = lazyModule(() => import("./SystemCatalog"));
 const FilePreview = lazyModule(() => import("./Editors/FilePreview"));
 const EntityDashboard = lazyModule(() => import("./EntityDashboard"));
 const ProjectSettings = lazyModule(() => import("./Settings"));
+const TraceRedirect = lazyModule(() => import("./TraceRedirect"));
 
 interface FeatureAccessFallbackProps {
   sourceType: ProjectSourceType;
@@ -39,6 +40,11 @@ const ProjectRoutes = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DefaultRoute />} />
+        {/* Links that name a trace id, e.g. from Grafana */}
+        <Route
+          path="trace/:traceId"
+          element={<LazyContent element={<TraceRedirect />} />}
+        />
         {isSettingsRoute ? (
           <Route
             path={`${ProjectSourceType.SETTINGS}/*`}

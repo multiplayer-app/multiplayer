@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express'
 import { ProjectModel, WorkspaceModel } from '@multiplayer/models'
 import { NotFoundError } from 'restify-errors'
 import { ErrorMessage } from '@multiplayer/types'
+import { ProjectLib } from '../../lib'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -33,7 +34,7 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
     projectObject.featureFlags = workspace.featureFlags || {}
 
-    return res.status(200).json(projectObject)
+    return res.status(200).json(ProjectLib.forViewer(req, projectObject))
   } catch (err) {
     return next(err)
   }

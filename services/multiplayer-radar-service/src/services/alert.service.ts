@@ -22,7 +22,6 @@ import {
   IDebugSession,
   MetricName,
   AlertRuleFilterCondition,
-  WorkspaceUserStatus,
 } from '@multiplayer/types'
 import durationToMs from 'duration-to-ms'
 import logger from '@multiplayer/logger'
@@ -125,39 +124,33 @@ export const getAlertRules = async (
   return alertRules
 }
 
+// What each kind of alert event must carry
+const assertAlertPayload = ({ conditionType, issue, span, sessionRecording }: IAlertPayload) => {
+  if (conditionType === AlertRuleConditionType.SESSION_RECORDING_CREATED) {
+    if (!sessionRecording) throw new InvalidArgumentError('Session recording is required')
+    return
+  }
+
+  // Fixes and state changes come from agents and users, not occurrences: there is no span
+  if (
+    conditionType === AlertRuleConditionType.DEBUGGING_AGENT_FIX_PUSHED
+    || (conditionType && ISSUE_TRANSITION_CONDITION_TYPES.includes(conditionType))
+  ) {
+    if (!issue) throw new InvalidArgumentError('Issue is required')
+    return
+  }
+
+  if ((!issue || !span) && !sessionRecording) {
+    throw new InvalidArgumentError('Issue and span are required')
+  }
+}
+
 export const checkAlertRules = async (
   workspaceId: string,
   projectId: string,
   payload: IAlertPayload,
 ): Promise<IAlertRule[]> => {
-  if (
-    payload.conditionType === AlertRuleConditionType.SESSION_RECORDING_CREATED
-    && !payload.sessionRecording
-  ) {
-    throw new InvalidArgumentError('Session recording is required')
-  } else if (
-    payload.conditionType === AlertRuleConditionType.DEBUGGING_AGENT_FIX_PUSHED
-    && !payload.issue
-  ) {
-    throw new InvalidArgumentError('Issue is required')
-  } else if (
-    payload.conditionType
-    && ISSUE_TRANSITION_CONDITION_TYPES.includes(payload.conditionType)
-  ) {
-    // State changes come from users/agents, so there is no span to attach
-    if (!payload.issue) {
-      throw new InvalidArgumentError('Issue is required')
-    }
-  } else if (
-    payload.conditionType !== AlertRuleConditionType.SESSION_RECORDING_CREATED
-    && payload.conditionType !== AlertRuleConditionType.DEBUGGING_AGENT_FIX_PUSHED
-    && (
-      !payload.issue
-      || !payload.span
-    ) && !payload.sessionRecording
-  ) {
-    throw new InvalidArgumentError('Issue and span are required')
-  }
+  assertAlertPayload(payload)
 
   // Thresholds are evaluated on occurrences only - a regression alert accompanies the
   // occurrence alert for the same span and must not count it twice.
@@ -323,19 +316,19 @@ const buildNotifications = async (
         notificationType: NotificationType.SLACK,
         integration: action.integration,
         slackChannelOptions: action.slack,
-        email: '',
         ...content,
         data: { ...content.data, slackChannelOptions: action.slack },
       }]
 
     case AlertRuleActionType.SEND_EMAIL_NOTIFICATION: {
-      const workspaceUsers = await WorkspaceUserModel.findWorkspaceUserByIds(action.email?.workspaceUsers || [])
-
       // Only active members of this workspace receive alerts, whatever ids the rule holds
+      const workspaceUsers = await WorkspaceUserModel.findActiveWorkspaceUsersByIds(
+        workspaceId,
+        action.email?.workspaceUsers || [],
+      )
+
       return workspaceUsers
-        .filter(workspaceUser => workspaceUser.status === WorkspaceUserStatus.ACTIVE
-          && String(workspaceUser.workspace) === String(workspaceId)
-          && (workspaceUser.user as any)?.primaryEmail)
+        .filter(workspaceUser => (workspaceUser.user as any)?.primaryEmail)
         .map(workspaceUser => ({
           notificationType: NotificationType.EMAIL,
           email: (workspaceUser.user as any).primaryEmail,
@@ -350,14 +343,14 @@ const buildNotifications = async (
 
       const secret = action.webhook.secret || (await getStoredAction())?.webhook?.secret
 
-      return [{ notificationType: NotificationType.WEBHOOK, webhookOptions: { url: action.webhook.url, secret }, email: '', ...content }]
+      return [{ notificationType: NotificationType.WEBHOOK, webhookOptions: { url: action.webhook.url, secret }, ...content }]
     }
 
     case AlertRuleActionType.SEND_TEAMS_NOTIFICATION: {
       const webhookUrl = action.teams?.webhookUrl || (await getStoredAction())?.teams?.webhookUrl
 
       return webhookUrl
-        ? [{ notificationType: NotificationType.TEAMS, teamsOptions: { webhookUrl }, email: '', ...content }]
+        ? [{ notificationType: NotificationType.TEAMS, teamsOptions: { webhookUrl }, ...content }]
         : []
     }
 
@@ -365,7 +358,7 @@ const buildNotifications = async (
       const webhookUrl = action.slackWebhook?.webhookUrl || (await getStoredAction())?.slackWebhook?.webhookUrl
 
       return webhookUrl
-        ? [{ notificationType: NotificationType.SLACK_WEBHOOK, slackWebhookOptions: { webhookUrl }, email: '', ...content }]
+        ? [{ notificationType: NotificationType.SLACK_WEBHOOK, slackWebhookOptions: { webhookUrl }, ...content }]
         : []
     }
 

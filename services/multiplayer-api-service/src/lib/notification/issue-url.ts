@@ -1,5 +1,5 @@
 import { IIssue } from '@multiplayer/types'
-import { FRONTEND_DOMAIN, FRONTEND_PROTOCOL } from '../../../config'
+import { FRONTEND_DOMAIN, FRONTEND_PROTOCOL } from '../../config'
 
 export const buildIssueUrl = (issue: IIssue): string | undefined => {
   if (!issue?.titleHash || !issue?.componentHash) {

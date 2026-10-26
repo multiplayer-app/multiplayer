@@ -12,6 +12,10 @@ const TEAMS_WEBHOOK_HOSTS = [
 
 export const isTeamsWebhookHost = (hostname: string) => TEAMS_WEBHOOK_HOSTS.some(pattern => pattern.test(hostname))
 
+// Teams shows at most 6 actions on a card; the first links (the issue, then trace links in their
+// configured order) are the ones kept
+const MAX_CARD_ACTIONS = 6
+
 export const buildTeamsCard = (content: AlertContent) => ({
   type: 'message',
   attachments: [{
@@ -22,12 +26,21 @@ export const buildTeamsCard = (content: AlertContent) => ({
       type: 'AdaptiveCard',
       version: '1.4',
       body: [
-        { type: 'TextBlock', text: content.headline, weight: 'Bolder', size: 'Medium', color: 'Attention', wrap: true },
+        {
+          type: 'TextBlock',
+          text: content.headline,
+          weight: 'Bolder',
+          size: 'Medium',
+          color: content.tone === 'success' ? 'Good' : 'Attention',
+          wrap: true,
+        },
         { type: 'TextBlock', text: content.title, weight: 'Bolder', wrap: true },
         ...content.summary ? [{ type: 'TextBlock', text: content.summary, isSubtle: true, wrap: true }] : [],
         { type: 'FactSet', facts: content.facts.map(({ name, value }) => ({ title: name, value })) },
       ],
-      actions: content.links.map(({ title, url }) => ({ type: 'Action.OpenUrl', title, url })),
+      actions: content.links
+        .slice(0, MAX_CARD_ACTIONS)
+        .map(({ title, url }) => ({ type: 'Action.OpenUrl', title, url })),
     },
   }],
 })

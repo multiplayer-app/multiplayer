@@ -17,6 +17,7 @@ import {
   MetricName,
   IAgent,
   MetricsGranularity,
+  ITraceResolution,
 } from "@multiplayer/types";
 import { radarInstance } from "shared/api";
 import { memoizeApiFunction } from "shared/helpers/api.helpers";
@@ -712,6 +713,17 @@ export const getIssueSpans = (
   return radarInstance.get(
     `/workspaces/${workspaceId}/projects/${projectId}/issues/${issueId}/spans`,
     { params }
+  );
+};
+
+// The sessions and issues a trace id is known as in the project
+export const resolveTrace = (
+  workspaceId: string,
+  projectId: string,
+  traceId: string
+): Promise<ITraceResolution> => {
+  return radarInstance.get(
+    `/workspaces/${workspaceId}/projects/${projectId}/traces/${traceId}`
   );
 };
 

@@ -1,0 +1,5 @@
+export enum TraceLinkType {
+  GRAFANA_TEMPO = 'GRAFANA_TEMPO',
+  GRAFANA_LOKI = 'GRAFANA_LOKI',
+  CUSTOM = 'CUSTOM',
+}

@@ -8,6 +8,7 @@ import {
   IProjectMember,
   IAccess,
   IssueCategoryEnum,
+  TraceLinkType,
 } from '@multiplayer/types'
 import { SKIP, LIMIT } from '../config'
 import { AccessSchema } from './shared/access.model'
@@ -171,6 +172,35 @@ const ProjectSchema = new Schema({
   access: AccessSchema,
 
   settings: {
+    traceLinks: [{
+      type: {
+        type: String,
+        enum: Object.values(TraceLinkType),
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+      environments: [{
+        type: String,
+      }],
+      url: {
+        type: String,
+      },
+      datasourceUid: {
+        type: String,
+      },
+      orgId: {
+        type: Number,
+      },
+      query: {
+        type: String,
+      },
+      urlTemplate: {
+        type: String,
+      },
+    }],
     issue: {
       createOnlyForCategories: [{
         type: String,
@@ -303,12 +333,19 @@ ProjectSchema.statics.updateProjectById = function (
   id: string | ObjectId,
   payload: object,
 ) {
+  // Settings are written per section (`settings.traceLinks`, `settings.agent`, ...): a `$set` of
+  // `settings` would replace it whole, so saving one section would erase the others.
+  const { settings, ...rest } = payload as { settings?: Record<string, unknown> }
+  const settingsSections = Object.fromEntries(
+    Object.entries(settings || {}).map(([section, value]) => [`settings.${section}`, value]),
+  )
+
   return this.findOneAndUpdate(
     {
       _id: id,
     },
     {
-      $set: payload,
+      $set: { ...rest, ...settingsSections },
     },
     {
       returnDocument: 'after',

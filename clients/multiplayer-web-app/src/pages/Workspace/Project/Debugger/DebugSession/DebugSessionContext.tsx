@@ -10,7 +10,7 @@ import {
 } from "react";
 
 import type { Replayer } from "rrweb";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { eventWithTime, metaEvent } from "@rrweb/types";
 import { Button, Flex, Image, UseDisclosureReturn } from "@chakra-ui/react";
 
@@ -29,6 +29,10 @@ import {
   generateNotebookFromDebugSession,
 } from "shared/services/radar.service";
 import useMessage from "shared/hooks/useMessage";
+import {
+  FOCUS_SPAN_PARAM,
+  FOCUS_TRACE_PARAM,
+} from "shared/navigation/traceFocus";
 
 import {
   ILogNode,
@@ -297,15 +301,21 @@ const DebugSessionProvider = ({
     [sessionNodes]
   );
 
-  const selectNodeById = useCallback(
-    (id: string, open: boolean = false) => {
+  // Expands the parents of the first node that matches - and selects it, when `open` - and tells
+  // whether one matched
+  const selectNode = useCallback(
+    (
+      matches: (
+        node: IDebugSessionNode<ITraceNode | ILogNode | IConsoleNode>
+      ) => boolean,
+      open: boolean = false
+    ): boolean => {
       const parentIds: string[] = [];
-      scrollTarget.current = id;
       const findNode = (
         nodes: IDebugSessionNode<ITraceNode | ILogNode | IConsoleNode>[]
       ): IDebugSessionNode<ITraceNode | ILogNode | IConsoleNode> | null => {
         for (const node of nodes) {
-          if (node.id === id) {
+          if (matches(node)) {
             return node;
           }
           if (node.childSpans && node.childSpans.length > 0) {
@@ -320,19 +330,73 @@ const DebugSessionProvider = ({
         return null;
       };
       const node = findNode(Object.values(sessionNodes).flat());
-      if (node) {
-        if (open) {
-          setSelectedNode(node);
-        }
-        setExpandedNodes((prev) => {
-          const newState = new Set(prev);
-          parentIds.forEach((id) => newState.add(id));
-          return newState;
-        });
+      if (!node) {
+        return false;
       }
+      scrollTarget.current = node.id;
+      if (open) {
+        setSelectedNode(node);
+      }
+      setExpandedNodes((prev) => {
+        const newState = new Set(prev);
+        parentIds.forEach((id) => newState.add(id));
+        return newState;
+      });
+      return true;
     },
     [sessionNodes]
   );
+
+  const selectNodeById = useCallback(
+    (id: string, open: boolean = false) => {
+      scrollTarget.current = id;
+      selectNode((node) => node.id === id, open);
+    },
+    [selectNode]
+  );
+
+  // A link to a trace or span (?trace=&span=, e.g. from Grafana) opens it once the traces are loaded
+  const [searchParams] = useSearchParams();
+  const focusTraceId = isPreviewMode ? null : searchParams.get(FOCUS_TRACE_PARAM);
+  const focusSpanId = isPreviewMode ? null : searchParams.get(FOCUS_SPAN_PARAM);
+  const focusedLink = useRef<string | null>(null);
+  const { onOpen: openNodeDetailsDrawer } = nodeDetailsDrawerDisclosure;
+
+  useEffect(() => {
+    if (tracesLoading || (!focusTraceId && !focusSpanId)) return;
+
+    const link = `${focusTraceId}:${focusSpanId}`;
+    if (focusedLink.current === link) return;
+
+    // The span itself, or else the trace's first span. Spans are listed before logs, which carry
+    // the ids of their span and trace too.
+    const traceId = focusTraceId?.toLowerCase();
+    const found =
+      (!!focusSpanId &&
+        selectNode(
+          (node) => "SpanId" in node.meta && node.meta.SpanId === focusSpanId,
+          true
+        )) ||
+      (!!traceId &&
+        selectNode(
+          (node) =>
+            "TraceId" in node.meta &&
+            node.meta.TraceId?.toLowerCase() === traceId,
+          true
+        ));
+    if (!found) return;
+
+    focusedLink.current = link;
+    setTabIndex(SessionTabIndex.All);
+    openNodeDetailsDrawer();
+  }, [
+    tracesLoading,
+    sessionNodes,
+    focusTraceId,
+    focusSpanId,
+    selectNode,
+    openNodeDetailsDrawer,
+  ]);
 
   const setCustomSeekTime = useCallback((time: number) => {
     if (seekRafRef.current !== null) {

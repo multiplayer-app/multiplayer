@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import { ProjectModel } from '@multiplayer/models'
+import { ProjectLib } from '../../lib'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -53,6 +54,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
         return project
       })
     }
+
+    projects.data = projects.data.map(project => ProjectLib.forViewer(req, project))
 
     return res.status(200).json(projects)
   } catch (err) {

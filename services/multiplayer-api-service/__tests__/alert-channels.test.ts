@@ -3,7 +3,7 @@ import http from 'http'
 import type { AddressInfo } from 'net'
 import { AlertRuleConditionType, NotificationType } from '@multiplayer/types'
 import { isPrivateAddress, sendSafeRequest, UnsafeUrlError } from '../src/lib/notification/safe-request'
-import { isTeamsWebhookHost } from '../src/lib/notification/teams.lib'
+import { buildTeamsCard, isTeamsWebhookHost } from '../src/lib/notification/teams.lib'
 import { isSlackWebhookHost } from '../src/lib/notification/slack-webhook.lib'
 import { describeAlert } from '../src/lib/notification/alert-content'
 import { sendNotification } from '../src/lib/notification/send-notification'
@@ -99,7 +99,6 @@ describe('Webhook notifications', () => {
     notificationType: NotificationType.WEBHOOK,
     webhookOptions: { url, secret },
     template: AlertRuleConditionType.NEW_ISSUE_CREATED,
-    email: '',
     data: alertData,
   })
 
@@ -123,7 +122,7 @@ describe('Webhook notifications', () => {
     expect(payload.id).toBe(headers['x-multiplayer-delivery'])
     expect(payload).toMatchObject({
       event: AlertRuleConditionType.NEW_ISSUE_CREATED,
-      headline: 'New issue detected',
+      headline: 'New issue created by Acme',
       title: issue.title,
       project: { name: 'Shop' },
       issue: { id: issue._id, componentHash: issue.componentHash },
@@ -193,7 +192,6 @@ describe('Microsoft Teams notifications', () => {
         notificationType: NotificationType.TEAMS,
         teamsOptions: { webhookUrl: receiver.url },
         template: AlertRuleConditionType.ISSUE_MARKED_AS_UNRESOLVED,
-        email: '',
         data: alertData,
       })
     } finally {
@@ -205,6 +203,19 @@ describe('Microsoft Teams notifications', () => {
     expect(card.content.type).toBe('AdaptiveCard')
     expect(JSON.stringify(card.content.body)).toContain('Resolved issue occurred again')
     expect(card.content.body.find(({ type }) => type === 'FactSet').facts).toContainEqual({ title: 'Endpoint', value: 'POST /orders' })
+  })
+
+  it('keeps the first actions a card can show', () => {
+    const links = Array.from({ length: 8 }, (_, i) => ({ title: `Link ${i}`, url: `https://example.com/${i}` }))
+    const card = buildTeamsCard({ ...describeAlert(AlertRuleConditionType.NEW_ISSUE_CREATED, alertData), links })
+
+    expect(card.attachments[0].content.actions.map(({ title }) => title)).toEqual(links.slice(0, 6).map(({ title }) => title))
+  })
+
+  it('marks a pushed fix as good news', () => {
+    const content = describeAlert(AlertRuleConditionType.DEBUGGING_AGENT_FIX_PUSHED, { ...alertData, git: { branchName: 'fix/orders' } })
+
+    expect(buildTeamsCard(content).attachments[0].content.body[0]).toMatchObject({ text: 'Agent pushed a fix', color: 'Good' })
   })
 })
 
@@ -227,7 +238,6 @@ describe('Slack incoming webhook notifications', () => {
         notificationType: NotificationType.SLACK_WEBHOOK,
         slackWebhookOptions: { webhookUrl: receiver.url },
         template: AlertRuleConditionType.ISSUE_MARKED_AS_UNRESOLVED,
-        email: '',
         data: alertData,
       })
     } finally {
@@ -256,7 +266,7 @@ describe('Alert emails', () => {
 
     const [email, subject, html] = (sendEmail as jest.Mock).mock.calls[0]
     expect(email).toBe('dev@example.com')
-    expect(subject).toBe('[Shop] New issue detected: Cannot read <img src=x onerror=alert(1)> of undefined')
+    expect(subject).toBe('[Shop] New issue created by Acme: Cannot read <img src=x onerror=alert(1)> of undefined')
     expect(html).toContain('Cannot read &lt;img src&#x3D;x onerror&#x3D;alert(1)&gt;')
     expect(html).not.toContain('<img src=x')
     expect(html).toContain('POST /orders')
@@ -294,6 +304,15 @@ describe('Notification request validation', () => {
   const validate = (body: object) => NotificationSchema.createNotificationSchema.validate({
     body: { template: AlertRuleConditionType.NEW_ISSUE_CREATED, email: '', ...body },
   }).error
+
+  it('requires an email address for email notifications only', () => {
+    expect(validate({ email: 'dev@example.com' })).toBeUndefined()
+    expect(validate({ notificationType: NotificationType.EMAIL, email: 'dev@example.com' })).toBeUndefined()
+    expect(validate({})).toBeDefined()
+    expect(validate({ notificationType: NotificationType.EMAIL })).toBeDefined()
+    expect(validate({ notificationType: NotificationType.EMAIL, email: undefined })).toBeDefined()
+    expect(validate({ notificationType: NotificationType.WEBHOOK, webhookOptions: { url: 'https://example.com/hook' }, email: undefined })).toBeUndefined()
+  })
 
   it('requires the options of the chosen channel and forbids the others', () => {
     expect(validate({ notificationType: NotificationType.WEBHOOK, webhookOptions: { url: 'https://example.com/hook' } })).toBeUndefined()

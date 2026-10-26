@@ -17,7 +17,12 @@ export const createNotificationSchema = Joi.object({
       webhookUrl: Joi.string().uri({ scheme: ['https', 'http'] }).required(),
     }).when('notificationType', { is: NotificationType.SLACK_WEBHOOK, then: Joi.required(), otherwise: Joi.forbidden() }),
     template: Joi.string().required(),
-    email: Joi.string().allow('').required(),
+    // Only emails have a recipient address; the other channels carry their own options
+    email: Joi.string().when('notificationType', {
+      is: Joi.exist().not(NotificationType.EMAIL),
+      then: Joi.optional().allow(''),
+      otherwise: Joi.required(),
+    }),
     data: Joi.any(),
     sendAt: Joi.alternatives(Joi.string(), Joi.date()),
   }).required(),

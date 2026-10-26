@@ -4,6 +4,7 @@ import {
   AlertRuleModel,
   AlertHistoryModel,
   ProjectModel,
+  UserModel,
   WorkspaceModel,
   WorkspaceUserModel,
 } from '@multiplayer/models'
@@ -32,9 +33,16 @@ const WEBHOOK_SECRET = 'whsec_alert_channels_0123456789'
 const TEAMS_URL = 'https://acme.webhook.office.com/webhookb2/alert-channels-credential'
 const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/T0000/B0000/alert-channels-credential'
 
-const ACTIVE_MEMBER = new ObjectId().toString()
-const INACTIVE_MEMBER = new ObjectId().toString()
-const FOREIGN_MEMBER = new ObjectId().toString()
+// Real members, so that the recipient query itself is tested: of the rule's recipients only the
+// active member of its workspace may receive the email
+const memberEmail = (name: string) => `${name}-${WORKSPACE_ID}@example.com`
+const MEMBER_EMAILS = ['active', 'inactive', 'foreign'].map(memberEmail)
+
+const createMember = async (name: string, workspace: string, status: WorkspaceUserStatus) => {
+  const user = await UserModel.createWithoutProfile(memberEmail(name))
+  const workspaceUser = await WorkspaceUserModel.createWorkspaceUser({ user: user._id, workspace, username: name, status })
+  return workspaceUser._id.toString()
+}
 
 const issue = {
   _id: new ObjectId().toString(),
@@ -70,6 +78,12 @@ beforeAll(async () => {
   await mongo.connect()
   await redis.connect()
 
+  const recipients = [
+    await createMember('active', WORKSPACE_ID, WorkspaceUserStatus.ACTIVE),
+    await createMember('inactive', WORKSPACE_ID, WorkspaceUserStatus.NOT_ACTIVE),
+    await createMember('foreign', OTHER_WORKSPACE_ID, WorkspaceUserStatus.ACTIVE),
+  ]
+
   alertRule = (await AlertRuleModel.createAlertRule({
     workspace: WORKSPACE_ID,
     project: PROJECT_ID,
@@ -80,7 +94,7 @@ beforeAll(async () => {
     filterOperator: 'ANY',
     filters: [],
     actions: [
-      { type: AlertRuleActionType.SEND_EMAIL_NOTIFICATION, email: { workspaceUsers: [ACTIVE_MEMBER, INACTIVE_MEMBER, FOREIGN_MEMBER] } },
+      { type: AlertRuleActionType.SEND_EMAIL_NOTIFICATION, email: { workspaceUsers: recipients } },
       { type: AlertRuleActionType.SEND_WEBHOOK_NOTIFICATION, webhook: { url: 'https://hooks.example.com/alerts', secret: WEBHOOK_SECRET } },
       { type: AlertRuleActionType.SEND_TEAMS_NOTIFICATION, teams: { webhookUrl: TEAMS_URL } },
       { type: AlertRuleActionType.SEND_SLACK_WEBHOOK_NOTIFICATION, slackWebhook: { webhookUrl: SLACK_WEBHOOK_URL } },
@@ -92,11 +106,6 @@ beforeAll(async () => {
 beforeEach(() => {
   jest.spyOn(ProjectModel, 'findProjectById').mockResolvedValue({ toObject: () => ({ _id: PROJECT_ID, name: 'Shop' }) } as any)
   jest.spyOn(WorkspaceModel, 'findWorkspaceById').mockResolvedValue({ toObject: () => ({ _id: WORKSPACE_ID, name: 'Acme' }) } as any)
-  jest.spyOn(WorkspaceUserModel, 'findWorkspaceUserByIds').mockResolvedValue([
-    { _id: ACTIVE_MEMBER, workspace: WORKSPACE_ID, status: WorkspaceUserStatus.ACTIVE, user: { primaryEmail: 'active@example.com' } },
-    { _id: INACTIVE_MEMBER, workspace: WORKSPACE_ID, status: WorkspaceUserStatus.NOT_ACTIVE, user: { primaryEmail: 'inactive@example.com' } },
-    { _id: FOREIGN_MEMBER, workspace: OTHER_WORKSPACE_ID, status: WorkspaceUserStatus.ACTIVE, user: { primaryEmail: 'foreign@example.com' } },
-  ] as any)
   jest.spyOn(InternalNotificationService.prototype, 'sendNotification').mockResolvedValue(undefined)
 })
 
@@ -108,6 +117,8 @@ afterAll(async () => {
   await Promise.all([
     AlertRuleModel.deleteMany({ workspace: WORKSPACE_ID }),
     AlertHistoryModel.deleteMany({ workspace: { $in: [WORKSPACE_ID, OTHER_WORKSPACE_ID] } }),
+    WorkspaceUserModel.deleteMany({ workspace: { $in: [WORKSPACE_ID, OTHER_WORKSPACE_ID] } }),
+    UserModel.deleteMany({ primaryEmail: { $in: MEMBER_EMAILS } }),
     AlertRulesCache.del(PROJECT_ID),
   ])
   await mongo.disconnect()
@@ -227,7 +238,7 @@ describe('Alert delivery', () => {
     const notifications = sentNotifications()
     const byType = (type: NotificationType) => notifications.filter(({ notificationType }) => notificationType === type)
     expect(notifications).toHaveLength(4)
-    expect(byType(NotificationType.EMAIL).map(({ email }) => email)).toEqual(['active@example.com'])
+    expect(byType(NotificationType.EMAIL).map(({ email }) => email)).toEqual([memberEmail('active')])
     expect(byType(NotificationType.WEBHOOK).map(({ webhookOptions }) => webhookOptions))
       .toEqual([{ url: 'https://hooks.example.com/alerts', secret: WEBHOOK_SECRET }])
     expect(byType(NotificationType.TEAMS).map(({ teamsOptions }) => teamsOptions)).toEqual([{ webhookUrl: TEAMS_URL }])

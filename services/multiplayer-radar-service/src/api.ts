@@ -14,6 +14,7 @@ import {
   conditionalRecordingFilters,
   globalConditionalRecordingSettings,
   issues,
+  traces,
   endUser,
   metrics,
   alertRules,
@@ -39,6 +40,7 @@ router.use('/workspaces/:workspaceId/projects/:projectId/debug-sessions/:debugSe
 router.use('/workspaces/:workspaceId/projects/:projectId/remote-session-recording-conditions', conditionalRecordingFilters)
 router.use('/workspaces/:workspaceId/projects/:projectId/remote-session-recording-settings', globalConditionalRecordingSettings)
 router.use('/workspaces/:workspaceId/projects/:projectId/issues', issues)
+router.use('/workspaces/:workspaceId/projects/:projectId/traces', traces)
 router.use('/workspaces/:workspaceId/projects/:projectId/issues-settings', globalIssuesSettings)
 router.use('/workspaces/:workspaceId/projects/:projectId/end-users', endUser)
 router.use('/workspaces/:workspaceId/projects/:projectId/metrics', metrics)

@@ -47,6 +47,11 @@ export interface IWorkspaceUserModel extends Model<IWorkspaceUserDocument> {
     workspaceUserIds: string[] | ObjectId[]
   ): Promise<IWorkspaceUserDocument[]>
 
+  findActiveWorkspaceUsersByIds(
+    workspaceId: string | ObjectId,
+    workspaceUserIds: string[] | ObjectId[]
+  ): Promise<IWorkspaceUserDocument[]>
+
   findWorkspaceUsers(
     filters?: object,
     cursor?: ICursor
@@ -185,6 +190,20 @@ WorkspaceUserSchema.statics.findWorkspaceUserById = function (
     _id: workspaceUserId,
   })
 }
+// Of the given ids, the active members of the workspace, with their user's email and name
+WorkspaceUserSchema.statics.findActiveWorkspaceUsersByIds = function (
+  workspaceId: string | ObjectId,
+  workspaceUserIds: string[] | ObjectId[],
+): Promise<IWorkspaceUserDocument[]> {
+  return this.find({
+    _id: {
+      $in: workspaceUserIds,
+    },
+    workspace: workspaceId,
+    status: WorkspaceUserStatus.ACTIVE,
+  }).populate('user', 'primaryEmail firstName lastName username')
+}
+
 WorkspaceUserSchema.statics.findWorkspaceUserByIds = function (
   workspaceUserIds: string[] | ObjectId[],
 ): Promise<IWorkspaceUserDocument[]> {

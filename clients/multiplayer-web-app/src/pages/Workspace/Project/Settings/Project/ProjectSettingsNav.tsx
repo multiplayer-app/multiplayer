@@ -35,6 +35,7 @@ const ProjectSettingsNav = () => {
     ) {
       items.push({ to: `${basePath}/issues`, label: "Issues" });
     }
+    items.push({ to: `${basePath}/trace-links`, label: "Trace links" });
     if (
       hasAccess(
         RoleProjectPermissionEntity.AGENT,

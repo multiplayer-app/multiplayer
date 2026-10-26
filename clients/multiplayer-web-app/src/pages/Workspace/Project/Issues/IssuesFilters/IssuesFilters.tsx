@@ -8,6 +8,8 @@ import { ISSUE_STATUS_OPTIONS } from "shared/utils";
 import { useParams } from "react-router-dom";
 import { getRadarDetections } from "shared/services/radar.service";
 import { RadarDetectionType } from "@multiplayer/types";
+import { slugifyString } from "@multiplayer/util-shared";
+import { useProjectEnvironments } from "shared/hooks/useProjectEnvironments";
 import Icon from "shared/components/Icon";
 import { useVisibility } from "shared/components/Visibility";
 
@@ -26,38 +28,34 @@ const IssuesFilters = ({
   const [services, setServices] = useState<{ label: string; value: string }[]>(
     []
   );
-  const [environments, setEnvironments] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const { environments: environmentNames } = useProjectEnvironments(
+    workspaceId,
+    projectId
+  );
+  // Issues are filtered by the slugs of their service and environment names
+  const environments = useMemo(
+    () =>
+      environmentNames.map((name) => ({
+        label: name,
+        value: slugifyString(name),
+      })),
+    [environmentNames]
+  );
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [services, environments] = await Promise.all([
-          getRadarDetections(workspaceId, projectId, {
-            type: RadarDetectionType.SERVICE,
-          }),
-          getRadarDetections(workspaceId, projectId, {
-            type: RadarDetectionType.ENVIRONMENT,
-          }),
-        ]);
+    getRadarDetections(workspaceId, projectId, {
+      type: RadarDetectionType.SERVICE,
+    })
+      .then((res) =>
         setServices(
-          services.data.map((service: any) => ({
+          res.data.map((service: any) => ({
             label: service.componentName,
-            value: service.componentName,
+            value: slugifyString(service.componentName),
           }))
-        );
-        setEnvironments(
-          environments.data.map((env) => ({
-            label: env.environmentName || env.environmentNames[0],
-            value: env.environmentName || env.environmentNames[0],
-          }))
-        );
-      } catch (_) {}
-    };
-
-    fetchData();
-  }, []);
+        )
+      )
+      .catch(() => undefined);
+  }, [workspaceId, projectId]);
 
   const onStatusChange = (selectionKey: string, newSelection: any[]) => {
     setFilters((prev: any) => {

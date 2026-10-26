@@ -13,6 +13,7 @@ import { DebugSessionNodeType } from "../types";
 import { useDebugSession } from "../DebugSessionContext";
 import ConsoleNodeDetails from "shared/components/ConsoleNodeDetails";
 import TraceNodeDetails from "shared/components/TraceNodeDetails";
+import TraceLinks from "shared/components/TraceLinks";
 import DebugSessionNodeIcon from "../DebugSessionDetails/components/DebugSessionNode/DebugSessionNodeIcon";
 
 const DebugSessionNodeDrawer = () => {
@@ -70,6 +71,14 @@ const DebugSessionNodeDetails = ({ node }) => {
         )}
         {node.meta?.SpanId && (
           <MetaIDDisplay label="Span ID" value={node.meta?.SpanId} />
+        )}
+        {node.type !== DebugSessionNodeType.Console && (
+          <TraceLinks
+            span={{
+              ...node.meta,
+              Timestamp: node.meta?.Timestamp ?? node.timestamp,
+            }}
+          />
         )}
         <Flex gap="2" alignItems="center">
           <Flex

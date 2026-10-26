@@ -21,7 +21,7 @@
               <tr>
                 <td><img alt="Multiplayer" height="32" src="https://assets.multiplayer.app/email/logo.png"
                     style="display:block;outline:none;border:none;text-decoration:none" width="144" />
-                  <p style="font-size:12px;line-height:normal;margin:30px 0 0;color:#E01E5A;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
+                  <p style="font-size:12px;line-height:normal;margin:30px 0 0;color:{{ headlineColor }};text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
                     {{ headline }}</p>
                   <h1
                     style="color:#2D3748;font-size:22px;text-align:left;font-weight:500;margin:8px 0 16px;padding:0;line-height:normal;word-break:break-word">
@@ -42,7 +42,7 @@
                       {{#each facts}}
                       <tr>
                         <td style="padding:8px 12px;font-size:13px;color:#5D5D8F;width:30%;vertical-align:top;border-top:1px solid #f1f1f1">{{ name }}</td>
-                        <td style="padding:8px 12px;font-size:13px;color:#2D3748;word-break:break-word;border-top:1px solid #f1f1f1">{{ value }}</td>
+                        <td style="padding:8px 12px;font-size:13px;color:#2D3748;word-break:break-word;border-top:1px solid #f1f1f1">{{#if url}}<a href="{{ url }}" style="color:#067df7;text-decoration:none" target="_blank">{{ value }}</a>{{else}}{{ value }}{{/if}}</td>
                       </tr>
                       {{/each}}
                     </tbody>

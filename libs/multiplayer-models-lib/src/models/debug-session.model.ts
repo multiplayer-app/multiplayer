@@ -1127,6 +1127,11 @@ DebugSessionSchema.index({
   createdAt: -1,
 })
 
+// Trace id lookups (links from external tools to a trace). Sparse: only sessions with errors, or
+// saved from a continuous recording, have the field.
+DebugSessionSchema.index({ 'issues.traceId': 1 }, { sparse: true })
+DebugSessionSchema.index({ continuousDebugSession: 1 }, { sparse: true })
+
 // DebugSessionSchema.index(
 //   {
 //     shortId: 1,

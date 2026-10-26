@@ -44,6 +44,8 @@ interface ProjectContext {
     callback: (data: any) => void
   ) => () => void;
   emitUpdate: (type: string, id: string, data: any) => void;
+  // Re-reads the project (e.g. after its settings changed) without reloading the page
+  refreshProject: () => Promise<void>;
 }
 
 export const ProjectContext = createContext<ProjectContext | null>(null);
@@ -117,6 +119,11 @@ export const ProjectProvider = ({ children }) => {
       socket.disconnect();
     };
   }, [workspaceId, projectId, fetchData, socket.disconnect]);
+
+  const refreshProject = useCallback(async () => {
+    if (!workspaceId || !projectId) return;
+    setProject(await getProject(workspaceId, projectId));
+  }, [workspaceId, projectId]);
 
   useEffect(() => {
     if (!layoutCacheKey) {
@@ -202,6 +209,7 @@ export const ProjectProvider = ({ children }) => {
       setLayoutState,
       subscribeToUpdates: subscribeToEvent,
       emitUpdate: emitEvent,
+      refreshProject,
     }),
     [
       users,
@@ -213,6 +221,7 @@ export const ProjectProvider = ({ children }) => {
       setLayoutState,
       subscribeToEvent,
       emitEvent,
+      refreshProject,
     ]
   );
 

@@ -1,6 +1,28 @@
 import { Joi } from '@multiplayer/util'
-import { IssueCategoryEnum } from '@multiplayer/types'
+import { getTraceLinkConfigError } from '@multiplayer/util-shared'
+import { IssueCategoryEnum, TraceLinkType } from '@multiplayer/types'
 import { AccessSchema } from './shared'
+
+const MAX_TRACE_LINKS = 10
+
+// Field bounds here; whether the link can be built is checked with the builder itself
+const traceLinkSchema = Joi.object({
+  _id: Joi.string().hex().length(24),
+  type: Joi.string().valid(...Object.values(TraceLinkType)).required(),
+  name: Joi.string().trim().max(50).required(),
+  environments: Joi.array().items(Joi.string().trim().min(1).max(100)).max(20),
+  url: Joi.string().max(2048),
+  datasourceUid: Joi.string().max(100),
+  orgId: Joi.number().integer().min(1),
+  query: Joi.string().max(2000).allow(''),
+  urlTemplate: Joi.string().max(2000),
+}).custom((link) => {
+  const error = getTraceLinkConfigError(link)
+  if (error) {
+    throw new Error(error)
+  }
+  return link
+})
 
 export const listProjectsSchema = Joi.object({
   params: Joi.object({
@@ -49,6 +71,7 @@ export const updateProjectSchema = Joi.object({
     version: Joi.string(),
 
     settings: Joi.object({
+      traceLinks: Joi.array().items(traceLinkSchema).max(MAX_TRACE_LINKS),
       agent: Joi.object({
         fixabilityScoreThreshold: Joi.number().integer().min(0).max(100),
       }),

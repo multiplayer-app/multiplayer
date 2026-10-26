@@ -7,6 +7,7 @@ import ApiKeys from "./ApiKeys";
 import OtelKeys from "./OtelKeys";
 import General from "./General";
 import Issues from "./Issues";
+import TraceLinks from "./TraceLinks";
 
 const Project = () => {
   return (
@@ -16,6 +17,7 @@ const Project = () => {
         <Route path="access" element={<Access />} />
         <Route path="danger" element={<Danger />} />
         <Route path="issues" element={<Issues />} />
+        <Route path="trace-links" element={<TraceLinks />} />
         <Route path="api-keys" element={<ApiKeys />} />
         <Route path="otel-keys" element={<OtelKeys />} />
         <Route path="*" element={<Navigate to="" replace />} />
