@@ -30,6 +30,8 @@ let instance: DuckDBInstance | undefined
 // used to fail immediately with "Not connected". Tracking the in-flight connect()
 // promise here lets getInstance() wait it out instead of failing that race.
 let connectPromise: Promise<void> | undefined
+// httpfs, which moveDataToS3 needs - installed and loaded once per instance (see loadHttpfs)
+let httpfsLoaded: Promise<void> | undefined
 
 const getInstance = async (): Promise<DuckDBInstance> => {
   if (!instance) {
@@ -103,6 +105,8 @@ const connect = async (): Promise<void> => {
 const disconnect = async (): Promise<void> => {
   instance?.closeSync()
   instance = undefined
+  // Extensions are loaded per instance
+  httpfsLoaded = undefined
 }
 
 const connected = async (): Promise<boolean> => !!instance
@@ -270,6 +274,26 @@ const insert = async (table: string, data: any, _asyncInsert?: boolean): Promise
   })
 }
 
+// INSTALL downloads httpfs into DuckDB's extension directory, which every connection shares. Moves
+// run concurrently (the S3-move queue prefetches several), and concurrent first installs on a
+// fresh machine fail to load a missing or half-written file - or crash the process. So httpfs is
+// installed and loaded once per instance, with concurrent moves waiting on that one attempt; LOAD
+// is instance-wide, so every connection can use it after. A failed attempt (the download, say) is
+// retried by the next move.
+const loadHttpfs = (): Promise<void> => {
+  if (!httpfsLoaded) {
+    httpfsLoaded = withConnection(async (conn) => {
+      await conn.run('INSTALL httpfs')
+      await conn.run('LOAD httpfs')
+    }).catch((err) => {
+      httpfsLoaded = undefined
+      throw err
+    })
+  }
+
+  return httpfsLoaded
+}
+
 const moveDataToS3 = async (
   absoluteS3FileUrl: string,
   table: string,
@@ -289,13 +313,13 @@ const moveDataToS3 = async (
   const key = keyParts.join('/')
   const conditions = buildFilter(filter)
 
+  await loadHttpfs()
+
   // SET s3_* is connection-scoped session state, and moveDataToS3 calls can run
   // concurrently (AMQP_DEBUG_SESSION_MOVE_S3_QUEUE prefetches several at once) with
   // different credentials/endpoints - each call must own its own connection so
   // concurrent moves can't clobber each other's S3 settings mid-flight.
   await withConnection(async conn => {
-    await conn.run('INSTALL httpfs')
-    await conn.run('LOAD httpfs')
     await conn.run(`SET s3_endpoint='${url.host}'`)
     await conn.run(`SET s3_use_ssl=${url.protocol === 'https:'}`)
     await conn.run('SET s3_url_style=\'path\'')
